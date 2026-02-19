@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>Champions</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- 左: 映像エリア -->
+      <section class="video-section">
+        <div class="video-controls">
+          <label for="device-select">映像ソース</label>
+          <select id="device-select" aria-label="映像ソースを選択">
+            <option value="">映像ソースを選択</option>
+          </select>
+          <label for="audio-select">音声ソース</label>
+          <select id="audio-select" aria-label="音声ソースを選択">
+            <option value="">音声ソースを選択</option>
+          </select>
+          <label for="volume-slider" class="volume-label">音量</label>
+          <input type="range" id="volume-slider" min="0" max="100" value="80" aria-label="音量" />
+          <button type="button" id="refresh-devices">一覧を更新</button>
+        </div>
+        <div class="video-wrap">
+          <video id="video" autoplay playsinline></video>
+        </div>
+        <p id="video-status" class="video-status" aria-live="polite"></p>
+      </section>
+
+      <!-- 右: タブ -->
+      <aside class="tabs-section">
+        <div class="tab-buttons">
+          <button type="button" class="tab-btn is-active" data-tab="tab1">タブ1</button>
+          <button type="button" class="tab-btn" data-tab="tab2">タブ2</button>
+          <button type="button" class="tab-btn" data-tab="tab3">タブ3</button>
+        </div>
+        <div class="tab-panels">
+          <div id="tab1" class="tab-panel is-active" role="tabpanel">
+            <p>タブ1の内容</p>
+          </div>
+          <div id="tab2" class="tab-panel" role="tabpanel" hidden>
+            <p>タブ2の内容</p>
+          </div>
+          <div id="tab3" class="tab-panel" role="tabpanel" hidden>
+            <p>タブ3の内容</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
