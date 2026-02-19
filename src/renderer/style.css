@@ -1,0 +1,173 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #375460;
+  color: #eee;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+/* ========== 左: 映像エリア（1920x1080） ========== */
+.video-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #0d0d14;
+}
+
+.video-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-controls label {
+  font-weight: 500;
+}
+
+.video-controls select {
+  min-width: 200px;
+  padding: 0.4rem 1.5rem 0.4rem 0.6rem;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  appearance: auto;
+  cursor: pointer;
+}
+
+.video-controls select:focus {
+  outline: none;
+  border-color: #6c8;
+}
+
+/* ドロップダウン一覧を開いたときのオプション（白背景・黒文字で見やすく） */
+.video-controls select option {
+  background: #fff;
+  color: #111;
+}
+
+.video-controls button {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+  background: #2a2a4a;
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.video-controls button:hover {
+  background: #3a3a5a;
+}
+
+.volume-label {
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.video-controls input[type="range"] {
+  width: 100px;
+  height: 6px;
+  accent-color: #6c8;
+  cursor: pointer;
+}
+
+.video-wrap {
+  width: 1920px;
+  height: 1080px;
+  flex: 0 0 1080px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.video-status {
+  padding: 0.35rem 0.75rem;
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* ========== 右: タブ ========== */
+.tabs-section {
+  flex: 1 1 auto;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tab-btn:hover {
+  color: #eee;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tab-btn.is-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tab-panels {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.is-active {
+  display: block;
+}
+
+.tab-panel p {
+  margin: 0 0 0.5rem 0;
+  opacity: 0.9;
+}
