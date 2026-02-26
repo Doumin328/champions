@@ -1,13 +1,28 @@
 // レンダラープロセス用: 映像ソースをプルダウンで選択して表示
 
-/** ポケモン情報（data/pokemon.json と同期） */
+/** ポケモン情報（地方別 JSON と同期） */
 interface Pokemon {
   id: string;
+  /** 4桁の図鑑番号（画像ファイル名に使用。例: 0025） */
+  number?: string;
   name: string;
   types: string[];
 }
 
-/** デモポケモン一覧（起動時に data/pokemon.json から読み込み） */
+/** 地方別ポケモンデータファイル（図鑑番号順に結合して使用） */
+const POKEMON_REGION_FILES = [
+  "data/pokemon_kanto.json",
+  "data/pokemon_johto.json",
+  "data/pokemon_hoenn.json",
+  "data/pokemon_sinnoh.json",
+  "data/pokemon_unova.json",
+  "data/pokemon_kalos.json",
+  "data/pokemon_alola.json",
+  "data/pokemon_galar.json",
+  "data/pokemon_paldea.json",
+];
+
+/** デモポケモン一覧（起動時に地方別 JSON を読み込んで結合） */
 let demoPokemon: Pokemon[] = [];
 
 const STORAGE_KEY_VIDEO = "champions_last_video_device_id";
@@ -26,14 +41,14 @@ const DUMMY_POKEMON_IMAGE =
       "</svg>"
   );
 
-/** 空きマス用ダミー画像 */
-const DUMMY_EMPTY_IMAGE =
-  "data:image/svg+xml," +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">' +
-      '<rect width="80" height="80" rx="8" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="4"/>' +
-      "</svg>"
-  );
+/** 空きマス用画像（6匹に満たない箇所）。src/img/ball_monster.png を優先し、無ければ ball_monster.svg を使用 */
+const BALL_MONSTER_IMAGE = "img/ball_monster.png";
+
+/** ポケモン画像のパス（img/pokemon/ 配下の {number}.png に統一。number がなければ DUMMY） */
+function getPokemonImageSrc(pokemon: Pokemon): string {
+  const num = pokemon.number?.trim();
+  return num ? `img/pokemon/${num}.png` : DUMMY_POKEMON_IMAGE;
+}
 
 const videoEl = document.getElementById("video") as HTMLVideoElement;
 const deviceSelect = document.getElementById("device-select") as HTMLSelectElement;
@@ -47,8 +62,14 @@ let currentStream: MediaStream | null = null;
 /** 複数チーム（各チームは最大6匹） */
 let teams: Pokemon[][] = [];
 
-/** 編集中のチームのインデックス（ピッカーで追加する先） */
+/** 編集中のチームのインデックス（ピッカーで追加する先）※未使用時は -1 */
 let editingTeamIndex: number = -1;
+
+/** ダイアログで作成中のチーム（作成ボタン押下まで teams には追加しない） */
+let editingTeam: Pokemon[] = [];
+
+/** ポケモン一覧のタイプ絞り込み（null または "すべて" で全件表示） */
+let pickerTypeFilter: string | null = null;
 
 /** チーム一覧の編集モード（true のとき各チームに削除ボタン表示） */
 let isEditMode: boolean = false;
@@ -243,6 +264,19 @@ function saveTeamToStorage(): void {
   }
 }
 
+/** localStorage の champions_* を削除し、チームを空にする */
+function clearLocalStorageAndResetTeams(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_TEAM);
+    localStorage.removeItem(STORAGE_KEY_VIDEO);
+    localStorage.removeItem(STORAGE_KEY_AUDIO);
+  } catch {
+    // 無視
+  }
+  teams = [];
+  renderTeamList();
+}
+
 function renderTeamList(): void {
   const listEl = document.getElementById("team-list");
   if (!listEl) return;
@@ -259,9 +293,12 @@ function renderTeamList(): void {
       const pokemon = team[i];
       if (pokemon) {
         const img = document.createElement("img");
-        img.src = DUMMY_POKEMON_IMAGE;
-        img.alt = "";
+        img.alt = pokemon.name;
         img.className = "team-slot-img";
+        img.onerror = () => { img.src = DUMMY_POKEMON_IMAGE; };
+        img.src = DUMMY_POKEMON_IMAGE;
+        const teamPicSrc = getPokemonImageSrc(pokemon);
+        if (teamPicSrc !== DUMMY_POKEMON_IMAGE) img.src = teamPicSrc;
         const name = document.createElement("span");
         name.className = "team-slot-name";
         name.textContent = pokemon.name;
@@ -269,9 +306,10 @@ function renderTeamList(): void {
         slot.appendChild(name);
       } else {
         const img = document.createElement("img");
-        img.src = DUMMY_EMPTY_IMAGE;
+        img.src = BALL_MONSTER_IMAGE;
         img.alt = "";
         img.className = "team-slot-img team-slot-img--empty";
+        img.onerror = () => { img.src = "img/ball_monster.svg"; };
         const name = document.createElement("span");
         name.className = "team-slot-name team-slot-name--empty";
         name.textContent = "（空）";
@@ -303,11 +341,152 @@ function escapeHtml(s: string): string {
   return div.innerHTML;
 }
 
+function getCurrentEditingTeam(): Pokemon[] {
+  return editingTeam;
+}
+
+/** ダイアログ内の「選んだチーム」プレビューを描画 */
+function renderPickerTeamPreview(): void {
+  const wrap = document.getElementById("pokemon-picker-team-preview");
+  if (!wrap) return;
+  const team = getCurrentEditingTeam();
+  wrap.innerHTML = "";
+  for (let i = 0; i < 6; i++) {
+    const slot = document.createElement("div");
+    slot.className = "pokemon-picker-team-slot";
+    const pokemon = team[i];
+    if (pokemon) {
+      slot.dataset.slotIndex = String(i);
+      const img = document.createElement("img");
+      img.alt = pokemon.name;
+      img.className = "pokemon-picker-team-slot-img";
+      img.onerror = () => { img.src = DUMMY_POKEMON_IMAGE; };
+      img.src = DUMMY_POKEMON_IMAGE;
+      const previewPicSrc = getPokemonImageSrc(pokemon);
+      if (previewPicSrc !== DUMMY_POKEMON_IMAGE) img.src = previewPicSrc;
+      const name = document.createElement("span");
+      name.className = "pokemon-picker-team-slot-name";
+      name.textContent = pokemon.name;
+      slot.appendChild(img);
+      slot.appendChild(name);
+    } else {
+      slot.classList.add("pokemon-picker-team-slot--empty");
+      const img = document.createElement("img");
+      img.src = BALL_MONSTER_IMAGE;
+      img.alt = "";
+      img.className = "pokemon-picker-team-slot-img";
+      img.onerror = () => { img.src = "img/ball_monster.svg"; };
+      slot.appendChild(img);
+    }
+    wrap.appendChild(slot);
+  }
+}
+
+/** ダイアログ内のポケモン一覧のボタン有効/無効を更新 */
+function updatePickerListButtons(): void {
+  const team = getCurrentEditingTeam();
+  const isFull = team.length >= MAX_TEAM_SIZE;
+  document.querySelectorAll(".pokemon-picker-btn").forEach((b) => {
+    (b as HTMLButtonElement).disabled = isFull;
+  });
+}
+
+/** タイプ絞り込み後のポケモン一覧を返す */
+function getFilteredPokemonList(): Pokemon[] {
+  if (!pickerTypeFilter || pickerTypeFilter === "すべて") return demoPokemon;
+  return demoPokemon.filter((p) => p.types.includes(pickerTypeFilter!));
+}
+
+/** 全ポケモンからユニークなタイプ一覧を取得（ソート済み） */
+function getUniqueTypes(): string[] {
+  const set = new Set<string>();
+  demoPokemon.forEach((p) => p.types.forEach((t) => set.add(t)));
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "ja"));
+}
+
+/** ダイアログ内のタイプボタンを描画 */
+function renderPickerTypeButtons(): void {
+  const wrap = document.getElementById("pokemon-picker-type-buttons");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const allBtn = document.createElement("button");
+  allBtn.type = "button";
+  allBtn.className = "picker-type-btn" + (!pickerTypeFilter || pickerTypeFilter === "すべて" ? " is-active" : "");
+  allBtn.textContent = "すべて";
+  allBtn.dataset.typeFilter = "すべて";
+  allBtn.addEventListener("click", () => {
+    pickerTypeFilter = null;
+    renderPickerTypeButtons();
+    renderPickerList();
+  });
+  wrap.appendChild(allBtn);
+  getUniqueTypes().forEach((typeName) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "picker-type-btn" + (pickerTypeFilter === typeName ? " is-active" : "");
+    btn.textContent = typeName;
+    btn.dataset.typeFilter = typeName;
+    btn.addEventListener("click", () => {
+      pickerTypeFilter = typeName;
+      renderPickerTypeButtons();
+      renderPickerList();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+/** ピッカー一覧用の画像パス（number に統一。number がなければ ball_monster、読み込み失敗時は onerror で差し替え） */
+function getPickerPokemonImageSrc(pokemon: Pokemon): string {
+  const num = pokemon.number?.trim();
+  return num ? `img/pokemon/${num}.png` : BALL_MONSTER_IMAGE;
+}
+
+/** ダイアログ内のポケモン一覧のみ再描画（タイプ絞り込み反映） */
+function renderPickerList(): void {
+  const listEl = document.getElementById("pokemon-picker-list");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+  const filtered = getFilteredPokemonList();
+  const team = getCurrentEditingTeam();
+  const isFull = team.length >= MAX_TEAM_SIZE;
+  filtered.forEach((pokemon) => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pokemon-picker-btn";
+    btn.dataset.pokemonId = pokemon.id;
+    const img = document.createElement("img");
+    img.className = "pokemon-picker-btn-img";
+    img.alt = pokemon.name;
+    img.onerror = () => {
+      img.src = BALL_MONSTER_IMAGE;
+    };
+    // 一度フォールバックを表示してから正しい src を設定（存在しないファイルで別ポケモン画像が残るのを防ぐ）
+    img.src = BALL_MONSTER_IMAGE;
+    const picSrc = getPickerPokemonImageSrc(pokemon);
+    if (picSrc !== BALL_MONSTER_IMAGE) {
+      img.src = picSrc;
+    }
+    const nameEl = document.createElement("span");
+    nameEl.className = "pokemon-picker-btn-name";
+    nameEl.textContent = pokemon.name;
+    btn.appendChild(img);
+    btn.appendChild(nameEl);
+    if (isFull) btn.disabled = true;
+    li.appendChild(btn);
+    listEl.appendChild(li);
+  });
+  updatePickerListButtons();
+}
+
 function openPokemonPicker(): void {
   const modal = document.getElementById("pokemon-picker-modal");
   const listEl = document.getElementById("pokemon-picker-list");
   if (!modal || !listEl) return;
+  pickerTypeFilter = null;
   listEl.innerHTML = "";
+  renderPickerTeamPreview();
+  renderPickerTypeButtons();
   if (demoPokemon.length === 0) {
     const li = document.createElement("li");
     li.textContent = "読み込み中…";
@@ -317,42 +496,37 @@ function openPokemonPicker(): void {
     modal.hidden = false;
     return;
   }
-  const currentTeam = editingTeamIndex >= 0 && editingTeamIndex < teams.length ? teams[editingTeamIndex] : [];
-  const isFull = currentTeam.length >= MAX_TEAM_SIZE;
-  demoPokemon.forEach((pokemon) => {
-    const li = document.createElement("li");
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "pokemon-picker-btn";
-    btn.dataset.pokemonId = pokemon.id;
-    btn.textContent = pokemon.name;
-    if (pokemon.types.length > 0) {
-      const typesSpan = document.createElement("span");
-      typesSpan.className = "pokemon-types";
-      typesSpan.textContent = `（${pokemon.types.join("・")}）`;
-      btn.appendChild(typesSpan);
-    }
-    if (isFull) btn.disabled = true;
-    li.appendChild(btn);
-    listEl.appendChild(li);
-  });
+  renderPickerList();
   modal.hidden = false;
+}
+
+/** ダイアログ内でチームのスロットをクリックして解除 */
+function removeFromTeamInPicker(slotIndex: number): void {
+  if (slotIndex < 0 || slotIndex >= editingTeam.length) return;
+  editingTeam.splice(slotIndex, 1);
+  renderPickerTeamPreview();
+  updatePickerListButtons();
 }
 
 function closePokemonPicker(): void {
   const modal = document.getElementById("pokemon-picker-modal");
   if (modal) modal.hidden = true;
+  editingTeam = [];
   editingTeamIndex = -1;
 }
 
-/** チーム作成をキャンセル（追加したチームを削除してモーダルを閉じる） */
+/** チーム作成をキャンセル（編集中チームを破棄してモーダルを閉じる） */
 function cancelTeamCreation(): void {
-  if (editingTeamIndex >= 0 && editingTeamIndex < teams.length) {
-    teams.splice(editingTeamIndex, 1);
-    saveTeamToStorage();
-    renderTeamList();
-  }
-  editingTeamIndex = -1;
+  editingTeam = [];
+  closePokemonPicker();
+}
+
+/** ダイアログの作成ボタン押下：編集中チームを teams に追加してモーダルを閉じる */
+function confirmTeamCreation(): void {
+  teams.push([...editingTeam]);
+  saveTeamToStorage();
+  renderTeamList();
+  editingTeam = [];
   closePokemonPicker();
 }
 
@@ -380,15 +554,10 @@ function confirmDeleteTeam(): void {
 }
 
 function addPokemonToTeam(pokemon: Pokemon): void {
-  if (editingTeamIndex < 0 || editingTeamIndex >= teams.length) return;
-  const team = teams[editingTeamIndex];
-  if (team.length >= MAX_TEAM_SIZE) return;
-  team.push(pokemon);
-  saveTeamToStorage();
-  renderTeamList();
-  if (team.length >= MAX_TEAM_SIZE) {
-    document.querySelectorAll(".pokemon-picker-btn").forEach((b) => ((b as HTMLButtonElement).disabled = true));
-  }
+  if (editingTeam.length >= MAX_TEAM_SIZE) return;
+  editingTeam.push(pokemon);
+  renderPickerTeamPreview();
+  updatePickerListButtons();
 }
 
 function initTabs(): void {
@@ -427,20 +596,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const teamDeleteConfirmCancel = document.getElementById("team-delete-confirm-cancel");
   loadTeamFromStorage();
   renderTeamList();
-  fetch("data/pokemon.json")
-    .then((res) => (res.ok ? res.json() : []))
-    .then((data: Pokemon[]) => { demoPokemon = Array.isArray(data) ? data : []; })
-    .catch(() => { demoPokemon = []; });
+  Promise.all(
+    POKEMON_REGION_FILES.map((file) =>
+      fetch(file)
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data: Pokemon[]) => (Array.isArray(data) ? data : []))
+        .catch(() => [] as Pokemon[])
+    )
+  ).then((arrays) => {
+    demoPokemon = arrays.flat();
+  });
   teamCreateBtn?.addEventListener("click", () => {
-    teams.push([]);
-    editingTeamIndex = teams.length - 1;
-    saveTeamToStorage();
-    renderTeamList();
+    editingTeam = [];
     openPokemonPicker();
   });
   teamEditBtn?.addEventListener("click", () => {
     isEditMode = !isEditMode;
     renderTeamList();
+  });
+  const teamResetStorageBtn = document.getElementById("team-reset-storage-btn");
+  teamResetStorageBtn?.addEventListener("click", () => {
+    if (!confirm("保存したチームとデバイス選択をすべて削除して初期化します。よろしいですか？")) return;
+    clearLocalStorageAndResetTeams();
   });
   teamListEl?.addEventListener("click", (e) => {
     const deleteBtn = (e.target as HTMLElement).closest(".team-delete-btn");
@@ -448,7 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const index = parseInt((deleteBtn as HTMLElement).dataset.teamIndex ?? "", 10);
     if (!Number.isNaN(index)) openDeleteConfirmModal(index);
   });
-  pokemonPickerConfirm?.addEventListener("click", () => closePokemonPicker());
+  pokemonPickerConfirm?.addEventListener("click", () => confirmTeamCreation());
   pokemonPickerCancel?.addEventListener("click", () => cancelTeamCreation());
   pokemonPickerModal?.querySelector(".pokemon-modal-backdrop")?.addEventListener("click", () => cancelTeamCreation());
   pokemonPickerList?.addEventListener("click", (e) => {
@@ -457,6 +634,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const id = (btn as HTMLElement).dataset.pokemonId;
     const pokemon = demoPokemon.find((p) => p.id === id);
     if (pokemon) addPokemonToTeam(pokemon);
+  });
+  document.getElementById("pokemon-picker-team-preview")?.addEventListener("click", (e) => {
+    const slot = (e.target as HTMLElement).closest(".pokemon-picker-team-slot");
+    if (!slot || slot.classList.contains("pokemon-picker-team-slot--empty")) return;
+    const index = parseInt((slot as HTMLElement).dataset.slotIndex ?? "", 10);
+    if (!Number.isNaN(index)) removeFromTeamInPicker(index);
   });
   teamDeleteConfirmOk?.addEventListener("click", () => confirmDeleteTeam());
   teamDeleteConfirmCancel?.addEventListener("click", () => closeDeleteConfirmModal());

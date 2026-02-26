@@ -231,18 +231,39 @@ body {
   color: rgba(255, 255, 255, 0.9);
 }
 
-.tab-team .team-edit-btn {
+.tab-team .team-list-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab-team .team-edit-btn,
+.tab-team .team-reset-storage-btn {
   padding: 0.3rem 0.7rem;
   font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.1);
-  color: #eee;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   cursor: pointer;
 }
 
+.tab-team .team-edit-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 .tab-team .team-edit-btn:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+.tab-team .team-reset-storage-btn {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.tab-team .team-reset-storage-btn:hover {
+  color: #eee;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .tab-team .team-list {
@@ -375,6 +396,19 @@ body {
   overflow: hidden;
 }
 
+/*
+ * ポケモン選択ダイアログのサイズ（ソート時も縦幅を変えないよう固定）
+ */
+.pokemon-picker-content {
+  max-width: 1280px;
+  width: 90vw;
+  height: 85vh;
+  min-height: 480px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .pokemon-modal-title {
   margin: 0;
   padding: 1rem 1.25rem;
@@ -383,6 +417,131 @@ body {
   color: #eee;
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pokemon-picker-team-wrap {
+  flex-shrink: 0;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pokemon-picker-team-label {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pokemon-picker-team-preview {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+}
+
+.pokemon-picker-team-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pokemon-picker-team-slot:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pokemon-picker-team-slot.pokemon-picker-team-slot--empty {
+  cursor: default;
+}
+
+.pokemon-picker-team-slot.pokemon-picker-team-slot--empty:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pokemon-picker-team-slot-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.pokemon-picker-team-slot-name {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 0.2rem;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pokemon-picker-team-slot--empty .pokemon-picker-team-slot-img {
+  opacity: 0.5;
+}
+
+.pokemon-picker-type-wrap {
+  flex-shrink: 0;
+  padding: 0.5rem 1.25rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pokemon-picker-type-label {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pokemon-picker-type-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.35rem;
+}
+
+.pokemon-picker-type-buttons .picker-type-btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 公式タイプカラー（ボタンに data-type-filter で適用） */
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ノーマル"] { background: #A8A878; color: #1a1a1a; border-color: #8a8a5e; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ほのお"] { background: #F08030; color: #1a1a1a; border-color: #c06020; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="みず"] { background: #6890F0; color: #fff; border-color: #5070c0; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="でんき"] { background: #F8D030; color: #1a1a1a; border-color: #c8a020; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="くさ"] { background: #78C850; color: #1a1a1a; border-color: #5a9a38; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="こおり"] { background: #98D8D8; color: #1a1a1a; border-color: #78b0b0; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="かくとう"] { background: #C03028; color: #fff; border-color: #902020; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="どく"] { background: #A040A0; color: #fff; border-color: #703070; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="じめん"] { background: #E0C068; color: #1a1a1a; border-color: #b89848; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ひこう"] { background: #A890F0; color: #fff; border-color: #8070c0; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="エスパー"] { background: #F85888; color: #fff; border-color: #c04868; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="むし"] { background: #A8B820; color: #1a1a1a; border-color: #809018; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="いわ"] { background: #B8A038; color: #1a1a1a; border-color: #908028; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ゴースト"] { background: #705898; color: #fff; border-color: #504070; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ドラゴン"] { background: #7038F8; color: #fff; border-color: #5028c0; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="あく"] { background: #705848; color: #fff; border-color: #504030; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="はがね"] { background: #B8B8D0; color: #1a1a1a; border-color: #9090a8; }
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="フェアリー"] { background: #EE99AC; color: #1a1a1a; border-color: #c07888; }
+
+.pokemon-picker-type-buttons .picker-type-btn[data-type-filter]:hover {
+  filter: brightness(1.1);
+}
+
+.pokemon-picker-type-buttons .picker-type-btn.is-active {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  filter: brightness(1.15);
 }
 
 .pokemon-modal-note {
@@ -394,13 +553,15 @@ body {
 
 .pokemon-picker-list {
   flex: 1;
+  min-height: 0;
   margin: 0;
   padding: 0.5rem 1rem 1rem;
   list-style: none;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  align-content: start;
 }
 
 .pokemon-picker-list li {
@@ -408,14 +569,17 @@ body {
 }
 
 .pokemon-picker-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  padding: 0.6rem 1rem;
-  font-size: 0.95rem;
-  text-align: left;
+  padding: 0.5rem 0.35rem;
+  font-size: 0.85rem;
+  text-align: center;
   background: rgba(255, 255, 255, 0.08);
   color: #eee;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
@@ -429,10 +593,24 @@ body {
   cursor: not-allowed;
 }
 
-.pokemon-picker-btn .pokemon-types {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-left: 0.5rem;
+.pokemon-picker-btn-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+  margin-bottom: 0.35rem;
+}
+
+.pokemon-picker-btn-name {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-all;
 }
 
 .pokemon-modal-actions {
@@ -440,7 +618,8 @@ body {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
-  margin: 0 1rem 1rem;
+  margin: 0 1.25rem 1.25rem;
+  padding-top: 0.5rem;
 }
 
 .pokemon-modal-btn {

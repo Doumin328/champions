@@ -1,0 +1,619 @@
+[
+  {
+    "id": "chespin",
+    "number": "0650",
+    "name": "ハリマロン",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "quilladin",
+    "number": "0651",
+    "name": "ハリボーグ",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "chesnaught",
+    "number": "0652",
+    "name": "ブリガロン",
+    "types": [
+      "くさ",
+      "かくとう"
+    ]
+  },
+  {
+    "id": "fennekin",
+    "number": "0653",
+    "name": "フォッコ",
+    "types": [
+      "ほのお"
+    ]
+  },
+  {
+    "id": "braixen",
+    "number": "0654",
+    "name": "テールナー",
+    "types": [
+      "ほのお"
+    ]
+  },
+  {
+    "id": "delphox",
+    "number": "0655",
+    "name": "マフォクシー",
+    "types": [
+      "ほのお",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "froakie",
+    "number": "0656",
+    "name": "ケロマツ",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "frogadier",
+    "number": "0657",
+    "name": "ゲコガシラ",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "greninja",
+    "number": "0658",
+    "name": "ゲッコウガ",
+    "types": [
+      "みず",
+      "あく"
+    ]
+  },
+  {
+    "id": "bunnelby",
+    "number": "0659",
+    "name": "ホルビー",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "diggersby",
+    "number": "0660",
+    "name": "ホルード",
+    "types": [
+      "ノーマル",
+      "じめん"
+    ]
+  },
+  {
+    "id": "fletchling",
+    "number": "0661",
+    "name": "ヤヤコマ",
+    "types": [
+      "ノーマル",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "fletchinder",
+    "number": "0662",
+    "name": "ヒノヤコマ",
+    "types": [
+      "ほのお",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "talonflame",
+    "number": "0663",
+    "name": "ファイアロー",
+    "types": [
+      "ほのお",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "scatterbug",
+    "number": "0664",
+    "name": "コフキムシ",
+    "types": [
+      "むし"
+    ]
+  },
+  {
+    "id": "spewpa",
+    "number": "0665",
+    "name": "コフーライ",
+    "types": [
+      "むし"
+    ]
+  },
+  {
+    "id": "vivillon",
+    "number": "0666",
+    "name": "ビビヨン",
+    "types": [
+      "むし",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "litleo",
+    "number": "0667",
+    "name": "シシコ",
+    "types": [
+      "ほのお",
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "pyroar",
+    "number": "0668",
+    "name": "カエンジシ",
+    "types": [
+      "ほのお",
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "flabebe",
+    "number": "0669",
+    "name": "フラベベ",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "floette",
+    "number": "0670",
+    "name": "フラエッテ",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "florges",
+    "number": "0671",
+    "name": "フラージェス",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "skiddo",
+    "number": "0672",
+    "name": "メェークル",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "gogoat",
+    "number": "0673",
+    "name": "ゴーゴート",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "pancham",
+    "number": "0674",
+    "name": "ヤンチャム",
+    "types": [
+      "かくとう"
+    ]
+  },
+  {
+    "id": "pangoro",
+    "number": "0675",
+    "name": "ゴロンダ",
+    "types": [
+      "かくとう",
+      "あく"
+    ]
+  },
+  {
+    "id": "furfrou",
+    "number": "0676",
+    "name": "トリミアン",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "espurr",
+    "number": "0677",
+    "name": "ニャスパー",
+    "types": [
+      "エスパー"
+    ]
+  },
+  {
+    "id": "meowstic",
+    "number": "0678",
+    "name": "ニャオニクス",
+    "types": [
+      "エスパー"
+    ]
+  },
+  {
+    "id": "honedge",
+    "number": "0679",
+    "name": "ヒトツキ",
+    "types": [
+      "はがね",
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "doublade",
+    "number": "0680",
+    "name": "ニダンギル",
+    "types": [
+      "はがね",
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "aegislash",
+    "number": "0681",
+    "name": "ギルガルド",
+    "types": [
+      "はがね",
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "spritzee",
+    "number": "0682",
+    "name": "シュシュプ",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "aromatisse",
+    "number": "0683",
+    "name": "フレフワン",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "swirlix",
+    "number": "0684",
+    "name": "ペロッパフ",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "slurpuff",
+    "number": "0685",
+    "name": "ペロリーム",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "inkay",
+    "number": "0686",
+    "name": "マーイーカ",
+    "types": [
+      "あく",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "malamar",
+    "number": "0687",
+    "name": "カラマネロ",
+    "types": [
+      "あく",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "binacle",
+    "number": "0688",
+    "name": "カメテテ",
+    "types": [
+      "いわ",
+      "みず"
+    ]
+  },
+  {
+    "id": "barbaracle",
+    "number": "0689",
+    "name": "ガメノデス",
+    "types": [
+      "いわ",
+      "みず"
+    ]
+  },
+  {
+    "id": "skrelp",
+    "number": "0690",
+    "name": "クズモー",
+    "types": [
+      "どく",
+      "みず"
+    ]
+  },
+  {
+    "id": "dragalge",
+    "number": "0691",
+    "name": "ドラミドロ",
+    "types": [
+      "どく",
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "clauncher",
+    "number": "0692",
+    "name": "ウデッポウ",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "clawitzer",
+    "number": "0693",
+    "name": "ブロスター",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "helioptile",
+    "number": "0694",
+    "name": "エリキテル",
+    "types": [
+      "でんき",
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "heliolisk",
+    "number": "0695",
+    "name": "エレザード",
+    "types": [
+      "でんき",
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "tyrunt",
+    "number": "0696",
+    "name": "チゴラス",
+    "types": [
+      "いわ",
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "tyrantrum",
+    "number": "0697",
+    "name": "ガチゴラス",
+    "types": [
+      "いわ",
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "amaura",
+    "number": "0698",
+    "name": "アマルス",
+    "types": [
+      "いわ",
+      "こおり"
+    ]
+  },
+  {
+    "id": "aurorus",
+    "number": "0699",
+    "name": "アマルルガ",
+    "types": [
+      "いわ",
+      "こおり"
+    ]
+  },
+  {
+    "id": "sylveon",
+    "number": "0700",
+    "name": "ニンフィア",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "hawlucha",
+    "number": "0701",
+    "name": "ルチャブル",
+    "types": [
+      "かくとう",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "dedenne",
+    "number": "0702",
+    "name": "デデンネ",
+    "types": [
+      "でんき",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "carbink",
+    "number": "0703",
+    "name": "メレシー",
+    "types": [
+      "いわ",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "goomy",
+    "number": "0704",
+    "name": "ヌメラ",
+    "types": [
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "sliggoo",
+    "number": "0705",
+    "name": "ヌメイル",
+    "types": [
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "goodra",
+    "number": "0706",
+    "name": "ヌメルゴン",
+    "types": [
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "klefki",
+    "number": "0707",
+    "name": "クレッフィ",
+    "types": [
+      "はがね",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "phantump",
+    "number": "0708",
+    "name": "ボクレー",
+    "types": [
+      "ゴースト",
+      "くさ"
+    ]
+  },
+  {
+    "id": "trevenant",
+    "number": "0709",
+    "name": "オーロット",
+    "types": [
+      "ゴースト",
+      "くさ"
+    ]
+  },
+  {
+    "id": "pumpkaboo",
+    "number": "0710",
+    "name": "バケッチャ",
+    "types": [
+      "ゴースト",
+      "くさ"
+    ]
+  },
+  {
+    "id": "gourgeist",
+    "number": "0711",
+    "name": "パンプジン",
+    "types": [
+      "ゴースト",
+      "くさ"
+    ]
+  },
+  {
+    "id": "bergmite",
+    "number": "0712",
+    "name": "カチコール",
+    "types": [
+      "こおり"
+    ]
+  },
+  {
+    "id": "avalugg",
+    "number": "0713",
+    "name": "クレベース",
+    "types": [
+      "こおり"
+    ]
+  },
+  {
+    "id": "noibat",
+    "number": "0714",
+    "name": "オンバット",
+    "types": [
+      "ひこう",
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "noivern",
+    "number": "0715",
+    "name": "オンバーン",
+    "types": [
+      "ひこう",
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "xerneas",
+    "number": "0716",
+    "name": "ゼルネアス",
+    "types": [
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "yveltal",
+    "number": "0717",
+    "name": "イベルタル",
+    "types": [
+      "あく",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "zygarde",
+    "number": "0718",
+    "name": "ジガルデ",
+    "types": [
+      "ドラゴン",
+      "じめん"
+    ]
+  },
+  {
+    "id": "diancie",
+    "number": "0719",
+    "name": "ディアンシー",
+    "types": [
+      "いわ",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "hoopa",
+    "number": "0720",
+    "name": "フーパ",
+    "types": [
+      "エスパー",
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "volcanion",
+    "number": "0721",
+    "name": "ボルケニオン",
+    "types": [
+      "ほのお",
+      "みず"
+    ]
+  }
+]

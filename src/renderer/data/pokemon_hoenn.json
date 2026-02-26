@@ -1,0 +1,1148 @@
+[
+  {
+    "id": "treecko",
+    "number": "0252",
+    "name": "キモリ",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "grovyle",
+    "number": "0253",
+    "name": "ジュプトル",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "sceptile",
+    "number": "0254",
+    "name": "ジュカイン",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "torchic",
+    "number": "0255",
+    "name": "アチャモ",
+    "types": [
+      "ほのお"
+    ]
+  },
+  {
+    "id": "combusken",
+    "number": "0256",
+    "name": "ワカシャモ",
+    "types": [
+      "ほのお",
+      "かくとう"
+    ]
+  },
+  {
+    "id": "blaziken",
+    "number": "0257",
+    "name": "バシャーモ",
+    "types": [
+      "ほのお",
+      "かくとう"
+    ]
+  },
+  {
+    "id": "mudkip",
+    "number": "0258",
+    "name": "ミズゴロウ",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "marshtomp",
+    "number": "0259",
+    "name": "ヌマクロー",
+    "types": [
+      "みず",
+      "じめん"
+    ]
+  },
+  {
+    "id": "swampert",
+    "number": "0260",
+    "name": "ラグラージ",
+    "types": [
+      "みず",
+      "じめん"
+    ]
+  },
+  {
+    "id": "poochyena",
+    "number": "0261",
+    "name": "ポチエナ",
+    "types": [
+      "あく"
+    ]
+  },
+  {
+    "id": "mightyena",
+    "number": "0262",
+    "name": "グラエナ",
+    "types": [
+      "あく"
+    ]
+  },
+  {
+    "id": "zigzagoon",
+    "number": "0263",
+    "name": "ジグザグマ",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "linoone",
+    "number": "0264",
+    "name": "マッスグマ",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "wurmple",
+    "number": "0265",
+    "name": "ケムッソ",
+    "types": [
+      "むし"
+    ]
+  },
+  {
+    "id": "silcoon",
+    "number": "0266",
+    "name": "カラサリス",
+    "types": [
+      "むし"
+    ]
+  },
+  {
+    "id": "beautifly",
+    "number": "0267",
+    "name": "アゲハント",
+    "types": [
+      "むし",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "cascoon",
+    "number": "0268",
+    "name": "マユルド",
+    "types": [
+      "むし"
+    ]
+  },
+  {
+    "id": "dustox",
+    "number": "0269",
+    "name": "ドクケイル",
+    "types": [
+      "むし",
+      "どく"
+    ]
+  },
+  {
+    "id": "lotad",
+    "number": "0270",
+    "name": "ハスボー",
+    "types": [
+      "みず",
+      "くさ"
+    ]
+  },
+  {
+    "id": "lombre",
+    "number": "0271",
+    "name": "ハスブレロ",
+    "types": [
+      "みず",
+      "くさ"
+    ]
+  },
+  {
+    "id": "ludicolo",
+    "number": "0272",
+    "name": "ルンパッパ",
+    "types": [
+      "みず",
+      "くさ"
+    ]
+  },
+  {
+    "id": "seedot",
+    "number": "0273",
+    "name": "タネボー",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "nuzleaf",
+    "number": "0274",
+    "name": "コノハナ",
+    "types": [
+      "くさ",
+      "あく"
+    ]
+  },
+  {
+    "id": "shiftry",
+    "number": "0275",
+    "name": "ダーテング",
+    "types": [
+      "くさ",
+      "あく"
+    ]
+  },
+  {
+    "id": "taillow",
+    "number": "0276",
+    "name": "スバメ",
+    "types": [
+      "ノーマル",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "swellow",
+    "number": "0277",
+    "name": "オオスバメ",
+    "types": [
+      "ノーマル",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "wingull",
+    "number": "0278",
+    "name": "キャモメ",
+    "types": [
+      "みず",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "pelipper",
+    "number": "0279",
+    "name": "ペリッパー",
+    "types": [
+      "みず",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "ralts",
+    "number": "0280",
+    "name": "ラルトス",
+    "types": [
+      "エスパー",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "kirlia",
+    "number": "0281",
+    "name": "キルリア",
+    "types": [
+      "エスパー",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "gardevoir",
+    "number": "0282",
+    "name": "サーナイト",
+    "types": [
+      "エスパー",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "surskit",
+    "number": "0283",
+    "name": "アメタマ",
+    "types": [
+      "むし",
+      "みず"
+    ]
+  },
+  {
+    "id": "masquerain",
+    "number": "0284",
+    "name": "アメモース",
+    "types": [
+      "むし",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "shroomish",
+    "number": "0285",
+    "name": "キノココ",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "breloom",
+    "number": "0286",
+    "name": "キノガッサ",
+    "types": [
+      "くさ",
+      "かくとう"
+    ]
+  },
+  {
+    "id": "slakoth",
+    "number": "0287",
+    "name": "ナマケロ",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "vigoroth",
+    "number": "0288",
+    "name": "ヤルキモノ",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "slaking",
+    "number": "0289",
+    "name": "ケッキング",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "nincada",
+    "number": "0290",
+    "name": "ツチニン",
+    "types": [
+      "むし",
+      "じめん"
+    ]
+  },
+  {
+    "id": "ninjask",
+    "number": "0291",
+    "name": "テッカニン",
+    "types": [
+      "むし",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "shedinja",
+    "number": "0292",
+    "name": "ヌケニン",
+    "types": [
+      "むし",
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "whismur",
+    "number": "0293",
+    "name": "ゴニョニョ",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "loudred",
+    "number": "0294",
+    "name": "ドゴーム",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "exploud",
+    "number": "0295",
+    "name": "バクオング",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "makuhita",
+    "number": "0296",
+    "name": "マクノシタ",
+    "types": [
+      "かくとう"
+    ]
+  },
+  {
+    "id": "hariyama",
+    "number": "0297",
+    "name": "ハリテヤマ",
+    "types": [
+      "かくとう"
+    ]
+  },
+  {
+    "id": "azurill",
+    "number": "0298",
+    "name": "ルリリ",
+    "types": [
+      "ノーマル",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "nosepass",
+    "number": "0299",
+    "name": "ノズパス",
+    "types": [
+      "いわ"
+    ]
+  },
+  {
+    "id": "skitty",
+    "number": "0300",
+    "name": "エネコ",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "delcatty",
+    "number": "0301",
+    "name": "エネコロロ",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "sableye",
+    "number": "0302",
+    "name": "ヤミラミ",
+    "types": [
+      "あく",
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "mawile",
+    "number": "0303",
+    "name": "クチート",
+    "types": [
+      "はがね",
+      "フェアリー"
+    ]
+  },
+  {
+    "id": "aron",
+    "number": "0304",
+    "name": "ココドラ",
+    "types": [
+      "はがね",
+      "いわ"
+    ]
+  },
+  {
+    "id": "lairon",
+    "number": "0305",
+    "name": "コドラ",
+    "types": [
+      "はがね",
+      "いわ"
+    ]
+  },
+  {
+    "id": "aggron",
+    "number": "0306",
+    "name": "ボスゴドラ",
+    "types": [
+      "はがね",
+      "いわ"
+    ]
+  },
+  {
+    "id": "meditite",
+    "number": "0307",
+    "name": "アサナン",
+    "types": [
+      "かくとう",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "medicham",
+    "number": "0308",
+    "name": "チャーレム",
+    "types": [
+      "かくとう",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "electrike",
+    "number": "0309",
+    "name": "ラクライ",
+    "types": [
+      "でんき"
+    ]
+  },
+  {
+    "id": "manectric",
+    "number": "0310",
+    "name": "ライボルト",
+    "types": [
+      "でんき"
+    ]
+  },
+  {
+    "id": "plusle",
+    "number": "0311",
+    "name": "プラスル",
+    "types": [
+      "でんき"
+    ]
+  },
+  {
+    "id": "minun",
+    "number": "0312",
+    "name": "マイナン",
+    "types": [
+      "でんき"
+    ]
+  },
+  {
+    "id": "volbeat",
+    "number": "0313",
+    "name": "バルビート",
+    "types": [
+      "むし"
+    ]
+  },
+  {
+    "id": "illumise",
+    "number": "0314",
+    "name": "イルミーゼ",
+    "types": [
+      "むし"
+    ]
+  },
+  {
+    "id": "roselia",
+    "number": "0315",
+    "name": "ロゼリア",
+    "types": [
+      "くさ",
+      "どく"
+    ]
+  },
+  {
+    "id": "gulpin",
+    "number": "0316",
+    "name": "ゴクリン",
+    "types": [
+      "どく"
+    ]
+  },
+  {
+    "id": "swalot",
+    "number": "0317",
+    "name": "マルノーム",
+    "types": [
+      "どく"
+    ]
+  },
+  {
+    "id": "carvanha",
+    "number": "0318",
+    "name": "キバニア",
+    "types": [
+      "みず",
+      "あく"
+    ]
+  },
+  {
+    "id": "sharpedo",
+    "number": "0319",
+    "name": "サメハダー",
+    "types": [
+      "みず",
+      "あく"
+    ]
+  },
+  {
+    "id": "wailmer",
+    "number": "0320",
+    "name": "ホエルコ",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "wailord",
+    "number": "0321",
+    "name": "ホエルオー",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "numel",
+    "number": "0322",
+    "name": "ドンメル",
+    "types": [
+      "ほのお",
+      "じめん"
+    ]
+  },
+  {
+    "id": "camerupt",
+    "number": "0323",
+    "name": "バクーダ",
+    "types": [
+      "ほのお",
+      "じめん"
+    ]
+  },
+  {
+    "id": "torkoal",
+    "number": "0324",
+    "name": "コータス",
+    "types": [
+      "ほのお"
+    ]
+  },
+  {
+    "id": "spoink",
+    "number": "0325",
+    "name": "バネブー",
+    "types": [
+      "エスパー"
+    ]
+  },
+  {
+    "id": "grumpig",
+    "number": "0326",
+    "name": "ブーピッグ",
+    "types": [
+      "エスパー"
+    ]
+  },
+  {
+    "id": "spinda",
+    "number": "0327",
+    "name": "パッチール",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "trapinch",
+    "number": "0328",
+    "name": "ナックラー",
+    "types": [
+      "じめん"
+    ]
+  },
+  {
+    "id": "vibrava",
+    "number": "0329",
+    "name": "ビブラーバ",
+    "types": [
+      "じめん",
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "flygon",
+    "number": "0330",
+    "name": "フライゴン",
+    "types": [
+      "じめん",
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "cacnea",
+    "number": "0331",
+    "name": "サボネア",
+    "types": [
+      "くさ"
+    ]
+  },
+  {
+    "id": "cacturne",
+    "number": "0332",
+    "name": "ノクタス",
+    "types": [
+      "くさ",
+      "あく"
+    ]
+  },
+  {
+    "id": "swablu",
+    "number": "0333",
+    "name": "チルット",
+    "types": [
+      "ノーマル",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "altaria",
+    "number": "0334",
+    "name": "チルタリス",
+    "types": [
+      "ドラゴン",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "zangoose",
+    "number": "0335",
+    "name": "ザングース",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "seviper",
+    "number": "0336",
+    "name": "ハブネーク",
+    "types": [
+      "どく"
+    ]
+  },
+  {
+    "id": "lunatone",
+    "number": "0337",
+    "name": "ルナトーン",
+    "types": [
+      "いわ",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "solrock",
+    "number": "0338",
+    "name": "ソルロック",
+    "types": [
+      "いわ",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "barboach",
+    "number": "0339",
+    "name": "ドジョッチ",
+    "types": [
+      "みず",
+      "じめん"
+    ]
+  },
+  {
+    "id": "whiscash",
+    "number": "0340",
+    "name": "ナマズン",
+    "types": [
+      "みず",
+      "じめん"
+    ]
+  },
+  {
+    "id": "corphish",
+    "number": "0341",
+    "name": "ヘイガニ",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "crawdaunt",
+    "number": "0342",
+    "name": "シザリガー",
+    "types": [
+      "みず",
+      "あく"
+    ]
+  },
+  {
+    "id": "baltoy",
+    "number": "0343",
+    "name": "ヤジロン",
+    "types": [
+      "じめん",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "claydol",
+    "number": "0344",
+    "name": "ネンドール",
+    "types": [
+      "じめん",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "lileep",
+    "number": "0345",
+    "name": "リリーラ",
+    "types": [
+      "いわ",
+      "くさ"
+    ]
+  },
+  {
+    "id": "cradily",
+    "number": "0346",
+    "name": "ユレイドル",
+    "types": [
+      "いわ",
+      "くさ"
+    ]
+  },
+  {
+    "id": "anorith",
+    "number": "0347",
+    "name": "アノプス",
+    "types": [
+      "いわ",
+      "むし"
+    ]
+  },
+  {
+    "id": "armaldo",
+    "number": "0348",
+    "name": "アーマルド",
+    "types": [
+      "いわ",
+      "むし"
+    ]
+  },
+  {
+    "id": "feebas",
+    "number": "0349",
+    "name": "ヒンバス",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "milotic",
+    "number": "0350",
+    "name": "ミロカロス",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "castform",
+    "number": "0351",
+    "name": "ポワルン",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "kecleon",
+    "number": "0352",
+    "name": "カクレオン",
+    "types": [
+      "ノーマル"
+    ]
+  },
+  {
+    "id": "shuppet",
+    "number": "0353",
+    "name": "カゲボウズ",
+    "types": [
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "banette",
+    "number": "0354",
+    "name": "ジュペッタ",
+    "types": [
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "duskull",
+    "number": "0355",
+    "name": "ヨマワル",
+    "types": [
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "dusclops",
+    "number": "0356",
+    "name": "サマヨール",
+    "types": [
+      "ゴースト"
+    ]
+  },
+  {
+    "id": "tropius",
+    "number": "0357",
+    "name": "トロピウス",
+    "types": [
+      "くさ",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "chimecho",
+    "number": "0358",
+    "name": "チリーン",
+    "types": [
+      "エスパー"
+    ]
+  },
+  {
+    "id": "absol",
+    "number": "0359",
+    "name": "アブソル",
+    "types": [
+      "あく"
+    ]
+  },
+  {
+    "id": "wynaut",
+    "number": "0360",
+    "name": "ソーナノ",
+    "types": [
+      "エスパー"
+    ]
+  },
+  {
+    "id": "snorunt",
+    "number": "0361",
+    "name": "ユキワラシ",
+    "types": [
+      "こおり"
+    ]
+  },
+  {
+    "id": "glalie",
+    "number": "0362",
+    "name": "オニゴーリ",
+    "types": [
+      "こおり"
+    ]
+  },
+  {
+    "id": "spheal",
+    "number": "0363",
+    "name": "タマザラシ",
+    "types": [
+      "こおり",
+      "みず"
+    ]
+  },
+  {
+    "id": "sealeo",
+    "number": "0364",
+    "name": "トドグラー",
+    "types": [
+      "こおり",
+      "みず"
+    ]
+  },
+  {
+    "id": "walrein",
+    "number": "0365",
+    "name": "トドゼルガ",
+    "types": [
+      "こおり",
+      "みず"
+    ]
+  },
+  {
+    "id": "clamperl",
+    "number": "0366",
+    "name": "パールル",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "huntail",
+    "number": "0367",
+    "name": "ハンテール",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "gorebyss",
+    "number": "0368",
+    "name": "サクラビス",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "relicanth",
+    "number": "0369",
+    "name": "ジーランス",
+    "types": [
+      "みず",
+      "いわ"
+    ]
+  },
+  {
+    "id": "luvdisc",
+    "number": "0370",
+    "name": "ラブカス",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "bagon",
+    "number": "0371",
+    "name": "タツベイ",
+    "types": [
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "shelgon",
+    "number": "0372",
+    "name": "コモルー",
+    "types": [
+      "ドラゴン"
+    ]
+  },
+  {
+    "id": "salamence",
+    "number": "0373",
+    "name": "ボーマンダ",
+    "types": [
+      "ドラゴン",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "beldum",
+    "number": "0374",
+    "name": "ダンバル",
+    "types": [
+      "はがね",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "metang",
+    "number": "0375",
+    "name": "メタング",
+    "types": [
+      "はがね",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "metagross",
+    "number": "0376",
+    "name": "メタグロス",
+    "types": [
+      "はがね",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "regirock",
+    "number": "0377",
+    "name": "レジロック",
+    "types": [
+      "いわ"
+    ]
+  },
+  {
+    "id": "regice",
+    "number": "0378",
+    "name": "レジアイス",
+    "types": [
+      "こおり"
+    ]
+  },
+  {
+    "id": "registeel",
+    "number": "0379",
+    "name": "レジスチル",
+    "types": [
+      "はがね"
+    ]
+  },
+  {
+    "id": "latias",
+    "number": "0380",
+    "name": "ラティアス",
+    "types": [
+      "ドラゴン",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "latios",
+    "number": "0381",
+    "name": "ラティオス",
+    "types": [
+      "ドラゴン",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "kyogre",
+    "number": "0382",
+    "name": "カイオーガ",
+    "types": [
+      "みず"
+    ]
+  },
+  {
+    "id": "groudon",
+    "number": "0383",
+    "name": "グラードン",
+    "types": [
+      "じめん"
+    ]
+  },
+  {
+    "id": "rayquaza",
+    "number": "0384",
+    "name": "レックウザ",
+    "types": [
+      "ドラゴン",
+      "ひこう"
+    ]
+  },
+  {
+    "id": "jirachi",
+    "number": "0385",
+    "name": "ジラーチ",
+    "types": [
+      "はがね",
+      "エスパー"
+    ]
+  },
+  {
+    "id": "deoxys",
+    "number": "0386",
+    "name": "デオキシス",
+    "types": [
+      "エスパー"
+    ]
+  }
+]

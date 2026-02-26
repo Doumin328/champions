@@ -47,7 +47,10 @@
               <section class="team-list-section" aria-labelledby="team-list-heading">
                 <div class="team-list-header">
                   <h2 id="team-list-heading" class="team-list-heading">チーム一覧</h2>
-                  <button type="button" class="team-edit-btn" id="team-edit-btn">編集</button>
+                  <div class="team-list-header-actions">
+                    <button type="button" class="team-edit-btn" id="team-edit-btn">編集</button>
+                    <button type="button" class="team-reset-storage-btn" id="team-reset-storage-btn">データを初期化</button>
+                  </div>
                 </div>
                 <ul class="team-list" id="team-list" aria-label="登録したチームの一覧">
                   <!-- チーム項目は JS で追加 -->
@@ -64,13 +67,21 @@
       <!-- ポケモン選択モーダル（タブ2で使用） -->
       <div id="pokemon-picker-modal" class="pokemon-modal" role="dialog" aria-modal="true" aria-labelledby="pokemon-picker-title" hidden>
         <div class="pokemon-modal-backdrop"></div>
-        <div class="pokemon-modal-content">
+        <div class="pokemon-modal-content pokemon-picker-content">
           <h2 id="pokemon-picker-title" class="pokemon-modal-title">ポケモンを選択</h2>
-          <p class="pokemon-modal-note">クリックでチームに追加（最大6匹）</p>
+          <div class="pokemon-picker-team-wrap">
+            <p class="pokemon-picker-team-label">選んだチーム（クリックで解除）</p>
+            <div class="pokemon-picker-team-preview" id="pokemon-picker-team-preview"></div>
+          </div>
+          <div class="pokemon-picker-type-wrap">
+            <p class="pokemon-picker-type-label">タイプで絞り込み</p>
+            <div class="pokemon-picker-type-buttons" id="pokemon-picker-type-buttons"></div>
+          </div>
+          <p class="pokemon-modal-note">下の一覧からクリックでチームに追加（最大6匹）</p>
           <ul class="pokemon-picker-list" id="pokemon-picker-list"></ul>
           <div class="pokemon-modal-actions">
-            <button type="button" class="pokemon-modal-btn pokemon-modal-confirm" id="pokemon-picker-confirm">作成</button>
             <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="pokemon-picker-cancel">キャンセル</button>
+            <button type="button" class="pokemon-modal-btn pokemon-modal-confirm" id="pokemon-picker-confirm">作成</button>
           </div>
         </div>
       </div>
