@@ -155,21 +155,598 @@ body {
 
 .tab-panels {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   padding: 1rem;
+  position: relative;
 }
 
 .tab-panel {
   display: none;
+  position: absolute;
+  inset: 0;
+  overflow: auto;
 }
 
 .tab-panel.is-active {
   display: block;
 }
 
+.tab-panel:not(.is-active) {
+  display: none !important;
+}
+
 .tab-panel p {
   margin: 0 0 0.5rem 0;
   opacity: 0.9;
+}
+
+/* ========== タブ1: ダメージ計算 ========== */
+.tab-damage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.damage-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 0;
+}
+
+/* ②+① で縦の 40% */
+.damage-slot-defender,
+.damage-slot-attacker {
+  flex: 0 0 auto;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.damage-slot-label {
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.damage-slot-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  min-height: 0;
+}
+
+.damage-slot-img-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.damage-slot-img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.damage-slot-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.damage-slot-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.damage-slot-types {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.damage-slot-select-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: linear-gradient(180deg, #4a7c59 0%, #3d6b4a 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.damage-slot-select-btn:hover {
+  background: linear-gradient(180deg, #5a8c69 0%, #4a7c59 100%);
+}
+
+.damage-slot-select-btn:disabled,
+.damage-slot-stats-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.damage-slot-stats-btn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.damage-slot-stats-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ステータス調整エリア */
+.damage-stats-adjust-section {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.damage-stats-adjust-label {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.damage-stats-adjust-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.damage-stats-adjust-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.damage-stats-adjust-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.damage-stats-real-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  min-width: 2rem;
+  display: inline-block;
+  text-align: center;
+}
+
+.damage-stats-adjust-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.damage-stats-adjust-row label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.damage-ev-input-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.damage-ev-btn,
+.damage-ev-step-btn {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.damage-ev-btn:hover:not(:disabled),
+.damage-ev-step-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.damage-ev-btn:disabled,
+.damage-ev-step-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.damage-ev-input {
+  width: 3.2rem;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.85rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #fff;
+}
+
+.damage-stats-adjust-row input[type="number"]:not(.damage-ev-input) {
+  width: 4rem;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #fff;
+}
+
+.damage-stats-adjust-row select {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #000;
+  min-width: 8rem;
+}
+
+.damage-stats-adjust-row select option {
+  color: #000;
+}
+
+.damage-stats-adjust-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.damage-stats-calc-btn,
+.damage-stats-confirm-btn {
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.damage-stats-calc-btn {
+  background: rgba(71, 99, 130, 0.5);
+  color: #fff;
+}
+
+.damage-stats-calc-btn:hover {
+  background: rgba(71, 99, 130, 0.65);
+}
+
+.damage-stats-confirm-btn {
+  background: linear-gradient(180deg, #4a7c59 0%, #3d6b4a 100%);
+  color: #fff;
+}
+
+.damage-stats-confirm-btn:hover {
+  background: linear-gradient(180deg, #5a8c69 0%, #4a7c59 100%);
+}
+
+/* ③ 技選択エリア（残り 60%） */
+.damage-moves-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.damage-moves-label {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.damage-moves-note {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.damage-moves-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.damage-moves-area--disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.damage-moves-placeholder {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.damage-moves-slots-wrap {
+  margin-bottom: 0.75rem;
+}
+
+.damage-moves-slots-label {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.damage-moves-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.damage-move-slot {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.damage-move-slot.is-editing {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.damage-move-slot-btn {
+  width: 100%;
+  padding: 0;
+  font-size: inherit;
+  text-align: left;
+  background: rgba(71, 85, 105, 0.35);
+  color: #eee;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.damage-move-slot-btn:hover {
+  background: rgba(71, 85, 105, 0.5);
+}
+
+.damage-move-slot.is-editing .damage-move-slot-btn {
+  background: rgba(71, 85, 105, 0.55);
+}
+
+.damage-move-slot-header {
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.damage-move-slot-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.damage-move-slot-meta {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.damage-move-slot-body {
+  padding: 0.4rem 0.75rem 0.6rem;
+  background: rgba(0, 0, 0, 0.15);
+  font-size: 0.85rem;
+}
+
+.damage-move-damage-text {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.damage-move-gauge-wrap {
+  margin-top: 0.35rem;
+}
+
+.damage-move-gauge {
+  height: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+}
+
+.damage-move-gauge-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.2s ease;
+}
+
+/* 下限バー（ダメージ少なめ＝残りHP多め）背景側・透明 */
+.damage-move-gauge-fill-min {
+  z-index: 1;
+  opacity: 0.4;
+}
+
+/* 上限バー（ダメージ多め＝残りHP少なめ）手前側・不透明 */
+.damage-move-gauge-fill-max {
+  z-index: 2;
+  opacity: 1;
+}
+
+/* 各バー個別の色：緑＝50％未満、黄＝50超〜75以下、赤＝75％超 */
+.damage-move-gauge-fill-min.is-green,
+.damage-move-gauge-fill-max.is-green {
+  background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+}
+
+.damage-move-gauge-fill-min.is-yellow,
+.damage-move-gauge-fill-max.is-yellow {
+  background: linear-gradient(90deg, #ecc94b 0%, #d69e2e 100%);
+}
+
+.damage-move-gauge-fill-min.is-red,
+.damage-move-gauge-fill-max.is-red {
+  background: linear-gradient(90deg, #fc8181 0%, #e53e3e 100%);
+}
+
+.damage-move-gauge-label {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.damage-moves-list-wrap {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.damage-moves-list-wrap[hidden] {
+  display: none !important;
+}
+
+.damage-moves-list-label {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.damage-moves-list-type-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.damage-move-type-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  cursor: pointer;
+}
+
+.damage-move-type-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.damage-move-type-btn.is-active {
+  background: rgba(71, 99, 130, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.damage-moves-list-category-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.damage-move-category-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  cursor: pointer;
+}
+
+.damage-move-category-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.damage-move-category-btn.is-active {
+  background: rgba(71, 99, 130, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.damage-move-category-btn--physical.is-active {
+  background: rgba(180, 60, 60, 0.5);
+  border-color: rgba(255, 180, 180, 0.5);
+}
+
+.damage-move-category-btn--special.is-active {
+  background: rgba(60, 80, 160, 0.5);
+  border-color: rgba(180, 200, 255, 0.5);
+}
+
+.damage-moves-list-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 300px;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.damage-moves-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.damage-move-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.08);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.damage-move-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ========== タブ2: ポケモン チーム編成 ========== */

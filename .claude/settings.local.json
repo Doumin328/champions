@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/gen-moves.js:*)",
+      "Bash(node scripts/gen-kanto-151.js:*)"
+    ]
+  }
+}

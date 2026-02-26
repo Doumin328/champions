@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc && copyfiles -u 1 \"src/renderer/*.html\" \"src/renderer/*.css\" \"src/renderer/data/*.json\" dist && copyfiles -u 1 \"src/img/*\" \"src/img/pokemon/*\" dist/renderer",
     "start": "npm run build && electron .",
-    "dev": "npm run build && electron ."
+    "dev": "npm run build && electron .",
+    "update-moves": "node scripts/update-moves.js",
+    "update-learnsets": "node scripts/update-learnsets.js"
   },
   "keywords": [],
   "author": "",
