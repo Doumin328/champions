@@ -223,9 +223,9 @@ body {
 .damage-slot-body {
   flex: 1;
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 1rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
   min-height: 0;
 }
 
@@ -263,6 +263,19 @@ body {
   color: rgba(255, 255, 255, 0.75);
 }
 
+/* ===== タイプ画像 ===== */
+.type-img {
+  height: 20px;
+  vertical-align: middle;
+}
+.type-img + .type-img { margin-left: 3px; }
+
+.type-btn-img {
+  height: 20px;
+  vertical-align: middle;
+  display: block;
+}
+
 .damage-slot-select-btn {
   flex-shrink: 0;
   padding: 0.5rem 1.25rem;
@@ -279,86 +292,75 @@ body {
   background: linear-gradient(180deg, #5a8c69 0%, #4a7c59 100%);
 }
 
-.damage-slot-select-btn:disabled,
-.damage-slot-stats-btn:disabled {
+.damage-slot-select-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.damage-slot-stats-btn {
-  flex-shrink: 0;
-  padding: 0.4rem 0.9rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.damage-slot-stats-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-/* ステータス調整エリア */
-.damage-stats-adjust-section {
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.damage-stats-adjust-label {
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.damage-stats-adjust-body {
-  padding: 1rem;
+/* ===== インラインステータス調整 ===== */
+.damage-slot-stats {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
 }
 
-.damage-stats-adjust-block {
+.damage-slot-stat-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
 }
 
-.damage-stats-adjust-subtitle {
-  margin: 0;
-  font-size: 0.85rem;
+.stat-label {
+  font-size: 0.72rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 2rem;
 }
 
 .damage-stats-real-value {
-  font-size: 0.9rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
-  min-width: 2rem;
+  min-width: 1.8rem;
   display: inline-block;
   text-align: center;
 }
 
-.damage-stats-adjust-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
+/* ランク */
+.rank-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-left: 0.3rem;
 }
 
-.damage-stats-adjust-row label {
+.rank-btn {
+  padding: 0.1rem 0.4rem;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  color: #fff;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.rank-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.rank-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rank-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  min-width: 1.4rem;
+  text-align: center;
 }
 
 .damage-ev-input-group {
@@ -392,72 +394,31 @@ body {
 }
 
 .damage-ev-input {
-  width: 3.2rem;
-  padding: 0.25rem 0.35rem;
-  font-size: 0.85rem;
+  width: 2.8rem;
+  padding: 0.15rem 0.25rem;
+  font-size: 0.72rem;
   text-align: center;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  border-radius: 3px;
   color: #fff;
 }
 
-.damage-stats-adjust-row input[type="number"]:not(.damage-ev-input) {
-  width: 4rem;
-  padding: 0.25rem 0.4rem;
-  font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: #fff;
-}
-
-.damage-stats-adjust-row select {
-  padding: 0.25rem 0.4rem;
-  font-size: 0.85rem;
+.damage-slot-stat-row select {
+  padding: 0.1rem 0.25rem;
+  font-size: 0.72rem;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: #000;
-  min-width: 8rem;
-}
-
-.damage-stats-adjust-row select option {
+  border-radius: 3px;
   color: #000;
 }
 
-.damage-stats-adjust-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+.damage-slot-stat-row select option {
+  color: #000;
 }
 
-.damage-stats-calc-btn,
-.damage-stats-confirm-btn {
-  padding: 0.4rem 1rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.damage-stats-calc-btn {
-  background: rgba(71, 99, 130, 0.5);
-  color: #fff;
-}
-
-.damage-stats-calc-btn:hover {
-  background: rgba(71, 99, 130, 0.65);
-}
-
-.damage-stats-confirm-btn {
-  background: linear-gradient(180deg, #4a7c59 0%, #3d6b4a 100%);
-  color: #fff;
-}
-
-.damage-stats-confirm-btn:hover {
-  background: linear-gradient(180deg, #5a8c69 0%, #4a7c59 100%);
+.damage-slot-stat-row select:disabled {
+  opacity: 0.5;
 }
 
 /* ③ 技選択エリア（残り 60%） */
@@ -664,13 +625,15 @@ body {
 }
 
 .damage-move-type-btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.72rem;
+  padding: 0.2rem 0.35rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.1);
   color: #eee;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .damage-move-type-btn:hover {
@@ -1083,42 +1046,23 @@ body {
 }
 
 .pokemon-picker-type-buttons .picker-type-btn {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
   background: rgba(255, 255, 255, 0.08);
-  color: #eee;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 公式タイプカラー（ボタンに data-type-filter で適用） */
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ノーマル"] { background: #A8A878; color: #1a1a1a; border-color: #8a8a5e; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ほのお"] { background: #F08030; color: #1a1a1a; border-color: #c06020; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="みず"] { background: #6890F0; color: #fff; border-color: #5070c0; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="でんき"] { background: #F8D030; color: #1a1a1a; border-color: #c8a020; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="くさ"] { background: #78C850; color: #1a1a1a; border-color: #5a9a38; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="こおり"] { background: #98D8D8; color: #1a1a1a; border-color: #78b0b0; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="かくとう"] { background: #C03028; color: #fff; border-color: #902020; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="どく"] { background: #A040A0; color: #fff; border-color: #703070; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="じめん"] { background: #E0C068; color: #1a1a1a; border-color: #b89848; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ひこう"] { background: #A890F0; color: #fff; border-color: #8070c0; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="エスパー"] { background: #F85888; color: #fff; border-color: #c04868; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="むし"] { background: #A8B820; color: #1a1a1a; border-color: #809018; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="いわ"] { background: #B8A038; color: #1a1a1a; border-color: #908028; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ゴースト"] { background: #705898; color: #fff; border-color: #504070; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="ドラゴン"] { background: #7038F8; color: #fff; border-color: #5028c0; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="あく"] { background: #705848; color: #fff; border-color: #504030; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="はがね"] { background: #B8B8D0; color: #1a1a1a; border-color: #9090a8; }
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter="フェアリー"] { background: #EE99AC; color: #1a1a1a; border-color: #c07888; }
-
-.pokemon-picker-type-buttons .picker-type-btn[data-type-filter]:hover {
-  filter: brightness(1.1);
+.pokemon-picker-type-buttons .picker-type-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .pokemon-picker-type-buttons .picker-type-btn.is-active {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
-  filter: brightness(1.15);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .pokemon-modal-note {
@@ -1244,4 +1188,542 @@ body {
 
 .confirm-delete-btn:hover {
   background: rgba(200, 80, 80, 0.8);
+}
+
+/* ========== 天候・フィールド ========== */
+.damage-weather-section {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.damage-weather-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.damage-weather-label {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+#damage-weather-select,
+#damage-terrain-select {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.4rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+
+#damage-weather-select option,
+#damage-terrain-select option {
+  background: #2a3540;
+  color: #eee;
+}
+
+/* ========== タブ3: BOX ========== */
+.box-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.box-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.box-create-btn {
+  padding: 0.4rem 1rem;
+  background: linear-gradient(180deg, #4a7c59 0%, #3d6b4a 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.box-create-btn:hover {
+  background: linear-gradient(180deg, #5a8c69 0%, #4a7c59 100%);
+}
+
+.box-pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.box-empty-msg {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  grid-column: 1 / -1;
+  padding: 1rem 0;
+}
+
+.box-pokemon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem 0.3rem;
+  cursor: pointer;
+}
+
+.box-pokemon-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.box-card-img-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.box-card-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.box-card-item-badge {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(22, 32, 42, 0.88);
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.box-card-item-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.box-card-name {
+  font-size: 0.68rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
+  word-break: break-all;
+}
+
+.box-type-filter-wrap {
+  flex-shrink: 0;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.box-type-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.box-type-btn {
+  padding: 0.2rem 0.35rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: #eee;
+}
+
+.box-type-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.box-type-btn.is-active {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.box-type-btn img {
+  height: 26px;
+  display: block;
+}
+
+/* ========== BOX詳細モーダル ========== */
+.box-detail-content {
+  max-width: 780px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-bottom: 0.5rem;
+}
+
+.box-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.box-detail-pokemon-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.box-detail-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.box-detail-types {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.box-detail-section {
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ========== BOX詳細確認ビュー ========== */
+.box-view-content {
+  padding: 0.5rem 1.25rem;
+}
+
+.box-view-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.box-view-section--moves {
+  align-items: flex-start;
+}
+
+.box-view-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+  min-width: 4.5rem;
+  padding-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.box-view-value {
+  font-size: 0.88rem;
+  color: #eee;
+}
+
+.box-view-ev-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.box-view-ev-chip {
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  color: #ddd;
+}
+
+.box-view-item-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.box-view-item-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.box-view-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #eee;
+}
+
+.box-view-item-effect {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.box-view-moves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.box-view-move {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #eee;
+}
+
+.box-view-move-meta {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* 技・アイテム共通の検索入力 */
+.move-search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.3rem;
+}
+
+.box-detail-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.4rem;
+}
+
+.box-detail-nature-select {
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.box-detail-nature-select option {
+  background: #2a3540;
+  color: #eee;
+}
+
+.box-ev-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1rem;
+}
+
+.box-ev-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.box-ev-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 4rem;
+}
+
+.box-detail-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.box-detail-item-input {
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  width: 200px;
+}
+
+.box-detail-item-preview {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* 持ち物選択UI */
+.box-detail-item-name {
+  font-size: 0.9rem;
+  color: #eee;
+  flex: 1;
+}
+
+.box-detail-item-select-btn {
+  padding: 0.2rem 0.6rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 5px;
+  color: #eee;
+  font-size: 0.8rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.box-detail-item-select-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.box-detail-item-clear-btn {
+  padding: 0.2rem 0.5rem;
+  background: rgba(200, 80, 80, 0.3);
+  border: 1px solid rgba(200, 80, 80, 0.4);
+  border-radius: 5px;
+  color: #eee;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.box-detail-item-clear-btn:hover {
+  background: rgba(200, 80, 80, 0.5);
+}
+
+.box-item-picker {
+  margin-top: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+}
+
+.box-item-search {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+
+.box-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.box-item-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+  color: #eee;
+  width: 100%;
+}
+
+.box-item-card:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.box-item-card.is-selected {
+  border-color: rgba(100, 180, 255, 0.6);
+  background: rgba(100, 180, 255, 0.12);
+}
+
+.box-item-card-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.box-item-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 9rem;
+  flex-shrink: 0;
+}
+
+.box-item-card-effect {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.3;
+}
+
+/* 技スロット+一覧 */
+.box-moves-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.box-moves-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+}
+
+.box-moves-list-wrap {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.4rem;
+}
+
+.box-moves-list-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 0.3rem;
+}
+
+.damage-move-btn.is-selected {
+  background: rgba(100, 180, 255, 0.15);
+  border-left-color: rgba(100, 180, 255, 0.6);
 }

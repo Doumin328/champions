@@ -101,7 +101,7 @@ function buildSpeciesMapping(speciesCsv) {
   for (const s of species) {
     const num = parseInt(s.id, 10);
     if (isNaN(num)) continue;
-    const identifier = (s.identifier || '').toLowerCase();
+    const identifier = (s.identifier || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     if (!identifier) continue;
     numToId[num] = identifier;
   }

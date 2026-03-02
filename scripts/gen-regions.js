@@ -45,6 +45,15 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+const STAT_MAP = {
+  hp: "hp",
+  attack: "attack",
+  defense: "defense",
+  "special-attack": "spAttack",
+  "special-defense": "spDefense",
+  speed: "speed",
+};
+
 async function fetchOne(id) {
   const [speciesRes, pokemonRes] = await Promise.all([
     fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}`),
@@ -60,11 +69,16 @@ async function fetchOne(id) {
   const types = (pokemon.types || [])
     .map((t) => TYPE_EN_TO_JA[t.type?.name] || t.type?.name)
     .filter(Boolean);
+  const baseStats = {};
+  for (const s of pokemon.stats || []) {
+    const key = STAT_MAP[s.stat?.name];
+    if (key) baseStats[key] = s.base_stat;
+  }
   return {
-    id: species.name || String(id),
-    number: pad(id),
+    id: pad(id),
     name: jaName,
     types,
+    baseStats,
   };
 }
 

@@ -59,12 +59,16 @@ function calculateDamage(input: {
   attackerBaseStats: { hp: number; attack: number; defense: number; spAttack: number; spDefense: number; speed: number };
   defenderTypes: string[];
   defenderBaseStats: { hp: number; attack: number; defense: number; spAttack: number; spDefense: number; speed: number };
-  /** ステータス調整時: 攻撃側の実数値オーバーライド */
   attackerStatOverride?: { attack?: number; spAttack?: number };
-  /** ステータス調整時: 防御側の実数値オーバーライド */
   defenderStatOverride?: { defense?: number; spDefense?: number };
+  attackerAtkRank?: number;
+  attackerSpAtkRank?: number;
+  defenderDefRank?: number;
+  defenderSpDefRank?: number;
+  weather?: string;
+  terrain?: string;
 }): DamageResult {
-  const { movePower, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride } = input;
+  const { movePower, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain } = input;
   const defenderHP = calcStat(defenderBaseStats.hp, true);
   if (moveCategory === "変化" || movePower == null || movePower <= 0) {
     return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: true, isImmune: false };
@@ -74,14 +78,31 @@ function calculateDamage(input: {
     return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: false, isImmune: true };
   }
   const stab = attackerTypes.includes(moveType) ? 1.5 : 1;
-  const atkStat = moveCategory === "物理"
+  const atkBase = moveCategory === "物理"
     ? (attackerStatOverride?.attack ?? calcStat(attackerBaseStats.attack, false))
     : (attackerStatOverride?.spAttack ?? calcStat(attackerBaseStats.spAttack, false));
-  const defStat = moveCategory === "物理"
+  const defBase = moveCategory === "物理"
     ? (defenderStatOverride?.defense ?? calcStat(defenderBaseStats.defense, false))
     : (defenderStatOverride?.spDefense ?? calcStat(defenderBaseStats.spDefense, false));
+  const atkRank = moveCategory === "物理" ? (input.attackerAtkRank ?? 0) : (input.attackerSpAtkRank ?? 0);
+  const defRank = moveCategory === "物理" ? (input.defenderDefRank ?? 0) : (input.defenderSpDefRank ?? 0);
+  const atkStat = Math.max(1, Math.floor(atkBase * rankMult(atkRank)));
+  const defStat = Math.max(1, Math.floor(defBase * rankMult(defRank)));
   const base = Math.floor((Math.floor((2 * DMG_LEVEL) / 5 + 2) * movePower * atkStat) / defStat / 50) + 2;
-  const modifier = stab * typeEff;
+  let weatherMult = 1;
+  if (weather === "はれ") {
+    if (moveType === "ほのお") weatherMult = 1.5;
+    else if (moveType === "みず") weatherMult = 0.5;
+  } else if (weather === "あめ") {
+    if (moveType === "みず") weatherMult = 1.5;
+    else if (moveType === "ほのお") weatherMult = 0.5;
+  }
+  let terrainMult = 1;
+  if (terrain === "エレキフィールド" && moveType === "でんき") terrainMult = 1.3;
+  else if (terrain === "グラスフィールド" && moveType === "くさ") terrainMult = 1.3;
+  else if (terrain === "サイコフィールド" && moveType === "エスパー") terrainMult = 1.3;
+  else if (terrain === "ミストフィールド" && moveType === "ドラゴン") terrainMult = 0.5;
+  const modifier = stab * typeEff * weatherMult * terrainMult;
   const damageMin = Math.floor(Math.max(1, Math.floor(base * modifier * 0.85)));
   const damageMax = Math.floor(Math.max(1, Math.floor(base * modifier * 1.0)));
   return {
@@ -126,6 +147,7 @@ const POKEMON_REGION_FILES = [
   "data/pokemon_alola.json",
   "data/pokemon_galar.json",
   "data/pokemon_paldea.json",
+  "data/pokemon_forms.json",
 ];
 
 /** デモポケモン一覧（起動時に地方別 JSON を読み込んで結合） */
@@ -150,9 +172,14 @@ const DUMMY_POKEMON_IMAGE =
 /** 空きマス用画像（6匹に満たない箇所）。src/img/ball_monster.png を優先し、無ければ ball_monster.svg を使用 */
 const BALL_MONSTER_IMAGE = "img/ball_monster.png";
 
-/** ポケモン画像のパス（img/pokemon/ 配下の {id}.png に統一。id がなければ DUMMY） */
+/** タイプ画像HTMLを生成 */
+function typeBadgesHtml(types: string[]): string {
+  return types.map(t => `<img class="type-img" src="img/type/${t}.png" alt="${t}" />`).join("");
+}
+
+/** ポケモン画像のパス（img/pokemon3/ 配下の {id}.png に統一。id がなければ DUMMY） */
 function getPokemonImageSrc(pokemon: Pokemon): string {
-  return pokemon.id ? `img/pokemon/${pokemon.id}.png` : DUMMY_POKEMON_IMAGE;
+  return pokemon.id ? `img/pokemon3/${pokemon.id}.png` : DUMMY_POKEMON_IMAGE;
 }
 
 const videoEl = document.getElementById("video") as HTMLVideoElement;
@@ -188,8 +215,8 @@ let attackPokemon: Pokemon | null = null;
 /** タブ1: 攻撃を受ける側ポケモン */
 let defendPokemon: Pokemon | null = null;
 
-/** タブ1: 単体選択モーダルで選択対象（'attack' | 'defend'） */
-let tab1SelectTarget: "attack" | "defend" | null = null;
+/** タブ1: 単体選択モーダルで選択対象（'attack' | 'defend' | 'box'） */
+let tab1SelectTarget: "attack" | "defend" | "box" | null = null;
 
 /** タブ1: 単体選択モーダルのタイプ絞り込み */
 let tab1SelectTypeFilter: string | null = null;
@@ -206,12 +233,6 @@ let damageMovesTypeFilter: string | null = null;
 /** タブ1: 技一覧の分類絞り込み（null または "すべて" で全件） */
 let damageMovesCategoryFilter: string | null = null;
 
-/** タブ1: ステータス調整エリアの表示状態 */
-let statsAdjustmentVisible = false;
-
-/** タブ1: ステータス調整を一度でも決定したか（保存済みならダメージ計算に反映） */
-let hasStatsAdjustmentSaved = false;
-
 /** タブ1: 防御側の努力値・性格（防御・特防） */
 let defenderDefEV = 0;
 let defenderDefNature = 1.0;
@@ -223,6 +244,16 @@ let attackerAtkEV = 0;
 let attackerAtkNature = 1.0;
 let attackerSpAtkEV = 0;
 let attackerSpAtkNature = 1.0;
+
+/** タブ1: 能力ランク（-6〜+6） */
+let attackerAtkRank = 0;
+let attackerSpAtkRank = 0;
+let defenderDefRank = 0;
+let defenderSpDefRank = 0;
+
+/** タブ1: 天候・フィールド */
+let currentWeather = "";
+let currentTerrain = "";
 
 /** 技データ（moves.json） */
 interface Move {
@@ -236,6 +267,677 @@ interface Move {
 }
 
 let movesData: Move[] = [];
+
+// ========== タブ3: BOX ==========
+
+interface BoxEntry {
+  pokemon: Pokemon;
+  ev: { hp: number; atk: number; def: number; spAtk: number; spDef: number; spd: number };
+  natureName: string;
+  heldItem: string;
+  moves: number[];
+}
+
+const NATURES: { name: string; atk: number; def: number; spAtk: number; spDef: number; spd: number }[] = [
+  { name: "がんばりや", atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
+  { name: "さみしがり", atk: 1.1, def: 0.9, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
+  { name: "ゆうかん",   atk: 1.1, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 0.9 },
+  { name: "いじっぱり", atk: 1.1, def: 1.0, spAtk: 0.9, spDef: 1.0, spd: 1.0 },
+  { name: "やんちゃ",   atk: 1.1, def: 1.0, spAtk: 1.0, spDef: 0.9, spd: 1.0 },
+  { name: "ずぶとい",   atk: 0.9, def: 1.1, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
+  { name: "すなお",     atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
+  { name: "のんき",     atk: 1.0, def: 1.1, spAtk: 1.0, spDef: 1.0, spd: 0.9 },
+  { name: "わんぱく",   atk: 1.0, def: 1.1, spAtk: 0.9, spDef: 1.0, spd: 1.0 },
+  { name: "のうてんき", atk: 1.0, def: 1.1, spAtk: 1.0, spDef: 0.9, spd: 1.0 },
+  { name: "おくびょう", atk: 0.9, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.1 },
+  { name: "せっかち",   atk: 1.0, def: 0.9, spAtk: 1.0, spDef: 1.0, spd: 1.1 },
+  { name: "まじめ",     atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
+  { name: "ようき",     atk: 1.0, def: 1.0, spAtk: 0.9, spDef: 1.0, spd: 1.1 },
+  { name: "むじゃき",   atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 0.9, spd: 1.1 },
+  { name: "ひかえめ",   atk: 0.9, def: 1.0, spAtk: 1.1, spDef: 1.0, spd: 1.0 },
+  { name: "おとなしい", atk: 1.0, def: 0.9, spAtk: 1.1, spDef: 1.0, spd: 1.0 },
+  { name: "れいせい",   atk: 1.0, def: 1.0, spAtk: 1.1, spDef: 1.0, spd: 0.9 },
+  { name: "うっかりや", atk: 1.0, def: 1.0, spAtk: 1.1, spDef: 0.9, spd: 1.0 },
+  { name: "てれや",     atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
+  { name: "おだやか",   atk: 0.9, def: 1.0, spAtk: 1.0, spDef: 1.1, spd: 1.0 },
+  { name: "なごやか",   atk: 1.0, def: 0.9, spAtk: 1.0, spDef: 1.1, spd: 1.0 },
+  { name: "なまいき",   atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.1, spd: 0.9 },
+  { name: "しんちょう", atk: 1.0, def: 1.0, spAtk: 0.9, spDef: 1.1, spd: 1.0 },
+  { name: "きまぐれ",   atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
+];
+
+/** 性格名に上昇・下降する能力を付加したラベルを返す */
+function getNatureLabel(n: typeof NATURES[number]): string {
+  const upMap: Record<string, string> = { atk: "こうげき", def: "ぼうぎょ", spAtk: "とくこう", spDef: "とくぼう", spd: "すばやさ" };
+  let up = "", down = "";
+  for (const key of ["atk", "def", "spAtk", "spDef", "spd"] as const) {
+    if (n[key] > 1) up = upMap[key];
+    if (n[key] < 1) down = upMap[key];
+  }
+  return up ? `${n.name}（${up}↑ ${down}↓）` : n.name;
+}
+
+/** 競技で使われる持ち物一覧 */
+interface CompetitiveItem { id: string; nameJa: string; effect: string }
+const COMPETITIVE_ITEMS: CompetitiveItem[] = [
+  // こだわり系
+  { id: "choice-scarf",       nameJa: "こだわりスカーフ",   effect: "すばやさ×1.5、最初に使った技しか選べない。" },
+  { id: "choice-specs",       nameJa: "こだわりメガネ",     effect: "とくこう×1.5、最初に使った技しか選べない。" },
+  { id: "choice-band",        nameJa: "こだわりハチマキ",   effect: "こうげき×1.5、最初に使った技しか選べない。" },
+  // 汎用
+  { id: "life-orb",           nameJa: "いのちのたま",       effect: "技ダメージ×1.3、使うたびHP−1/10。" },
+  { id: "leftovers",          nameJa: "たべのこし",         effect: "毎ターン最大HP×1/16回復。" },
+  { id: "focus-sash",         nameJa: "きあいのタスキ",     effect: "HP満タン時、一撃耐える（一回限り）。" },
+  { id: "assault-vest",       nameJa: "とつげきチョッキ",   effect: "とくぼう×1.5、変化技使用不可。" },
+  { id: "eviolite",           nameJa: "しんかのきせき",     effect: "進化前限定、ぼうぎょ・とくぼう×1.5。" },
+  { id: "rocky-helmet",       nameJa: "ゴツゴツメット",     effect: "接触技を受けると相手HP−1/6。" },
+  { id: "heavy-duty-boots",   nameJa: "とつげきブーツ",     effect: "場に出たときのまきびし等無効。" },
+  { id: "shed-shell",         nameJa: "ぬけのから",         effect: "どんな状況でも交代できる。" },
+  // SV新アイテム
+  { id: "booster-energy",     nameJa: "ブーストエナジー",   effect: "最も高い種族値の能力+1段階（一回限り）。" },
+  { id: "covert-cloak",       nameJa: "おんみつマント",     effect: "技の追加効果を受けない。" },
+  { id: "loaded-dice",        nameJa: "いかさまダイス",     effect: "複数回ヒット技が最大回数になりやすい。" },
+  { id: "punching-glove",     nameJa: "パンチグローブ",     effect: "パンチ技威力×1.1、接触判定なし。" },
+  { id: "mirror-herb",        nameJa: "はんかがみ",         effect: "相手の能力上昇と同じ能力+1段階（一回限り）。" },
+  { id: "clear-amulet",       nameJa: "まもりのおまもり",   effect: "技・特性による能力低下無効。" },
+  { id: "ability-shield",     nameJa: "とくせいガード",     effect: "特性を書き換えられない。" },
+  // 強化系
+  { id: "expert-belt",        nameJa: "たつじんのおび",     effect: "効果抜群の技ダメージ×1.2。" },
+  { id: "scope-lens",         nameJa: "ピントレンズ",       effect: "急所ランク+1。" },
+  { id: "weakness-policy",    nameJa: "じゃくてんほけん",   effect: "抜群ダメージを受けるとこうげき・とくこう+2段階。" },
+  { id: "air-balloon",        nameJa: "ふわふわのまくら",   effect: "じめん技無効（攻撃受けると割れる）。" },
+  { id: "eject-button",       nameJa: "だっしゅつボタン",   effect: "攻撃受けると自動交代（一回限り）。" },
+  { id: "eject-pack",         nameJa: "だっしゅつパック",   effect: "能力低下で自動交代（一回限り）。" },
+  { id: "red-card",           nameJa: "レッドカード",       effect: "攻撃受けると相手をランダム交代（一回限り）。" },
+  { id: "safety-goggles",     nameJa: "ぼうじんゴーグル",   effect: "砂・雹ダメージと粉技無効。" },
+  // オーブ・ハーブ
+  { id: "flame-orb",          nameJa: "かえんだま",         effect: "毎ターン終了時にやけど状態になる。" },
+  { id: "toxic-orb",          nameJa: "どくどくだま",       effect: "毎ターン終了時に猛毒状態になる。" },
+  { id: "white-herb",         nameJa: "しろいハーブ",       effect: "下がった能力を一度だけ回復（一回限り）。" },
+  { id: "power-herb",         nameJa: "パワフルハーブ",     effect: "溜めを省略して技を出す（一回限り）。" },
+  { id: "mental-herb",        nameJa: "メンタルハーブ",     effect: "メロメロなど精神系状態を回復（一回限り）。" },
+  // 天候延長
+  { id: "smooth-rock",        nameJa: "さらさらいわ",       effect: "すなあらしを8ターンに延長。" },
+  { id: "heat-rock",          nameJa: "あついいわ",         effect: "はれを8ターンに延長。" },
+  { id: "damp-rock",          nameJa: "しめったいわ",       effect: "あめを8ターンに延長。" },
+  { id: "icy-rock",           nameJa: "ゆきだま",           effect: "ゆきを8ターンに延長。" },
+  { id: "terrain-extender",   nameJa: "テレインエクステンダー", effect: "フィールド効果を8ターンに延長。" },
+  // その他
+  { id: "black-sludge",       nameJa: "くろいヘドロ",       effect: "どくタイプはHP+1/16、それ以外は−1/8。" },
+  { id: "metronome-1",        nameJa: "メトロノーム",       effect: "同じ技を連続使用で威力最大×2（6回上限）。" },
+  { id: "big-root",           nameJa: "おおきなねっこ",     effect: "吸収技の回復量×1.3。" },
+  // 木の実
+  { id: "lum-berry",          nameJa: "ラムのみ",           effect: "あらゆる状態異常・混乱を回復（一回限り）。" },
+  { id: "sitrus-berry",       nameJa: "オボンのみ",         effect: "HP≦1/2のとき最大HPの1/4回復（一回限り）。" },
+  { id: "salac-berry",        nameJa: "サンのみ",           effect: "HP≦1/4のときすばやさ+1段階（一回限り）。" },
+  { id: "petaya-berry",       nameJa: "プリンのみ",         effect: "HP≦1/4のときとくこう+1段階（一回限り）。" },
+  { id: "liechi-berry",       nameJa: "オヤマのみ",         effect: "HP≦1/4のときこうげき+1段階（一回限り）。" },
+  { id: "custap-berry",       nameJa: "バコウのみ",         effect: "HP≦1/4のとき一度だけ最優先行動（一回限り）。" },
+  { id: "yache-berry",        nameJa: "ヤチェのみ",         effect: "こおり技ダメージ半減（一回限り）。" },
+  { id: "occa-berry",         nameJa: "オッカのみ",         effect: "ほのお技ダメージ半減（一回限り）。" },
+  { id: "wacan-berry",        nameJa: "ウタンのみ",         effect: "でんき技ダメージ半減（一回限り）。" },
+  { id: "rindo-berry",        nameJa: "リリバのみ",         effect: "くさ技ダメージ半減（一回限り）。" },
+  { id: "passho-berry",       nameJa: "ヤゴのみ",           effect: "みず技ダメージ半減（一回限り）。" },
+  // タイプ強化
+  { id: "charcoal",           nameJa: "もくたん",           effect: "ほのお技威力×1.2。" },
+  { id: "mystic-water",       nameJa: "しんぴのしずく",     effect: "みず技威力×1.2。" },
+  { id: "miracle-seed",       nameJa: "きせきのタネ",       effect: "くさ技威力×1.2。" },
+  { id: "magnet",             nameJa: "じしゃく",           effect: "でんき技威力×1.2。" },
+  { id: "never-melt-ice",     nameJa: "とけないこおり",     effect: "こおり技威力×1.2。" },
+  { id: "black-belt",         nameJa: "くろおび",           effect: "かくとう技威力×1.2。" },
+  { id: "poison-barb",        nameJa: "どくバリ",           effect: "どく技威力×1.2。" },
+  { id: "soft-sand",          nameJa: "やわらかいすな",     effect: "じめん技威力×1.2。" },
+  { id: "hard-stone",         nameJa: "かたいいし",         effect: "いわ技威力×1.2。" },
+  { id: "silver-powder",      nameJa: "ぎんのこな",         effect: "むし技威力×1.2。" },
+  { id: "spell-tag",          nameJa: "のろいのおふだ",     effect: "ゴースト技威力×1.2。" },
+  { id: "twisted-spoon",      nameJa: "まがったスプーン",   effect: "エスパー技威力×1.2。" },
+  { id: "dragon-fang",        nameJa: "りゅうのキバ",       effect: "ドラゴン技威力×1.2。" },
+  { id: "black-glasses",      nameJa: "くろいメガネ",       effect: "あく技威力×1.2。" },
+  { id: "metal-coat",         nameJa: "メタルコート",       effect: "はがね技威力×1.2。" },
+  { id: "sharp-beak",         nameJa: "するどいくちばし",   effect: "ひこう技威力×1.2。" },
+  { id: "fairy-feather",      nameJa: "フェアリーはね",     effect: "フェアリー技威力×1.2。" },
+];
+
+const STORAGE_KEY_BOX = "champions_box";
+let box: BoxEntry[] = [];
+let boxTypeFilter: string | null = null;
+let boxEditingPokemon: Pokemon | null = null;
+
+/** BOX詳細モーダル: 選択中の持ち物 */
+let boxSelectedItem: CompetitiveItem | null = null;
+/** BOX詳細モーダル: 持ち物ピッカーの検索テキスト */
+let boxItemSearchText = "";
+
+/** BOX詳細モーダル: 選択中の技4つ（0=未選択） */
+let boxSelectedMoves: number[] = [0, 0, 0, 0];
+/** BOX詳細モーダル: 編集中の技スロット番号（null=未選択） */
+let boxEditingMoveSlot: number | null = null;
+/** BOX詳細モーダル: 技一覧のタイプ絞り込み */
+let boxMoveTypeFilter: string | null = null;
+/** BOX詳細モーダル: 技一覧の分類絞り込み */
+let boxMoveCategoryFilter: string | null = null;
+/** BOX詳細モーダル: 技一覧の検索テキスト */
+let boxMoveSearchText = "";
+
+/** 詳細確認中のBOXエントリのインデックス（null=新規作成） */
+let boxViewingIndex: number | null = null;
+
+/** タブ1技一覧の検索テキスト */
+let tab1MoveSearchText = "";
+
+// BOXのタイプ一覧（18タイプ）
+const ALL_TYPES = ["ノーマル","かくとう","ひこう","どく","じめん","いわ","むし","ゴースト","はがね","ほのお","みず","くさ","でんき","エスパー","こおり","ドラゴン","あく","フェアリー"];
+
+function saveBoxToStorage(): void {
+  try { localStorage.setItem(STORAGE_KEY_BOX, JSON.stringify(box)); } catch { /* ignore */ }
+}
+
+function loadBoxFromStorage(): void {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_BOX);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return;
+    box = parsed.filter((e): e is BoxEntry =>
+      e != null && typeof e === "object" && "pokemon" in e
+    );
+  } catch { box = []; }
+}
+
+function renderBoxTypeButtons(): void {
+  const wrap = document.getElementById("box-type-buttons");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const allBtn = document.createElement("button");
+  allBtn.type = "button";
+  allBtn.className = "box-type-btn" + (!boxTypeFilter ? " is-active" : "");
+  allBtn.textContent = "すべて";
+  allBtn.addEventListener("click", () => { boxTypeFilter = null; renderBoxGrid(); renderBoxTypeButtons(); });
+  wrap.appendChild(allBtn);
+  ALL_TYPES.forEach((typeName) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "box-type-btn" + (boxTypeFilter === typeName ? " is-active" : "");
+    const img = document.createElement("img");
+    img.src = `img/type/logos/■${typeName}.png`;
+    img.alt = typeName;
+    img.onerror = () => { img.style.display = "none"; btn.textContent = typeName; };
+    btn.appendChild(img);
+    btn.addEventListener("click", () => { boxTypeFilter = typeName; renderBoxGrid(); renderBoxTypeButtons(); });
+    wrap.appendChild(btn);
+  });
+}
+
+function renderBoxGrid(): void {
+  const grid = document.getElementById("box-pokemon-grid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  const filtered = boxTypeFilter
+    ? box.filter((e) => e.pokemon.types.includes(boxTypeFilter!))
+    : box;
+  if (filtered.length === 0) {
+    const p = document.createElement("p");
+    p.className = "box-empty-msg";
+    p.textContent = "BOXにポケモンがいません";
+    grid.appendChild(p);
+    return;
+  }
+  filtered.forEach((entry, idx) => {
+    const card = document.createElement("div");
+    card.className = "box-pokemon-card";
+    card.dataset.boxIndex = String(box.indexOf(entry));
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "box-card-img-wrap";
+    const pokImg = document.createElement("img");
+    pokImg.className = "box-card-img";
+    pokImg.alt = entry.pokemon.name;
+    pokImg.src = entry.pokemon.id ? `img/pokemon3/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    pokImg.onerror = () => { pokImg.src = BALL_MONSTER_IMAGE; };
+    imgWrap.appendChild(pokImg);
+    if (entry.heldItem) {
+      const itemBadge = document.createElement("div");
+      itemBadge.className = "box-card-item-badge";
+      const itemImg = document.createElement("img");
+      itemImg.className = "box-card-item-img";
+      itemImg.alt = entry.heldItem;
+      itemImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${entry.heldItem}.png`;
+      itemImg.onerror = () => { itemBadge.hidden = true; };
+      itemBadge.appendChild(itemImg);
+      imgWrap.appendChild(itemBadge);
+    }
+    card.appendChild(imgWrap);
+    const nameEl = document.createElement("span");
+    nameEl.className = "box-card-name";
+    nameEl.textContent = entry.pokemon.name;
+    card.appendChild(nameEl);
+    grid.appendChild(card);
+    const realIndex = box.indexOf(entry);
+    card.addEventListener("click", () => openBoxDetailView(realIndex));
+    void idx;
+  });
+}
+
+function renderTab3(): void {
+  renderBoxTypeButtons();
+  renderBoxGrid();
+}
+
+// BOX努力値グリッド生成
+const BOX_EV_LABELS: { label: string; key: keyof BoxEntry["ev"]; id: string }[] = [
+  { label: "HP",   key: "hp",    id: "box-ev-hp" },
+  { label: "こうげき", key: "atk", id: "box-ev-atk" },
+  { label: "ぼうぎょ", key: "def", id: "box-ev-def" },
+  { label: "とくこう", key: "spAtk", id: "box-ev-spatk" },
+  { label: "とくぼう", key: "spDef", id: "box-ev-spdef" },
+  { label: "すばやさ", key: "spd",  id: "box-ev-spd" },
+];
+
+function openBoxDetailModal(pokemon: Pokemon): void {
+  boxViewingIndex = null;
+  boxEditingPokemon = pokemon;
+  const modal = document.getElementById("box-detail-modal");
+  const title = document.getElementById("box-detail-title");
+  const img = document.getElementById("box-detail-img") as HTMLImageElement | null;
+  const typesEl = document.getElementById("box-detail-types");
+  if (title) title.textContent = pokemon.name;
+  if (img) {
+    img.src = pokemon.id ? `img/pokemon3/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
+  }
+  if (typesEl) typesEl.innerHTML = typeBadgesHtml(pokemon.types);
+  // 詳細確認非表示 / 編集フォーム表示
+  const viewEl = document.getElementById("box-detail-view");
+  const editEl = document.getElementById("box-detail-edit");
+  if (viewEl) viewEl.hidden = true;
+  if (editEl) editEl.hidden = false;
+  // フォーム初期化
+  initBoxEditForm(pokemon);
+  if (modal) modal.hidden = false;
+}
+
+function closeBoxDetailModal(): void {
+  const modal = document.getElementById("box-detail-modal");
+  if (modal) modal.hidden = true;
+  boxEditingPokemon = null;
+  boxSelectedItem = null;
+  boxItemSearchText = "";
+  boxSelectedMoves = [0, 0, 0, 0];
+  boxEditingMoveSlot = null;
+  boxViewingIndex = null;
+}
+
+function saveBoxEntry(): void {
+  if (!boxEditingPokemon) return;
+  const ev: BoxEntry["ev"] = { hp: 0, atk: 0, def: 0, spAtk: 0, spDef: 0, spd: 0 };
+  BOX_EV_LABELS.forEach(({ key, id }) => {
+    const el = document.getElementById(id) as HTMLInputElement | null;
+    ev[key] = clampEv(Number(el?.value) || 0);
+  });
+  const natSel = document.getElementById("box-detail-nature") as HTMLSelectElement | null;
+  const natureName = natSel?.value ?? "がんばりや";
+  const heldItem = boxSelectedItem?.id ?? "";
+  const moves = boxSelectedMoves.filter((v) => v > 0);
+  const entry: BoxEntry = { pokemon: boxEditingPokemon, ev, natureName, heldItem, moves };
+  if (boxViewingIndex !== null) {
+    box[boxViewingIndex] = entry;
+  } else {
+    box.push(entry);
+  }
+  saveBoxToStorage();
+  closeBoxDetailModal();
+  renderTab3();
+}
+
+function openBoxCreate(): void {
+  openTab1PokemonSelect("box");
+}
+
+// ========== タブ3: 詳細確認・編集 ==========
+
+/** BOX詳細モーダルを詳細確認モードで開く */
+function openBoxDetailView(index: number): void {
+  const entry = box[index];
+  if (!entry) return;
+  boxViewingIndex = index;
+  boxEditingPokemon = entry.pokemon;
+
+  // ヘッダー
+  const modal = document.getElementById("box-detail-modal");
+  const title = document.getElementById("box-detail-title");
+  const img = document.getElementById("box-detail-img") as HTMLImageElement | null;
+  const typesEl = document.getElementById("box-detail-types");
+  if (title) title.textContent = entry.pokemon.name;
+  if (img) {
+    img.src = entry.pokemon.id ? `img/pokemon3/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
+  }
+  if (typesEl) typesEl.innerHTML = typeBadgesHtml(entry.pokemon.types);
+
+  // 詳細ビュー表示 / 編集フォーム非表示
+  const viewEl = document.getElementById("box-detail-view");
+  const editEl = document.getElementById("box-detail-edit");
+  if (viewEl) viewEl.hidden = false;
+  if (editEl) editEl.hidden = true;
+
+  // 詳細コンテンツ描画
+  renderBoxDetailView(entry);
+
+  // 編集フォームの初期化（編集ボタン押下時にすぐ使えるよう準備）
+  initBoxEditForm(entry.pokemon, entry);
+
+  if (modal) modal.hidden = false;
+}
+
+/** 詳細確認コンテンツを描画 */
+function renderBoxDetailView(entry: BoxEntry): void {
+  const viewContent = document.getElementById("box-view-content");
+  if (!viewContent) return;
+
+  const nat = NATURES.find((n) => n.name === entry.natureName) ?? NATURES[0];
+  const natLabel = getNatureLabel(nat);
+
+  const item = COMPETITIVE_ITEMS.find((it) => it.id === entry.heldItem);
+  const itemHtml = item
+    ? `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${escapeHtml(item.id)}.png"
+         class="box-view-item-img" onerror="this.style.display='none'" />
+       <span class="box-view-item-name">${escapeHtml(item.nameJa)}</span>
+       <span class="box-view-item-effect">${escapeHtml(item.effect)}</span>`
+    : (entry.heldItem ? escapeHtml(entry.heldItem) : "なし");
+
+  const evParts = BOX_EV_LABELS
+    .filter(({ key }) => entry.ev[key] > 0)
+    .map(({ label, key }) => `<span class="box-view-ev-chip">${label} ${entry.ev[key]}</span>`);
+  const evHtml = evParts.length > 0 ? evParts.join("") : "なし";
+
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  const movesHtml = entry.moves.length > 0
+    ? entry.moves.map((id) => {
+        const m = moveMap.get(id);
+        if (!m) return "";
+        const powerStr = m.power != null ? String(m.power) : "—";
+        return `<div class="box-view-move">
+          <img class="type-img" src="img/type/${escapeHtml(m.type)}.png" alt="${escapeHtml(m.type)}" />
+          <span>${escapeHtml(m.name)}</span>
+          <span class="box-view-move-meta">${escapeHtml(m.category)}・威力${powerStr}</span>
+        </div>`;
+      }).filter(Boolean).join("")
+    : "なし";
+
+  viewContent.innerHTML = `
+    <div class="box-view-section">
+      <span class="box-view-label">性格</span>
+      <span class="box-view-value">${escapeHtml(natLabel)}</span>
+    </div>
+    <div class="box-view-section">
+      <span class="box-view-label">努力値</span>
+      <div class="box-view-ev-wrap">${evHtml}</div>
+    </div>
+    <div class="box-view-section">
+      <span class="box-view-label">持ち物</span>
+      <div class="box-view-item-wrap">${itemHtml}</div>
+    </div>
+    <div class="box-view-section box-view-section--moves">
+      <span class="box-view-label">技</span>
+      <div class="box-view-moves">${movesHtml}</div>
+    </div>
+  `;
+}
+
+/** 編集フォームを初期化（新規 or 既存エントリで事前充填） */
+function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
+  // 性格select
+  const natSel = document.getElementById("box-detail-nature") as HTMLSelectElement | null;
+  if (natSel) {
+    natSel.innerHTML = "";
+    NATURES.forEach((n) => {
+      const opt = document.createElement("option");
+      opt.value = n.name;
+      opt.textContent = getNatureLabel(n);
+      natSel.appendChild(opt);
+    });
+    natSel.value = existing?.natureName ?? "がんばりや";
+  }
+  // 努力値グリッド生成
+  const evGrid = document.getElementById("box-ev-grid");
+  if (evGrid) {
+    evGrid.innerHTML = "";
+    BOX_EV_LABELS.forEach(({ label, id, key }) => {
+      const row = document.createElement("div");
+      row.className = "box-ev-row";
+      const lbl = document.createElement("span");
+      lbl.className = "box-ev-label";
+      lbl.textContent = label;
+      const btn0 = document.createElement("button");
+      btn0.type = "button"; btn0.className = "damage-ev-btn damage-ev-btn-0"; btn0.dataset.evInput = id; btn0.textContent = "0";
+      const inp = document.createElement("input");
+      inp.type = "number"; inp.id = id; inp.className = "damage-ev-input"; inp.min = "0"; inp.max = "255";
+      inp.value = String(existing?.ev[key] ?? 0);
+      const btn252 = document.createElement("button");
+      btn252.type = "button"; btn252.className = "damage-ev-btn damage-ev-btn-252"; btn252.dataset.evInput = id; btn252.textContent = "252";
+      const btnDn = document.createElement("button");
+      btnDn.type = "button"; btnDn.className = "damage-ev-step-btn damage-ev-step-down"; btnDn.dataset.evInput = id; btnDn.textContent = "−";
+      const btnUp = document.createElement("button");
+      btnUp.type = "button"; btnUp.className = "damage-ev-step-btn damage-ev-step-up"; btnUp.dataset.evInput = id; btnUp.textContent = "＋";
+      row.append(lbl, btn0, inp, btn252, btnDn, btnUp);
+      evGrid.appendChild(row);
+    });
+  }
+  // 持ち物
+  boxSelectedItem = existing ? (COMPETITIVE_ITEMS.find((it) => it.id === existing.heldItem) ?? null) : null;
+  boxItemSearchText = "";
+  renderBoxItemSelected();
+  const picker = document.getElementById("box-item-picker");
+  if (picker) picker.hidden = true;
+  const searchInp = document.getElementById("box-item-search") as HTMLInputElement | null;
+  if (searchInp) searchInp.value = "";
+  // 技
+  boxSelectedMoves = existing ? [...existing.moves, 0, 0, 0, 0].slice(0, 4) : [0, 0, 0, 0];
+  boxEditingMoveSlot = null;
+  boxMoveTypeFilter = null;
+  boxMoveCategoryFilter = null;
+  boxMoveSearchText = "";
+  renderBoxMovesArea();
+  void pokemon;
+}
+
+/** 詳細確認→編集モードに切り替え */
+function switchToBoxEditMode(): void {
+  const viewEl = document.getElementById("box-detail-view");
+  const editEl = document.getElementById("box-detail-edit");
+  if (viewEl) viewEl.hidden = true;
+  if (editEl) editEl.hidden = false;
+}
+
+// ========== タブ3: 持ち物ピッカー ==========
+
+function renderBoxItemSelected(): void {
+  const img = document.getElementById("box-detail-item-img") as HTMLImageElement | null;
+  const nameEl = document.getElementById("box-detail-item-name");
+  const clearBtn = document.getElementById("box-detail-item-clear-btn") as HTMLButtonElement | null;
+  if (img) {
+    if (boxSelectedItem) {
+      img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${boxSelectedItem.id}.png`;
+      img.hidden = false;
+      img.onerror = () => { img.hidden = true; };
+    } else {
+      img.hidden = true;
+    }
+  }
+  if (nameEl) nameEl.textContent = boxSelectedItem ? boxSelectedItem.nameJa : "—";
+  if (clearBtn) clearBtn.hidden = !boxSelectedItem;
+}
+
+function renderBoxItemPicker(): void {
+  const list = document.getElementById("box-item-list");
+  if (!list) return;
+  list.innerHTML = "";
+  const query = boxItemSearchText.trim().toLowerCase();
+  const items = query
+    ? COMPETITIVE_ITEMS.filter((it) => it.nameJa.includes(boxItemSearchText.trim()) || it.id.includes(query))
+    : COMPETITIVE_ITEMS;
+  items.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "box-item-card" + (boxSelectedItem?.id === item.id ? " is-selected" : "");
+    const img = document.createElement("img");
+    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png`;
+    img.alt = item.nameJa;
+    img.className = "box-item-card-img";
+    img.onerror = () => { img.style.display = "none"; };
+    const nameEl = document.createElement("span");
+    nameEl.className = "box-item-card-name";
+    nameEl.textContent = item.nameJa;
+    const effectEl = document.createElement("span");
+    effectEl.className = "box-item-card-effect";
+    effectEl.textContent = item.effect;
+    btn.append(img, nameEl, effectEl);
+    btn.addEventListener("click", () => {
+      boxSelectedItem = item;
+      renderBoxItemSelected();
+      const picker = document.getElementById("box-item-picker");
+      if (picker) picker.hidden = true;
+    });
+    list.appendChild(btn);
+  });
+}
+
+// ========== タブ3: 技スロット+一覧 ==========
+
+function getBoxMoveUniqueTypes(): string[] {
+  if (!boxEditingPokemon?.learnset) return [];
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  const set = new Set<string>();
+  boxEditingPokemon.learnset.forEach((id) => {
+    const m = moveMap.get(id);
+    if (m) set.add(m.type);
+  });
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "ja"));
+}
+
+function renderBoxMoveSlots(): void {
+  const slotsEl = document.getElementById("box-moves-slots");
+  if (!slotsEl || !boxEditingPokemon) return;
+  slotsEl.innerHTML = "";
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  for (let i = 0; i < 4; i++) {
+    const moveId = boxSelectedMoves[i];
+    const move = moveId ? moveMap.get(moveId) : null;
+    const slot = document.createElement("div");
+    slot.className = "damage-move-slot" + (boxEditingMoveSlot === i ? " is-editing" : "");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "damage-move-slot-btn";
+    btn.addEventListener("click", () => {
+      boxEditingMoveSlot = boxEditingMoveSlot === i ? null : i;
+      boxMoveTypeFilter = null;
+      boxMoveCategoryFilter = null;
+      renderBoxMovesArea();
+    });
+    if (move) {
+      const powerStr = move.power != null ? String(move.power) : "—";
+      btn.innerHTML = `<span class="damage-move-slot-name">${escapeHtml(move.name)}</span> <span class="damage-move-slot-meta"><img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" />・${escapeHtml(move.category)}・威力${powerStr}</span>`;
+    } else {
+      btn.textContent = "—（クリックで技を選択）";
+    }
+    slot.appendChild(btn);
+    slotsEl.appendChild(slot);
+  }
+}
+
+function renderBoxMoveListTypeButtons(): void {
+  const wrap = document.getElementById("box-moves-list-type-btns");
+  if (!wrap || !boxEditingPokemon) return;
+  wrap.innerHTML = "";
+  getBoxMoveUniqueTypes().forEach((typeName) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "damage-move-type-btn" + (boxMoveTypeFilter === typeName ? " is-active" : "");
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
+    btn.addEventListener("click", () => {
+      boxMoveTypeFilter = boxMoveTypeFilter === typeName ? null : typeName;
+      renderBoxMoveListTypeButtons();
+      renderBoxMoveList();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function renderBoxMoveListCategoryButtons(): void {
+  const wrap = document.getElementById("box-moves-list-cat-btns");
+  if (!wrap || !boxEditingPokemon) return;
+  wrap.innerHTML = "";
+  const options = [
+    { label: "すべて", value: null },
+    { label: "物理", value: "物理" },
+    { label: "特殊", value: "特殊" },
+    { label: "変化", value: "変化" },
+  ];
+  options.forEach(({ label, value }) => {
+    const isActive = value === null ? !boxMoveCategoryFilter : boxMoveCategoryFilter === value;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    let cls = "damage-move-category-btn";
+    if (value === "物理") cls += " damage-move-category-btn--physical";
+    else if (value === "特殊") cls += " damage-move-category-btn--special";
+    if (isActive) cls += " is-active";
+    btn.className = cls;
+    btn.textContent = label;
+    btn.addEventListener("click", () => { boxMoveCategoryFilter = value; renderBoxMoveListCategoryButtons(); renderBoxMoveList(); });
+    wrap.appendChild(btn);
+  });
+}
+
+function renderBoxMoveList(): void {
+  const listEl = document.getElementById("box-moves-list");
+  if (!listEl || !boxEditingPokemon) return;
+  listEl.innerHTML = "";
+  const learnset = boxEditingPokemon.learnset;
+  if (!learnset || learnset.length === 0) {
+    const p = document.createElement("p");
+    p.className = "damage-moves-placeholder";
+    p.textContent = "このポケモンには覚える技データがありません";
+    listEl.appendChild(p);
+    return;
+  }
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  let moves = learnset.map((id) => moveMap.get(id)).filter((m): m is Move => m != null);
+  if (boxMoveTypeFilter) moves = moves.filter((m) => m.type === boxMoveTypeFilter);
+  if (boxMoveCategoryFilter) moves = moves.filter((m) => m.category === boxMoveCategoryFilter);
+  if (boxMoveSearchText.trim()) moves = moves.filter((m) => m.name.includes(boxMoveSearchText.trim()));
+  moves.forEach((move) => {
+    const isSelected = boxSelectedMoves.includes(move.id);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "damage-move-btn" + (isSelected ? " is-selected" : "");
+    const powerStr = move.power != null ? String(move.power) : "—";
+    btn.innerHTML = `<img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" /> ${escapeHtml(move.name)}（${escapeHtml(move.category)}・威力${powerStr}）`;
+    btn.addEventListener("click", () => {
+      if (boxEditingMoveSlot !== null) {
+        boxSelectedMoves[boxEditingMoveSlot] = move.id;
+        boxEditingMoveSlot = null;
+        renderBoxMovesArea();
+      }
+    });
+    listEl.appendChild(btn);
+  });
+}
+
+function renderBoxMovesArea(): void {
+  if (!boxEditingPokemon) return;
+  renderBoxMoveSlots();
+  const listWrap = document.getElementById("box-moves-list-wrap");
+  const showList = boxEditingMoveSlot !== null;
+  if (listWrap) {
+    listWrap.hidden = !showList;
+    if (showList) {
+      renderBoxMoveListTypeButtons();
+      renderBoxMoveListCategoryButtons();
+      renderBoxMoveList();
+    }
+  }
+}
+
+// ========== タブ3: BOX ここまで ==========
 
 function saveDeviceSelection(): void {
   try {
@@ -584,7 +1286,7 @@ function renderPickerTypeButtons(): void {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "picker-type-btn" + (pickerTypeFilter === typeName ? " is-active" : "");
-    btn.textContent = typeName;
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
     btn.dataset.typeFilter = typeName;
     btn.addEventListener("click", () => {
       pickerTypeFilter = typeName;
@@ -597,7 +1299,7 @@ function renderPickerTypeButtons(): void {
 
 /** ピッカー一覧用の画像パス（id に統一。id がなければ ball_monster、読み込み失敗時は onerror で差し替え） */
 function getPickerPokemonImageSrc(pokemon: Pokemon): string {
-  return pokemon.id ? `img/pokemon/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
+  return pokemon.id ? `img/pokemon3/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
 }
 
 /** ダイアログ内のポケモン一覧のみ再描画（タイプ絞り込み反映） */
@@ -737,12 +1439,12 @@ function renderTab1DamageDisplay(): void {
       defenderImg.alt = defendPokemon.name;
       defenderImg.onerror = () => { defenderImg.src = BALL_MONSTER_IMAGE; };
       if (defenderName) defenderName.textContent = defendPokemon.name;
-      if (defenderTypes) defenderTypes.textContent = defendPokemon.types.join("・");
+      if (defenderTypes) defenderTypes.innerHTML = typeBadgesHtml(defendPokemon.types);
     } else {
       defenderImg.src = BALL_MONSTER_IMAGE;
       defenderImg.alt = "";
       if (defenderName) defenderName.textContent = "";
-      if (defenderTypes) defenderTypes.textContent = "";
+      if (defenderTypes) defenderTypes.innerHTML = "";
     }
   }
   if (attackerImg) {
@@ -753,38 +1455,29 @@ function renderTab1DamageDisplay(): void {
       attackerImg.alt = attackPokemon.name;
       attackerImg.onerror = () => { attackerImg.src = BALL_MONSTER_IMAGE; };
       if (attackerName) attackerName.textContent = attackPokemon.name;
-      if (attackerTypes) attackerTypes.textContent = attackPokemon.types.join("・");
+      if (attackerTypes) attackerTypes.innerHTML = typeBadgesHtml(attackPokemon.types);
     } else {
       attackerImg.src = BALL_MONSTER_IMAGE;
       attackerImg.alt = "";
       if (attackerName) attackerName.textContent = "";
-      if (attackerTypes) attackerTypes.textContent = "";
+      if (attackerTypes) attackerTypes.innerHTML = "";
     }
   }
-  const defenderStatsBtn = document.getElementById("damage-defender-stats-btn") as HTMLButtonElement | null;
-  const attackerStatsBtn = document.getElementById("damage-attacker-stats-btn") as HTMLButtonElement | null;
-  if (defenderStatsBtn) defenderStatsBtn.disabled = !defendPokemon;
-  if (attackerStatsBtn) attackerStatsBtn.disabled = !attackPokemon;
-
-  const statsSection = document.getElementById("damage-stats-adjust-section");
-  if (statsSection) statsSection.hidden = !statsAdjustmentVisible;
-
-  const defenderBlock = document.getElementById("damage-stats-defender-block");
-  const attackerBlock = document.getElementById("damage-stats-attacker-block");
-  if (defenderBlock) {
-    defenderBlock.querySelectorAll("input, select, button").forEach((el) => {
+  const defenderStatsBlock = document.getElementById("damage-slot-stats-defender");
+  const attackerStatsBlock = document.getElementById("damage-slot-stats-attacker");
+  if (defenderStatsBlock) {
+    defenderStatsBlock.querySelectorAll("input, select, button").forEach((el) => {
       (el as HTMLInputElement).disabled = !defendPokemon;
     });
   }
-  if (attackerBlock) {
-    attackerBlock.querySelectorAll("input, select, button").forEach((el) => {
+  if (attackerStatsBlock) {
+    attackerStatsBlock.querySelectorAll("input, select, button").forEach((el) => {
       (el as HTMLInputElement).disabled = !attackPokemon;
     });
   }
 
-  if (statsAdjustmentVisible) {
-    updateStatsRealValues();
-  }
+  updateStatsRealValues();
+  updateRankDisplays();
 
   renderTab1MovesArea();
 }
@@ -904,21 +1597,26 @@ function clampNature(v: number): number {
   return v === 0.9 || v === 1.1 ? v : 1.0;
 }
 
-function openStatsAdjustment(): void {
-  statsAdjustmentVisible = true;
-  syncStatsInputsFromState();
-  renderTab1DamageDisplay();
+/** 能力ランク(-6〜+6)の倍率を返す */
+function rankMult(rank: number): number {
+  const n = Math.max(-6, Math.min(6, rank));
+  return n >= 0 ? (2 + n) / 2 : 2 / (2 - n);
+}
+
+/** ランク表示を更新 */
+function updateRankDisplays(): void {
+  const atkVal = document.getElementById("atk-rank-value");
+  const spatkVal = document.getElementById("spatk-rank-value");
+  const defVal = document.getElementById("def-rank-value");
+  const spdefVal = document.getElementById("spdef-rank-value");
+  if (atkVal) atkVal.textContent = String(attackerAtkRank);
+  if (spatkVal) spatkVal.textContent = String(attackerSpAtkRank);
+  if (defVal) defVal.textContent = String(defenderDefRank);
+  if (spdefVal) spdefVal.textContent = String(defenderSpDefRank);
 }
 
 function applyStatsFromInputsAndRecalc(): void {
   readStatsInputsToState();
-  renderTab1DamageDisplay();
-}
-
-function confirmStatsAndClose(): void {
-  readStatsInputsToState();
-  hasStatsAdjustmentSaved = true;
-  statsAdjustmentVisible = false;
   renderTab1DamageDisplay();
 }
 
@@ -952,7 +1650,7 @@ function renderTab1SelectTypeButtons(): void {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "picker-type-btn" + (tab1SelectTypeFilter === typeName ? " is-active" : "");
-    btn.textContent = typeName;
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
     btn.dataset.typeFilter = typeName;
     btn.addEventListener("click", () => {
       tab1SelectTypeFilter = typeName;
@@ -991,12 +1689,16 @@ function renderTab1SelectList(): void {
   });
 }
 
-function openTab1PokemonSelect(target: "attack" | "defend"): void {
+function openTab1PokemonSelect(target: "attack" | "defend" | "box"): void {
   tab1SelectTarget = target;
   tab1SelectTypeFilter = null;
   const modal = document.getElementById("tab1-pokemon-select-modal");
   const titleEl = document.getElementById("tab1-pokemon-select-title");
-  if (titleEl) titleEl.textContent = target === "attack" ? "攻撃側のポケモンを選択" : "防御側のポケモンを選択";
+  if (titleEl) {
+    if (target === "attack") titleEl.textContent = "攻撃側のポケモンを選択";
+    else if (target === "defend") titleEl.textContent = "防御側のポケモンを選択";
+    else titleEl.textContent = "BOXに追加するポケモンを選択";
+  }
   renderTab1SelectTypeButtons();
   if (demoPokemon.length === 0) {
     const listEl = document.getElementById("tab1-pokemon-select-list");
@@ -1024,13 +1726,22 @@ function onTab1PokemonSelected(pokemon: Pokemon): void {
     attackerAtkNature = 1.0;
     attackerSpAtkEV = 0;
     attackerSpAtkNature = 1.0;
+    attackerAtkRank = 0;
+    attackerSpAtkRank = 0;
   } else if (tab1SelectTarget === "defend") {
     defendPokemon = pokemon;
     defenderDefEV = 0;
     defenderDefNature = 1.0;
     defenderSpDefEV = 0;
     defenderSpDefNature = 1.0;
+    defenderDefRank = 0;
+    defenderSpDefRank = 0;
+  } else if (tab1SelectTarget === "box") {
+    closeTab1PokemonSelect();
+    openBoxDetailModal(pokemon);
+    return;
   }
+  syncStatsInputsFromState();
   closeTab1PokemonSelect();
   renderTab1DamageDisplay();
 }
@@ -1121,18 +1832,13 @@ function renderTab1MovesSlots(): void {
       const header = document.createElement("div");
       header.className = "damage-move-slot-header";
       const powerStr = move.power != null ? String(move.power) : "—";
-      header.innerHTML = `<span class="damage-move-slot-name">${escapeHtml(move.name)}</span> <span class="damage-move-slot-meta">${escapeHtml(move.type)}・${escapeHtml(move.category)}・威力${powerStr}</span>`;
+      header.innerHTML = `<span class="damage-move-slot-name">${escapeHtml(move.name)}</span> <span class="damage-move-slot-meta"><img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" />・${escapeHtml(move.category)}・威力${powerStr}</span>`;
       btn.appendChild(header);
 
       let damageResult: DamageResult | null = null;
       if (defendPokemon && defenderStats) {
-        const useStatsOverride = statsAdjustmentVisible || hasStatsAdjustmentSaved;
-        const atkOverride = useStatsOverride
-          ? { attack: calcStatWithEV(attackerStats.attack, attackerAtkEV, attackerAtkNature), spAttack: calcStatWithEV(attackerStats.spAttack, attackerSpAtkEV, attackerSpAtkNature) }
-          : undefined;
-        const defOverride = useStatsOverride
-          ? { defense: calcStatWithEV(defenderStats.defense, defenderDefEV, defenderDefNature), spDefense: calcStatWithEV(defenderStats.spDefense, defenderSpDefEV, defenderSpDefNature) }
-          : undefined;
+        const atkOverride = { attack: calcStatWithEV(attackerStats.attack, attackerAtkEV, attackerAtkNature), spAttack: calcStatWithEV(attackerStats.spAttack, attackerSpAtkEV, attackerSpAtkNature) };
+        const defOverride = { defense: calcStatWithEV(defenderStats.defense, defenderDefEV, defenderDefNature), spDefense: calcStatWithEV(defenderStats.spDefense, defenderSpDefEV, defenderSpDefNature) };
         damageResult = calculateDamage({
           movePower: move.power,
           moveType: move.type,
@@ -1143,6 +1849,12 @@ function renderTab1MovesSlots(): void {
           defenderBaseStats: defenderStats,
           attackerStatOverride: atkOverride,
           defenderStatOverride: defOverride,
+          attackerAtkRank,
+          attackerSpAtkRank,
+          defenderDefRank,
+          defenderSpDefRank,
+          weather: currentWeather || undefined,
+          terrain: currentTerrain || undefined,
         });
       }
 
@@ -1204,25 +1916,14 @@ function renderTab1MovesListTypeButtons(): void {
   const wrap = document.getElementById("damage-moves-list-type-buttons");
   if (!wrap || !attackPokemon) return;
   wrap.innerHTML = "";
-  const allBtn = document.createElement("button");
-  allBtn.type = "button";
-  allBtn.className = "damage-move-type-btn" + (!damageMovesTypeFilter || damageMovesTypeFilter === "すべて" ? " is-active" : "");
-  allBtn.textContent = "すべて";
-  allBtn.dataset.typeFilter = "すべて";
-  allBtn.addEventListener("click", () => {
-    damageMovesTypeFilter = null;
-    renderTab1MovesListTypeButtons();
-    renderTab1MovesList();
-  });
-  wrap.appendChild(allBtn);
   getTab1MovesUniqueTypes().forEach((typeName) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "damage-move-type-btn" + (damageMovesTypeFilter === typeName ? " is-active" : "");
-    btn.textContent = typeName;
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
     btn.dataset.typeFilter = typeName;
     btn.addEventListener("click", () => {
-      damageMovesTypeFilter = typeName;
+      damageMovesTypeFilter = damageMovesTypeFilter === typeName ? null : typeName;
       renderTab1MovesListTypeButtons();
       renderTab1MovesList();
     });
@@ -1288,19 +1989,17 @@ function renderTab1MovesList(): void {
     .filter((m): m is Move => m != null)
     .filter((m) => m.category !== "変化");
 
-  if (damageMovesTypeFilter && damageMovesTypeFilter !== "すべて") {
-    moves = moves.filter((m) => m.type === damageMovesTypeFilter);
-  }
-  if (damageMovesCategoryFilter) {
-    moves = moves.filter((m) => m.category === damageMovesCategoryFilter);
-  }
+  if (damageMovesTypeFilter) moves = moves.filter((m) => m.type === damageMovesTypeFilter);
+  if (damageMovesCategoryFilter) moves = moves.filter((m) => m.category === damageMovesCategoryFilter);
+  const searchText = (document.getElementById("damage-moves-search") as HTMLInputElement | null)?.value.trim() ?? "";
+  if (searchText) moves = moves.filter((m) => m.name.includes(searchText));
 
   moves.forEach((move) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "damage-move-btn";
     const powerStr = move.power != null ? String(move.power) : "—";
-    btn.textContent = `${move.name}（${move.type}・${move.category}・威力${powerStr}）`;
+    btn.innerHTML = `<img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" /> ${escapeHtml(move.name)}（${escapeHtml(move.category)}・威力${powerStr}）`;
     btn.dataset.moveId = String(move.id);
     btn.addEventListener("click", () => {
       if (editingMoveSlotIndex !== null) {
@@ -1367,6 +2066,7 @@ function initTabs(): void {
         p.hidden = !isTarget;
       });
       btn.classList.add("is-active");
+      if (tabId === "tab3") renderTab3();
     });
   });
 }
@@ -1386,6 +2086,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const teamDeleteConfirmOk = document.getElementById("team-delete-confirm-ok");
   const teamDeleteConfirmCancel = document.getElementById("team-delete-confirm-cancel");
   loadTeamFromStorage();
+  loadBoxFromStorage();
   renderTeamList();
   renderTab1DamageDisplay();
 
@@ -1402,63 +2103,123 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("damage-defender-select")?.addEventListener("click", () => openTab1PokemonSelect("defend"));
   document.getElementById("damage-attacker-select")?.addEventListener("click", () => openTab1PokemonSelect("attack"));
-  document.getElementById("damage-defender-stats-btn")?.addEventListener("click", () => openStatsAdjustment());
-  document.getElementById("damage-attacker-stats-btn")?.addEventListener("click", () => openStatsAdjustment());
-  document.getElementById("damage-stats-calc-btn")?.addEventListener("click", () => applyStatsFromInputsAndRecalc());
-  document.getElementById("damage-stats-confirm-btn")?.addEventListener("click", () => confirmStatsAndClose());
-
-  const statsSection = document.getElementById("damage-stats-adjust-section");
-  statsSection?.addEventListener("click", (e) => {
+  // インラインステータス: EVボタン・ステップボタンの委譲処理
+  const damagePanel = document.querySelector(".damage-panel");
+  damagePanel?.addEventListener("click", (e) => {
     const target = (e.target as HTMLElement).closest("button");
+    if (!target) return;
+    const inputId = target.dataset.evInput;
+    if (inputId) {
+      const input = document.getElementById(inputId) as HTMLInputElement | null;
+      if (!input) return;
+      const val = clampEv(Number(input.value) || 0);
+      if (target.classList.contains("damage-ev-btn-0")) {
+        input.value = "0";
+      } else if (target.classList.contains("damage-ev-btn-252")) {
+        input.value = "252";
+      } else if (target.classList.contains("damage-ev-step-up")) {
+        input.value = String(getNextEvStep(val));
+      } else if (target.classList.contains("damage-ev-step-down")) {
+        input.value = String(getPrevEvStep(val));
+      } else {
+        return;
+      }
+      e.preventDefault();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+    // ランクボタン
+    const rankUp = target.classList.contains("rank-btn-up");
+    const rankDown = target.classList.contains("rank-btn-down");
+    if (!rankUp && !rankDown) return;
+    const delta = rankUp ? 1 : -1;
+    const id = target.id;
+    if (id === "atk-rank-up" || id === "atk-rank-down") attackerAtkRank = Math.max(-6, Math.min(6, attackerAtkRank + delta));
+    else if (id === "spatk-rank-up" || id === "spatk-rank-down") attackerSpAtkRank = Math.max(-6, Math.min(6, attackerSpAtkRank + delta));
+    else if (id === "def-rank-up" || id === "def-rank-down") defenderDefRank = Math.max(-6, Math.min(6, defenderDefRank + delta));
+    else if (id === "spdef-rank-up" || id === "spdef-rank-down") defenderSpDefRank = Math.max(-6, Math.min(6, defenderSpDefRank + delta));
+    updateRankDisplays();
+    readStatsInputsToState();
+    renderTab1MovesSlots();
+  });
+
+  // インラインEV/性格 変更時に自動再計算
+  damagePanel?.addEventListener("input", (e) => {
+    const el = e.target as HTMLElement;
+    if (el.classList.contains("damage-ev-input")) {
+      const inp = el as HTMLInputElement;
+      let v = Number(inp.value);
+      if (Number.isNaN(v) || v < 0) v = 0;
+      if (v > 255) v = 255;
+      inp.value = String(Math.floor(v));
+      readStatsInputsToState();
+      updateStatsRealValues();
+      renderTab1MovesSlots();
+    }
+  });
+  damagePanel?.addEventListener("change", (e) => {
+    const el = e.target as HTMLElement;
+    if (el.matches("select[id^='stats-']")) {
+      readStatsInputsToState();
+      updateStatsRealValues();
+      renderTab1MovesSlots();
+    }
+  });
+  // 天候・フィールドの変更
+  document.getElementById("damage-weather-select")?.addEventListener("change", (e) => {
+    currentWeather = (e.target as HTMLSelectElement).value;
+    renderTab1MovesSlots();
+  });
+  document.getElementById("damage-terrain-select")?.addEventListener("change", (e) => {
+    currentTerrain = (e.target as HTMLSelectElement).value;
+    renderTab1MovesSlots();
+  });
+  // タブ3: BOX
+  document.getElementById("box-create-btn")?.addEventListener("click", openBoxCreate);
+  document.getElementById("box-detail-cancel")?.addEventListener("click", closeBoxDetailModal);
+  document.getElementById("box-detail-backdrop")?.addEventListener("click", closeBoxDetailModal);
+  document.getElementById("box-detail-save")?.addEventListener("click", saveBoxEntry);
+  // 持ち物ピッカー
+  document.getElementById("box-detail-item-select-btn")?.addEventListener("click", () => {
+    const picker = document.getElementById("box-item-picker");
+    if (!picker) return;
+    const isHidden = picker.hidden;
+    picker.hidden = !isHidden;
+    if (isHidden) renderBoxItemPicker();
+  });
+  document.getElementById("box-detail-item-clear-btn")?.addEventListener("click", () => {
+    boxSelectedItem = null;
+    renderBoxItemSelected();
+  });
+  document.getElementById("box-item-search")?.addEventListener("input", (e) => {
+    boxItemSearchText = (e.target as HTMLInputElement).value;
+    renderBoxItemPicker();
+  });
+  // 詳細確認モード: 編集ボタン・閉じるボタン
+  document.getElementById("box-detail-edit-btn")?.addEventListener("click", switchToBoxEditMode);
+  document.getElementById("box-detail-view-close")?.addEventListener("click", closeBoxDetailModal);
+  // 技検索（タブ③）
+  document.getElementById("box-moves-search")?.addEventListener("input", (e) => {
+    boxMoveSearchText = (e.target as HTMLInputElement).value;
+    renderBoxMoveList();
+  });
+  // 技検索（タブ①）
+  document.getElementById("damage-moves-search")?.addEventListener("input", () => {
+    renderTab1MovesList();
+  });
+  // BOX詳細モーダル内のEVボタン委譲
+  document.getElementById("box-detail-modal")?.addEventListener("click", (e) => {
+    const target = (e.target as HTMLElement).closest("button") as HTMLButtonElement | null;
     if (!target) return;
     const inputId = target.dataset.evInput;
     if (!inputId) return;
     const input = document.getElementById(inputId) as HTMLInputElement | null;
     if (!input) return;
     const val = clampEv(Number(input.value) || 0);
-    if (target.classList.contains("damage-ev-btn-0")) {
-      input.value = "0";
-    } else if (target.classList.contains("damage-ev-btn-252")) {
-      input.value = "252";
-    } else if (target.classList.contains("damage-ev-step-up")) {
-      input.value = String(getNextEvStep(val));
-    } else if (target.classList.contains("damage-ev-step-down")) {
-      input.value = String(getPrevEvStep(val));
-    } else {
-      return;
-    }
-    e.preventDefault();
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-
-  statsSection?.addEventListener("input", (e) => {
-    const el = e.target as HTMLElement;
-    if (el.classList.contains("damage-ev-input") || el.matches("select[id^='stats-']")) {
-      updateStatsRealValues();
-    }
-  });
-  statsSection?.addEventListener("change", (e) => {
-    const el = e.target as HTMLElement;
-    if (el.classList.contains("damage-ev-input") || el.matches("select[id^='stats-']")) {
-      updateStatsRealValues();
-    }
-  });
-
-  document.querySelectorAll(".damage-ev-input").forEach((input) => {
-    input.addEventListener("input", () => {
-      const el = input as HTMLInputElement;
-      let v = Number(el.value);
-      if (Number.isNaN(v) || v < 0) v = 0;
-      if (v > 255) v = 255;
-      el.value = String(Math.floor(v));
-    });
-    input.addEventListener("change", () => {
-      const el = input as HTMLInputElement;
-      let v = Number(el.value);
-      if (Number.isNaN(v) || v < 0) v = 0;
-      if (v > 255) v = 255;
-      el.value = String(Math.floor(v));
-    });
+    if (target.classList.contains("damage-ev-btn-0")) input.value = "0";
+    else if (target.classList.contains("damage-ev-btn-252")) input.value = "252";
+    else if (target.classList.contains("damage-ev-step-up")) input.value = String(getNextEvStep(val));
+    else if (target.classList.contains("damage-ev-step-down")) input.value = String(getPrevEvStep(val));
   });
   document.getElementById("tab1-pokemon-select-list")?.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest(".pokemon-picker-btn");

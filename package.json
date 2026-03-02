@@ -4,7 +4,7 @@
   "description": "Electron デスクトップアプリ",
   "main": "dist/main/main.js",
   "scripts": {
-    "build": "tsc && copyfiles -u 1 \"src/renderer/*.html\" \"src/renderer/*.css\" \"src/renderer/data/*.json\" dist && copyfiles -u 1 \"src/img/*\" \"src/img/pokemon/*\" dist/renderer",
+    "build": "tsc && copyfiles -u 1 \"src/renderer/*.html\" \"src/renderer/*.css\" \"src/renderer/data/*.json\" dist && copyfiles -u 1 \"src/img/*\" \"src/img/pokemon/*\" \"src/img/pokemon2/*\" \"src/img/pokemon3/*\" \"src/img/type/*\" \"src/img/type/logos/*\" \"src/img/item/*\" dist/renderer",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron .",
     "update-moves": "node scripts/update-moves.js",

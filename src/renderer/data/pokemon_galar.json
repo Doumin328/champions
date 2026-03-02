@@ -1,11 +1,18 @@
 [
   {
-    "id": "grookey",
-    "number": "0810",
+    "id": "0810",
     "name": "サルノリ",
     "types": [
       "くさ"
     ],
+    "baseStats": {
+      "hp": 50,
+      "attack": 65,
+      "defense": 50,
+      "spAttack": 40,
+      "spDefense": 40,
+      "speed": 65
+    },
     "learnset": [
       5,
       10,
@@ -68,12 +75,19 @@
     ]
   },
   {
-    "id": "thwackey",
-    "number": "0811",
+    "id": "0811",
     "name": "バチンキー",
     "types": [
       "くさ"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 85,
+      "defense": 70,
+      "spAttack": 55,
+      "spDefense": 60,
+      "speed": 80
+    },
     "learnset": [
       5,
       10,
@@ -132,12 +146,19 @@
     ]
   },
   {
-    "id": "rillaboom",
-    "number": "0812",
+    "id": "0812",
     "name": "ゴリランダー",
     "types": [
       "くさ"
     ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 125,
+      "defense": 90,
+      "spAttack": 60,
+      "spDefense": 70,
+      "speed": 85
+    },
     "learnset": [
       5,
       10,
@@ -219,12 +240,19 @@
     ]
   },
   {
-    "id": "scorbunny",
-    "number": "0813",
+    "id": "0813",
     "name": "ヒバニー",
     "types": [
       "ほのお"
     ],
+    "baseStats": {
+      "hp": 50,
+      "attack": 71,
+      "defense": 40,
+      "spAttack": 40,
+      "spDefense": 40,
+      "speed": 69
+    },
     "learnset": [
       25,
       28,
@@ -285,12 +313,19 @@
     ]
   },
   {
-    "id": "raboot",
-    "number": "0814",
+    "id": "0814",
     "name": "ラビフット",
     "types": [
       "ほのお"
     ],
+    "baseStats": {
+      "hp": 65,
+      "attack": 86,
+      "defense": 60,
+      "spAttack": 55,
+      "spDefense": 60,
+      "speed": 94
+    },
     "learnset": [
       14,
       25,
@@ -351,12 +386,19 @@
     ]
   },
   {
-    "id": "cinderace",
-    "number": "0815",
+    "id": "0815",
     "name": "エースバーン",
     "types": [
       "ほのお"
     ],
+    "baseStats": {
+      "hp": 80,
+      "attack": 116,
+      "defense": 75,
+      "spAttack": 65,
+      "spDefense": 75,
+      "speed": 119
+    },
     "learnset": [
       7,
       14,
@@ -436,12 +478,19 @@
     ]
   },
   {
-    "id": "sobble",
-    "number": "0816",
+    "id": "0816",
     "name": "メッソン",
     "types": [
       "みず"
     ],
+    "baseStats": {
+      "hp": 50,
+      "attack": 40,
+      "defense": 40,
+      "spAttack": 70,
+      "spDefense": 40,
+      "speed": 70
+    },
     "learnset": [
       1,
       20,
@@ -492,12 +541,19 @@
     ]
   },
   {
-    "id": "drizzile",
-    "number": "0817",
+    "id": "0817",
     "name": "ジメレオン",
     "types": [
       "みず"
     ],
+    "baseStats": {
+      "hp": 65,
+      "attack": 60,
+      "defense": 55,
+      "spAttack": 95,
+      "spDefense": 55,
+      "speed": 90
+    },
     "learnset": [
       1,
       20,
@@ -543,12 +599,19 @@
     ]
   },
   {
-    "id": "inteleon",
-    "number": "0818",
+    "id": "0818",
     "name": "インテレオン",
     "types": [
       "みず"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 85,
+      "defense": 65,
+      "spAttack": 125,
+      "spDefense": 65,
+      "speed": 120
+    },
     "learnset": [
       1,
       14,
@@ -621,12 +684,19 @@
     ]
   },
   {
-    "id": "skwovet",
-    "number": "0819",
+    "id": "0819",
     "name": "ホシガリス",
     "types": [
       "ノーマル"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 55,
+      "defense": 55,
+      "spAttack": 35,
+      "spDefense": 35,
+      "speed": 25
+    },
     "learnset": [
       33,
       34,
@@ -678,12 +748,19 @@
     ]
   },
   {
-    "id": "greedent",
-    "number": "0820",
+    "id": "0820",
     "name": "ヨクバリス",
     "types": [
       "ノーマル"
     ],
+    "baseStats": {
+      "hp": 120,
+      "attack": 95,
+      "defense": 95,
+      "spAttack": 55,
+      "spDefense": 75,
+      "speed": 20
+    },
     "learnset": [
       14,
       33,
@@ -749,12 +826,19 @@
     ]
   },
   {
-    "id": "rookidee",
-    "number": "0821",
+    "id": "0821",
     "name": "ココガラ",
     "types": [
       "ひこう"
     ],
+    "baseStats": {
+      "hp": 38,
+      "attack": 47,
+      "defense": 35,
+      "spAttack": 33,
+      "spDefense": 35,
+      "speed": 57
+    },
     "learnset": [
       19,
       28,
@@ -806,12 +890,19 @@
     ]
   },
   {
-    "id": "corvisquire",
-    "number": "0822",
+    "id": "0822",
     "name": "アオガラス",
     "types": [
       "ひこう"
     ],
+    "baseStats": {
+      "hp": 68,
+      "attack": 67,
+      "defense": 55,
+      "spAttack": 43,
+      "spDefense": 55,
+      "speed": 77
+    },
     "learnset": [
       19,
       31,
@@ -860,13 +951,20 @@
     ]
   },
   {
-    "id": "corviknight",
-    "number": "0823",
+    "id": "0823",
     "name": "アーマーガア",
     "types": [
       "ひこう",
       "はがね"
     ],
+    "baseStats": {
+      "hp": 98,
+      "attack": 87,
+      "defense": 105,
+      "spAttack": 53,
+      "spDefense": 85,
+      "speed": 67
+    },
     "learnset": [
       19,
       31,
@@ -934,12 +1032,19 @@
     ]
   },
   {
-    "id": "blipbug",
-    "number": "0824",
+    "id": "0824",
     "name": "サッチムシ",
     "types": [
       "むし"
     ],
+    "baseStats": {
+      "hp": 25,
+      "attack": 20,
+      "defense": 20,
+      "spAttack": 25,
+      "spDefense": 45,
+      "speed": 45
+    },
     "learnset": [
       48,
       138,
@@ -949,13 +1054,20 @@
     ]
   },
   {
-    "id": "dottler",
-    "number": "0825",
+    "id": "0825",
     "name": "レドームシ",
     "types": [
       "むし",
       "エスパー"
     ],
+    "baseStats": {
+      "hp": 50,
+      "attack": 35,
+      "defense": 80,
+      "spAttack": 50,
+      "spDefense": 90,
+      "speed": 30
+    },
     "learnset": [
       79,
       87,
@@ -1000,13 +1112,20 @@
     ]
   },
   {
-    "id": "orbeetle",
-    "number": "0826",
+    "id": "0826",
     "name": "イオルブ",
     "types": [
       "むし",
       "エスパー"
     ],
+    "baseStats": {
+      "hp": 60,
+      "attack": 45,
+      "defense": 110,
+      "spAttack": 80,
+      "spDefense": 120,
+      "speed": 90
+    },
     "learnset": [
       60,
       63,
@@ -1064,12 +1183,19 @@
     ]
   },
   {
-    "id": "nickit",
-    "number": "0827",
+    "id": "0827",
     "name": "クスネ",
     "types": [
       "あく"
     ],
+    "baseStats": {
+      "hp": 40,
+      "attack": 28,
+      "defense": 28,
+      "spAttack": 47,
+      "spDefense": 52,
+      "speed": 50
+    },
     "learnset": [
       39,
       70,
@@ -1109,12 +1235,19 @@
     ]
   },
   {
-    "id": "thievul",
-    "number": "0828",
+    "id": "0828",
     "name": "フォクスライ",
     "types": [
       "あく"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 58,
+      "defense": 58,
+      "spAttack": 87,
+      "spDefense": 92,
+      "speed": 90
+    },
     "learnset": [
       39,
       63,
@@ -1165,12 +1298,19 @@
     ]
   },
   {
-    "id": "gossifleur",
-    "number": "0829",
+    "id": "0829",
     "name": "ヒメンカ",
     "types": [
       "くさ"
     ],
+    "baseStats": {
+      "hp": 40,
+      "attack": 40,
+      "defense": 60,
+      "spAttack": 40,
+      "spDefense": 60,
+      "speed": 10
+    },
     "learnset": [
       47,
       72,
@@ -1213,12 +1353,19 @@
     ]
   },
   {
-    "id": "eldegoss",
-    "number": "0830",
+    "id": "0830",
     "name": "ワタシラガ",
     "types": [
       "くさ"
     ],
+    "baseStats": {
+      "hp": 60,
+      "attack": 50,
+      "defense": 90,
+      "spAttack": 80,
+      "spDefense": 120,
+      "speed": 60
+    },
     "learnset": [
       47,
       63,
@@ -1261,12 +1408,19 @@
     ]
   },
   {
-    "id": "wooloo",
-    "number": "0831",
+    "id": "0831",
     "name": "ウールー",
     "types": [
       "ノーマル"
     ],
+    "baseStats": {
+      "hp": 42,
+      "attack": 40,
+      "defense": 55,
+      "spAttack": 40,
+      "spDefense": 45,
+      "speed": 48
+    },
     "learnset": [
       23,
       29,
@@ -1301,12 +1455,19 @@
     ]
   },
   {
-    "id": "dubwool",
-    "number": "0832",
+    "id": "0832",
     "name": "バイウールー",
     "types": [
       "ノーマル"
     ],
+    "baseStats": {
+      "hp": 72,
+      "attack": 80,
+      "defense": 100,
+      "spAttack": 60,
+      "spDefense": 90,
+      "speed": 88
+    },
     "learnset": [
       14,
       25,
@@ -1349,12 +1510,19 @@
     ]
   },
   {
-    "id": "chewtle",
-    "number": "0833",
+    "id": "0833",
     "name": "カムカメ",
     "types": [
       "みず"
     ],
+    "baseStats": {
+      "hp": 50,
+      "attack": 64,
+      "defense": 50,
+      "spAttack": 38,
+      "spDefense": 38,
+      "speed": 44
+    },
     "learnset": [
       29,
       33,
@@ -1402,13 +1570,20 @@
     ]
   },
   {
-    "id": "drednaw",
-    "number": "0834",
+    "id": "0834",
     "name": "カジリガメ",
     "types": [
       "みず",
       "いわ"
     ],
+    "baseStats": {
+      "hp": 90,
+      "attack": 115,
+      "defense": 90,
+      "spAttack": 48,
+      "spDefense": 68,
+      "speed": 74
+    },
     "learnset": [
       14,
       29,
@@ -1486,12 +1661,19 @@
     ]
   },
   {
-    "id": "yamper",
-    "number": "0835",
+    "id": "0835",
     "name": "ワンパチ",
     "types": [
       "でんき"
     ],
+    "baseStats": {
+      "hp": 59,
+      "attack": 45,
+      "defense": 50,
+      "spAttack": 40,
+      "spDefense": 50,
+      "speed": 26
+    },
     "learnset": [
       28,
       33,
@@ -1534,12 +1716,19 @@
     ]
   },
   {
-    "id": "boltund",
-    "number": "0836",
+    "id": "0836",
     "name": "パルスワン",
     "types": [
       "でんき"
     ],
+    "baseStats": {
+      "hp": 69,
+      "attack": 90,
+      "defense": 60,
+      "spAttack": 90,
+      "spDefense": 60,
+      "speed": 121
+    },
     "learnset": [
       33,
       39,
@@ -1587,12 +1776,19 @@
     ]
   },
   {
-    "id": "rolycoly",
-    "number": "0837",
+    "id": "0837",
     "name": "タンドン",
     "types": [
       "いわ"
     ],
+    "baseStats": {
+      "hp": 30,
+      "attack": 40,
+      "defense": 50,
+      "spAttack": 40,
+      "spDefense": 50,
+      "speed": 30
+    },
     "learnset": [
       33,
       34,
@@ -1640,13 +1836,20 @@
     ]
   },
   {
-    "id": "carkol",
-    "number": "0838",
+    "id": "0838",
     "name": "トロッゴン",
     "types": [
       "いわ",
       "ほのお"
     ],
+    "baseStats": {
+      "hp": 80,
+      "attack": 60,
+      "defense": 90,
+      "spAttack": 60,
+      "spDefense": 70,
+      "speed": 50
+    },
     "learnset": [
       33,
       34,
@@ -1706,13 +1909,20 @@
     ]
   },
   {
-    "id": "coalossal",
-    "number": "0839",
+    "id": "0839",
     "name": "セキタンザン",
     "types": [
       "いわ",
       "ほのお"
     ],
+    "baseStats": {
+      "hp": 110,
+      "attack": 80,
+      "defense": 120,
+      "spAttack": 80,
+      "spDefense": 90,
+      "speed": 30
+    },
     "learnset": [
       5,
       7,
@@ -1781,13 +1991,20 @@
     ]
   },
   {
-    "id": "applin",
-    "number": "0840",
+    "id": "0840",
     "name": "カジッチュ",
     "types": [
       "くさ",
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 40,
+      "attack": 40,
+      "defense": 80,
+      "spAttack": 40,
+      "spDefense": 40,
+      "speed": 20
+    },
     "learnset": [
       107,
       132,
@@ -1803,13 +2020,20 @@
     ]
   },
   {
-    "id": "flapple",
-    "number": "0841",
+    "id": "0841",
     "name": "アップリュー",
     "types": [
       "くさ",
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 110,
+      "defense": 80,
+      "spAttack": 95,
+      "spDefense": 60,
+      "speed": 70
+    },
     "learnset": [
       17,
       19,
@@ -1866,13 +2090,20 @@
     ]
   },
   {
-    "id": "appletun",
-    "number": "0842",
+    "id": "0842",
     "name": "タルップル",
     "types": [
       "くさ",
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 110,
+      "attack": 85,
+      "defense": 80,
+      "spAttack": 100,
+      "spDefense": 80,
+      "speed": 30
+    },
     "learnset": [
       23,
       29,
@@ -1937,12 +2168,19 @@
     ]
   },
   {
-    "id": "silicobra",
-    "number": "0843",
+    "id": "0843",
     "name": "スナヘビ",
     "types": [
       "じめん"
     ],
+    "baseStats": {
+      "hp": 52,
+      "attack": 57,
+      "defense": 75,
+      "spAttack": 35,
+      "spDefense": 50,
+      "speed": 46
+    },
     "learnset": [
       21,
       28,
@@ -1990,12 +2228,19 @@
     ]
   },
   {
-    "id": "sandaconda",
-    "number": "0844",
+    "id": "0844",
     "name": "サダイジャ",
     "types": [
       "じめん"
     ],
+    "baseStats": {
+      "hp": 72,
+      "attack": 107,
+      "defense": 125,
+      "spAttack": 65,
+      "spDefense": 70,
+      "speed": 71
+    },
     "learnset": [
       21,
       28,
@@ -2053,13 +2298,20 @@
     ]
   },
   {
-    "id": "cramorant",
-    "number": "0845",
+    "id": "0845",
     "name": "ウッウ",
     "types": [
       "ひこう",
       "みず"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 85,
+      "defense": 55,
+      "spAttack": 85,
+      "spDefense": 95,
+      "speed": 85
+    },
     "learnset": [
       19,
       31,
@@ -2125,12 +2377,19 @@
     ]
   },
   {
-    "id": "arrokuda",
-    "number": "0846",
+    "id": "0846",
     "name": "サシカマス",
     "types": [
       "みず"
     ],
+    "baseStats": {
+      "hp": 41,
+      "attack": 63,
+      "defense": 40,
+      "spAttack": 40,
+      "spDefense": 30,
+      "speed": 66
+    },
     "learnset": [
       31,
       36,
@@ -2181,12 +2440,19 @@
     ]
   },
   {
-    "id": "barraskewda",
-    "number": "0847",
+    "id": "0847",
     "name": "カマスジョー",
     "types": [
       "みず"
     ],
+    "baseStats": {
+      "hp": 61,
+      "attack": 123,
+      "defense": 60,
+      "spAttack": 60,
+      "spDefense": 50,
+      "speed": 136
+    },
     "learnset": [
       31,
       36,
@@ -2238,13 +2504,20 @@
     ]
   },
   {
-    "id": "toxel",
-    "number": "0848",
+    "id": "0848",
     "name": "エレズン",
     "types": [
       "でんき",
       "どく"
     ],
+    "baseStats": {
+      "hp": 40,
+      "attack": 38,
+      "defense": 35,
+      "spAttack": 54,
+      "spDefense": 35,
+      "speed": 40
+    },
     "learnset": [
       45,
       51,
@@ -2270,13 +2543,20 @@
     ]
   },
   {
-    "id": "toxtricity",
-    "number": "0849",
+    "id": "0849",
     "name": "ストリンダー",
     "types": [
       "でんき",
       "どく"
     ],
+    "baseStats": {
+      "hp": 75,
+      "attack": 98,
+      "defense": 70,
+      "spAttack": 114,
+      "spDefense": 70,
+      "speed": 75
+    },
     "learnset": [
       5,
       7,
@@ -2361,13 +2641,20 @@
     ]
   },
   {
-    "id": "sizzlipede",
-    "number": "0850",
+    "id": "0850",
     "name": "ヤクデ",
     "types": [
       "ほのお",
       "むし"
     ],
+    "baseStats": {
+      "hp": 50,
+      "attack": 65,
+      "defense": 45,
+      "spAttack": 50,
+      "spDefense": 50,
+      "speed": 45
+    },
     "learnset": [
       21,
       35,
@@ -2409,13 +2696,20 @@
     ]
   },
   {
-    "id": "centiskorch",
-    "number": "0851",
+    "id": "0851",
     "name": "マルヤクデ",
     "types": [
       "ほのお",
       "むし"
     ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 115,
+      "defense": 65,
+      "spAttack": 90,
+      "spDefense": 90,
+      "speed": 65
+    },
     "learnset": [
       21,
       35,
@@ -2466,12 +2760,19 @@
     ]
   },
   {
-    "id": "clobbopus",
-    "number": "0852",
+    "id": "0852",
     "name": "タタッコ",
     "types": [
       "かくとう"
     ],
+    "baseStats": {
+      "hp": 50,
+      "attack": 68,
+      "defense": 60,
+      "spAttack": 50,
+      "spDefense": 50,
+      "speed": 32
+    },
     "learnset": [
       5,
       8,
@@ -2518,12 +2819,19 @@
     ]
   },
   {
-    "id": "grapploct",
-    "number": "0853",
+    "id": "0853",
     "name": "オトスパス",
     "types": [
       "かくとう"
     ],
+    "baseStats": {
+      "hp": 80,
+      "attack": 118,
+      "defense": 90,
+      "spAttack": 70,
+      "spDefense": 80,
+      "speed": 42
+    },
     "learnset": [
       5,
       8,
@@ -2578,12 +2886,19 @@
     ]
   },
   {
-    "id": "sinistea",
-    "number": "0854",
+    "id": "0854",
     "name": "ヤバチャ",
     "types": [
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 40,
+      "attack": 45,
+      "defense": 45,
+      "spAttack": 74,
+      "spDefense": 54,
+      "speed": 50
+    },
     "learnset": [
       60,
       84,
@@ -2634,12 +2949,19 @@
     ]
   },
   {
-    "id": "polteageist",
-    "number": "0855",
+    "id": "0855",
     "name": "ポットデス",
     "types": [
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 60,
+      "attack": 65,
+      "defense": 65,
+      "spAttack": 134,
+      "spDefense": 114,
+      "speed": 70
+    },
     "learnset": [
       60,
       63,
@@ -2698,12 +3020,19 @@
     ]
   },
   {
-    "id": "hatenna",
-    "number": "0856",
+    "id": "0856",
     "name": "ミブリム",
     "types": [
       "エスパー"
     ],
+    "baseStats": {
+      "hp": 42,
+      "attack": 30,
+      "defense": 45,
+      "spAttack": 56,
+      "spDefense": 53,
+      "speed": 39
+    },
     "learnset": [
       60,
       87,
@@ -2759,12 +3088,19 @@
     ]
   },
   {
-    "id": "hattrem",
-    "number": "0857",
+    "id": "0857",
     "name": "テブリム",
     "types": [
       "エスパー"
     ],
+    "baseStats": {
+      "hp": 57,
+      "attack": 40,
+      "defense": 65,
+      "spAttack": 86,
+      "spDefense": 73,
+      "speed": 49
+    },
     "learnset": [
       60,
       87,
@@ -2818,13 +3154,20 @@
     ]
   },
   {
-    "id": "hatterene",
-    "number": "0858",
+    "id": "0858",
     "name": "ブリムオン",
     "types": [
       "エスパー",
       "フェアリー"
     ],
+    "baseStats": {
+      "hp": 57,
+      "attack": 90,
+      "defense": 95,
+      "spAttack": 136,
+      "spDefense": 103,
+      "speed": 29
+    },
     "learnset": [
       14,
       60,
@@ -2895,13 +3238,20 @@
     ]
   },
   {
-    "id": "impidimp",
-    "number": "0859",
+    "id": "0859",
     "name": "ベロバー",
     "types": [
       "あく",
       "フェアリー"
     ],
+    "baseStats": {
+      "hp": 45,
+      "attack": 45,
+      "defense": 30,
+      "spAttack": 55,
+      "spDefense": 40,
+      "speed": 50
+    },
     "learnset": [
       5,
       25,
@@ -2956,13 +3306,20 @@
     ]
   },
   {
-    "id": "morgrem",
-    "number": "0860",
+    "id": "0860",
     "name": "ギモー",
     "types": [
       "あく",
       "フェアリー"
     ],
+    "baseStats": {
+      "hp": 65,
+      "attack": 60,
+      "defense": 45,
+      "spAttack": 75,
+      "spDefense": 55,
+      "speed": 70
+    },
     "learnset": [
       5,
       25,
@@ -3019,13 +3376,20 @@
     ]
   },
   {
-    "id": "grimmsnarl",
-    "number": "0861",
+    "id": "0861",
     "name": "オーロンゲ",
     "types": [
       "あく",
       "フェアリー"
     ],
+    "baseStats": {
+      "hp": 95,
+      "attack": 120,
+      "defense": 65,
+      "spAttack": 95,
+      "spDefense": 75,
+      "speed": 60
+    },
     "learnset": [
       5,
       7,
@@ -3105,13 +3469,20 @@
     ]
   },
   {
-    "id": "obstagoon",
-    "number": "0862",
+    "id": "0862",
     "name": "タチフサグマ",
     "types": [
       "あく",
       "ノーマル"
     ],
+    "baseStats": {
+      "hp": 93,
+      "attack": 90,
+      "defense": 101,
+      "spAttack": 60,
+      "spDefense": 81,
+      "speed": 95
+    },
     "learnset": [
       5,
       7,
@@ -3197,12 +3568,19 @@
     ]
   },
   {
-    "id": "perrserker",
-    "number": "0863",
+    "id": "0863",
     "name": "ニャイキング",
     "types": [
       "はがね"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 110,
+      "defense": 100,
+      "spAttack": 50,
+      "spDefense": 60,
+      "speed": 50
+    },
     "learnset": [
       6,
       10,
@@ -3287,12 +3665,19 @@
     ]
   },
   {
-    "id": "cursola",
-    "number": "0864",
+    "id": "0864",
     "name": "サニゴーン",
     "types": [
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 60,
+      "attack": 95,
+      "defense": 50,
+      "spAttack": 145,
+      "spDefense": 130,
+      "speed": 30
+    },
     "learnset": [
       33,
       34,
@@ -3366,12 +3751,19 @@
     ]
   },
   {
-    "id": "sirfetchd",
-    "number": "0865",
+    "id": "0865",
     "name": "ネギガナイト",
     "types": [
       "かくとう"
     ],
+    "baseStats": {
+      "hp": 62,
+      "attack": 135,
+      "defense": 95,
+      "spAttack": 68,
+      "spDefense": 82,
+      "speed": 65
+    },
     "learnset": [
       14,
       21,
@@ -3420,22 +3812,127 @@
     ]
   },
   {
-    "id": "mr-rime",
-    "number": "0866",
+    "id": "0866",
     "name": "バリコオル",
     "types": [
       "こおり",
       "エスパー"
+    ],
+    "baseStats": {
+      "hp": 80,
+      "attack": 85,
+      "defense": 75,
+      "spAttack": 110,
+      "spDefense": 100,
+      "speed": 70
+    },
+    "learnset": [
+      1,
+      5,
+      8,
+      25,
+      34,
+      58,
+      60,
+      63,
+      72,
+      79,
+      87,
+      89,
+      90,
+      91,
+      93,
+      98,
+      103,
+      107,
+      121,
+      122,
+      123,
+      139,
+      141,
+      142,
+      145,
+      149,
+      151,
+      152,
+      153,
+      159,
+      160,
+      168,
+      178,
+      179,
+      180,
+      184,
+      185,
+      195,
+      239,
+      262,
+      263,
+      271,
+      276,
+      281,
+      283,
+      294,
+      298,
+      300,
+      305,
+      311,
+      312,
+      313,
+      314,
+      320,
+      322,
+      327,
+      340,
+      354,
+      369,
+      370,
+      371,
+      404,
+      407,
+      416,
+      417,
+      418,
+      436,
+      438,
+      439,
+      443,
+      444,
+      446,
+      453,
+      458,
+      470,
+      494,
+      495,
+      500,
+      512,
+      515,
+      516,
+      520,
+      522,
+      588,
+      596,
+      620,
+      657,
+      754,
+      770
     ]
   },
   {
-    "id": "runerigus",
-    "number": "0867",
+    "id": "0867",
     "name": "デスバーン",
     "types": [
       "じめん",
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 58,
+      "attack": 95,
+      "defense": 145,
+      "spAttack": 50,
+      "spDefense": 105,
+      "speed": 30
+    },
     "learnset": [
       21,
       50,
@@ -3507,12 +4004,19 @@
     ]
   },
   {
-    "id": "milcery",
-    "number": "0868",
+    "id": "0868",
     "name": "マホミル",
     "types": [
       "フェアリー"
     ],
+    "baseStats": {
+      "hp": 45,
+      "attack": 40,
+      "defense": 40,
+      "spAttack": 50,
+      "spDefense": 61,
+      "speed": 34
+    },
     "learnset": [
       33,
       86,
@@ -3545,12 +4049,19 @@
     ]
   },
   {
-    "id": "alcremie",
-    "number": "0869",
+    "id": "0869",
     "name": "マホイップ",
     "types": [
       "フェアリー"
     ],
+    "baseStats": {
+      "hp": 65,
+      "attack": 60,
+      "defense": 75,
+      "spAttack": 110,
+      "spDefense": 121,
+      "speed": 64
+    },
     "learnset": [
       33,
       63,
@@ -3608,12 +4119,19 @@
     ]
   },
   {
-    "id": "falinks",
-    "number": "0870",
+    "id": "0870",
     "name": "タイレーツ",
     "types": [
       "かくとう"
     ],
+    "baseStats": {
+      "hp": 65,
+      "attack": 100,
+      "defense": 100,
+      "spAttack": 70,
+      "spDefense": 60,
+      "speed": 75
+    },
     "learnset": [
       14,
       29,
@@ -3675,12 +4193,19 @@
     ]
   },
   {
-    "id": "pincurchin",
-    "number": "0871",
+    "id": "0871",
     "name": "バチンウニ",
     "types": [
       "でんき"
     ],
+    "baseStats": {
+      "hp": 48,
+      "attack": 101,
+      "defense": 95,
+      "spAttack": 91,
+      "spDefense": 85,
+      "speed": 15
+    },
     "learnset": [
       31,
       34,
@@ -3745,13 +4270,20 @@
     ]
   },
   {
-    "id": "snom",
-    "number": "0872",
+    "id": "0872",
     "name": "ユキハミ",
     "types": [
       "こおり",
       "むし"
     ],
+    "baseStats": {
+      "hp": 30,
+      "attack": 25,
+      "defense": 35,
+      "spAttack": 45,
+      "spDefense": 30,
+      "speed": 20
+    },
     "learnset": [
       87,
       89,
@@ -3777,13 +4309,20 @@
     ]
   },
   {
-    "id": "frosmoth",
-    "number": "0873",
+    "id": "0873",
     "name": "モスノウ",
     "types": [
       "こおり",
       "むし"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 65,
+      "defense": 60,
+      "spAttack": 125,
+      "spDefense": 90,
+      "speed": 65
+    },
     "learnset": [
       36,
       54,
@@ -3844,12 +4383,19 @@
     ]
   },
   {
-    "id": "stonjourner",
-    "number": "0874",
+    "id": "0874",
     "name": "イシヘンジン",
     "types": [
       "いわ"
     ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 125,
+      "defense": 135,
+      "spAttack": 20,
+      "spDefense": 20,
+      "speed": 70
+    },
     "learnset": [
       23,
       25,
@@ -3909,12 +4455,19 @@
     ]
   },
   {
-    "id": "eiscue",
-    "number": "0875",
+    "id": "0875",
     "name": "コオリッポ",
     "types": [
       "こおり"
     ],
+    "baseStats": {
+      "hp": 75,
+      "attack": 80,
+      "defense": 110,
+      "spAttack": 65,
+      "spDefense": 90,
+      "speed": 50
+    },
     "learnset": [
       8,
       29,
@@ -3974,13 +4527,20 @@
     ]
   },
   {
-    "id": "indeedee",
-    "number": "0876",
+    "id": "0876",
     "name": "イエッサン",
     "types": [
       "エスパー",
       "ノーマル"
     ],
+    "baseStats": {
+      "hp": 60,
+      "attack": 65,
+      "defense": 55,
+      "spAttack": 105,
+      "spDefense": 95,
+      "speed": 95
+    },
     "learnset": [
       6,
       34,
@@ -4042,13 +4602,95 @@
     ]
   },
   {
-    "id": "morpeko",
-    "number": "0877",
+    "id": "0876A",
+    "name": "イエッサン",
+    "types": [
+      "エスパー",
+      "ノーマル"
+    ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 55,
+      "defense": 65,
+      "spAttack": 95,
+      "spDefense": 105,
+      "speed": 85
+    },
+    "learnset": [
+      6,
+      34,
+      36,
+      60,
+      87,
+      89,
+      93,
+      98,
+      141,
+      142,
+      145,
+      149,
+      153,
+      195,
+      204,
+      233,
+      262,
+      271,
+      291,
+      294,
+      297,
+      305,
+      312,
+      313,
+      327,
+      328,
+      345,
+      353,
+      364,
+      380,
+      389,
+      394,
+      417,
+      420,
+      436,
+      439,
+      453,
+      458,
+      493,
+      494,
+      495,
+      500,
+      515,
+      516,
+      520,
+      522,
+      589,
+      592,
+      598,
+      604,
+      610,
+      620,
+      657,
+      754,
+      762,
+      808,
+      874
+    ]
+  },
+  {
+    "id": "0877",
     "name": "モルペコ",
     "types": [
       "でんき",
       "あく"
     ],
+    "baseStats": {
+      "hp": 58,
+      "attack": 95,
+      "defense": 58,
+      "spAttack": 70,
+      "spDefense": 58,
+      "speed": 97
+    },
     "learnset": [
       9,
       36,
@@ -4127,12 +4769,19 @@
     ]
   },
   {
-    "id": "cufant",
-    "number": "0878",
+    "id": "0878",
     "name": "ゾウドウ",
     "types": [
       "はがね"
     ],
+    "baseStats": {
+      "hp": 72,
+      "attack": 80,
+      "defense": 49,
+      "spAttack": 40,
+      "spDefense": 49,
+      "speed": 40
+    },
     "learnset": [
       18,
       21,
@@ -4194,12 +4843,19 @@
     ]
   },
   {
-    "id": "copperajah",
-    "number": "0879",
+    "id": "0879",
     "name": "ダイオウドウ",
     "types": [
       "はがね"
     ],
+    "baseStats": {
+      "hp": 122,
+      "attack": 130,
+      "defense": 69,
+      "spAttack": 80,
+      "spDefense": 69,
+      "speed": 30
+    },
     "learnset": [
       23,
       25,
@@ -4268,13 +4924,20 @@
     ]
   },
   {
-    "id": "dracozolt",
-    "number": "0880",
+    "id": "0880",
     "name": "パッチラゴン",
     "types": [
       "でんき",
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 90,
+      "attack": 100,
+      "defense": 90,
+      "spAttack": 80,
+      "spDefense": 70,
+      "speed": 75
+    },
     "learnset": [
       5,
       9,
@@ -4337,13 +5000,20 @@
     ]
   },
   {
-    "id": "arctozolt",
-    "number": "0881",
+    "id": "0881",
     "name": "パッチルドン",
     "types": [
       "でんき",
       "こおり"
     ],
+    "baseStats": {
+      "hp": 90,
+      "attack": 100,
+      "defense": 90,
+      "spAttack": 90,
+      "spDefense": 80,
+      "speed": 55
+    },
     "learnset": [
       5,
       9,
@@ -4402,13 +5072,20 @@
     ]
   },
   {
-    "id": "dracovish",
-    "number": "0882",
+    "id": "0882",
     "name": "ウオノラゴン",
     "types": [
       "みず",
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 90,
+      "attack": 90,
+      "defense": 100,
+      "spAttack": 70,
+      "spDefense": 80,
+      "speed": 75
+    },
     "learnset": [
       23,
       25,
@@ -4463,13 +5140,20 @@
     ]
   },
   {
-    "id": "arctovish",
-    "number": "0883",
+    "id": "0883",
     "name": "ウオチルドン",
     "types": [
       "みず",
       "こおり"
     ],
+    "baseStats": {
+      "hp": 90,
+      "attack": 90,
+      "defense": 100,
+      "spAttack": 80,
+      "spDefense": 90,
+      "speed": 55
+    },
     "learnset": [
       34,
       44,
@@ -4519,13 +5203,20 @@
     ]
   },
   {
-    "id": "duraludon",
-    "number": "0884",
+    "id": "0884",
     "name": "ジュラルドン",
     "types": [
       "はがね",
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 95,
+      "defense": 115,
+      "spAttack": 120,
+      "spDefense": 50,
+      "speed": 85
+    },
     "learnset": [
       14,
       34,
@@ -4590,13 +5281,20 @@
     ]
   },
   {
-    "id": "dreepy",
-    "number": "0885",
+    "id": "0885",
     "name": "ドラメシヤ",
     "types": [
       "ドラゴン",
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 28,
+      "attack": 60,
+      "defense": 30,
+      "spAttack": 40,
+      "spDefense": 30,
+      "speed": 82
+    },
     "learnset": [
       44,
       50,
@@ -4627,13 +5325,20 @@
     ]
   },
   {
-    "id": "drakloak",
-    "number": "0886",
+    "id": "0886",
     "name": "ドロンチ",
     "types": [
       "ドラゴン",
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 68,
+      "attack": 80,
+      "defense": 50,
+      "spAttack": 60,
+      "spDefense": 50,
+      "speed": 102
+    },
     "learnset": [
       36,
       38,
@@ -4698,13 +5403,20 @@
     ]
   },
   {
-    "id": "dragapult",
-    "number": "0887",
+    "id": "0887",
     "name": "ドラパルト",
     "types": [
       "ドラゴン",
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 88,
+      "attack": 120,
+      "defense": 75,
+      "spAttack": 100,
+      "spDefense": 75,
+      "speed": 142
+    },
     "learnset": [
       19,
       34,
@@ -4779,12 +5491,19 @@
     ]
   },
   {
-    "id": "zacian",
-    "number": "0888",
+    "id": "0888",
     "name": "ザシアン",
     "types": [
       "フェアリー"
     ],
+    "baseStats": {
+      "hp": 92,
+      "attack": 120,
+      "defense": 115,
+      "spAttack": 80,
+      "spDefense": 115,
+      "speed": 138
+    },
     "learnset": [
       14,
       34,
@@ -4852,12 +5571,100 @@
     ]
   },
   {
-    "id": "zamazenta",
-    "number": "0889",
+    "id": "0888A",
+    "name": "ザシアン(けんのおう)",
+    "types": [
+      "フェアリー",
+      "はがね"
+    ],
+    "baseStats": {
+      "hp": 92,
+      "attack": 150,
+      "defense": 115,
+      "spAttack": 80,
+      "spDefense": 115,
+      "speed": 148
+    },
+    "learnset": [
+      14,
+      34,
+      36,
+      44,
+      63,
+      70,
+      87,
+      89,
+      92,
+      104,
+      127,
+      135,
+      141,
+      142,
+      153,
+      182,
+      193,
+      204,
+      235,
+      246,
+      250,
+      262,
+      284,
+      285,
+      290,
+      305,
+      312,
+      321,
+      322,
+      328,
+      345,
+      370,
+      372,
+      403,
+      405,
+      438,
+      443,
+      448,
+      449,
+      450,
+      452,
+      455,
+      466,
+      516,
+      521,
+      534,
+      544,
+      546,
+      549,
+      557,
+      570,
+      583,
+      596,
+      598,
+      600,
+      620,
+      648,
+      652,
+      671,
+      684,
+      753,
+      808,
+      842
+    ]
+  },
+  {
+    "id": "0889",
     "name": "ザマゼンタ",
     "types": [
       "かくとう"
     ],
+    "baseStats": {
+      "hp": 92,
+      "attack": 120,
+      "defense": 115,
+      "spAttack": 80,
+      "spDefense": 115,
+      "speed": 138
+    },
     "learnset": [
       34,
       36,
@@ -4930,13 +5737,106 @@
     ]
   },
   {
-    "id": "eternatus",
-    "number": "0890",
+    "id": "0889A",
+    "name": "ザマゼンタ(たてのおう)",
+    "types": [
+      "かくとう",
+      "はがね"
+    ],
+    "baseStats": {
+      "hp": 92,
+      "attack": 120,
+      "defense": 140,
+      "spAttack": 80,
+      "spDefense": 140,
+      "speed": 128
+    },
+    "learnset": [
+      34,
+      36,
+      44,
+      63,
+      70,
+      72,
+      79,
+      87,
+      89,
+      90,
+      91,
+      92,
+      111,
+      114,
+      141,
+      142,
+      150,
+      151,
+      153,
+      182,
+      193,
+      204,
+      235,
+      246,
+      250,
+      262,
+      276,
+      284,
+      285,
+      290,
+      305,
+      312,
+      321,
+      322,
+      328,
+      345,
+      370,
+      372,
+      401,
+      403,
+      404,
+      417,
+      418,
+      438,
+      443,
+      448,
+      449,
+      450,
+      455,
+      466,
+      491,
+      505,
+      516,
+      534,
+      544,
+      546,
+      557,
+      570,
+      598,
+      600,
+      620,
+      652,
+      684,
+      733,
+      753,
+      768,
+      808,
+      842
+    ]
+  },
+  {
+    "id": "0890",
     "name": "ムゲンダイナ",
     "types": [
       "どく",
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 140,
+      "attack": 85,
+      "defense": 95,
+      "spAttack": 145,
+      "spDefense": 95,
+      "speed": 130
+    },
     "learnset": [
       19,
       34,
@@ -4994,12 +5894,19 @@
     ]
   },
   {
-    "id": "kubfu",
-    "number": "0891",
+    "id": "0891",
     "name": "ダクマ",
     "types": [
       "かくとう"
     ],
+    "baseStats": {
+      "hp": 60,
+      "attack": 90,
+      "defense": 60,
+      "spAttack": 53,
+      "spDefense": 50,
+      "speed": 72
+    },
     "learnset": [
       5,
       7,
@@ -5052,13 +5959,20 @@
     ]
   },
   {
-    "id": "urshifu",
-    "number": "0892",
+    "id": "0892",
     "name": "ウーラオス",
     "types": [
       "かくとう",
       "あく"
     ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 130,
+      "defense": 100,
+      "spAttack": 63,
+      "spDefense": 60,
+      "speed": 97
+    },
     "learnset": [
       5,
       7,
@@ -5138,13 +6052,20 @@
     ]
   },
   {
-    "id": "zarude",
-    "number": "0893",
+    "id": "0893",
     "name": "ザルード",
     "types": [
       "あく",
       "くさ"
     ],
+    "baseStats": {
+      "hp": 105,
+      "attack": 120,
+      "defense": 105,
+      "spAttack": 70,
+      "spDefense": 95,
+      "speed": 105
+    },
     "learnset": [
       5,
       10,
@@ -5231,12 +6152,19 @@
     ]
   },
   {
-    "id": "regieleki",
-    "number": "0894",
+    "id": "0894",
     "name": "レジエレキ",
     "types": [
       "でんき"
     ],
+    "baseStats": {
+      "hp": 80,
+      "attack": 100,
+      "defense": 50,
+      "spAttack": 100,
+      "spDefense": 50,
+      "speed": 200
+    },
     "learnset": [
       34,
       36,
@@ -5288,12 +6216,19 @@
     ]
   },
   {
-    "id": "regidrago",
-    "number": "0895",
+    "id": "0895",
     "name": "レジドラゴ",
     "types": [
       "ドラゴン"
     ],
+    "baseStats": {
+      "hp": 200,
+      "attack": 100,
+      "defense": 50,
+      "spAttack": 100,
+      "spDefense": 50,
+      "speed": 80
+    },
     "learnset": [
       34,
       36,
@@ -5340,12 +6275,19 @@
     ]
   },
   {
-    "id": "glastrier",
-    "number": "0896",
+    "id": "0896",
     "name": "ブリザポス",
     "types": [
       "こおり"
     ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 145,
+      "defense": 130,
+      "spAttack": 65,
+      "spDefense": 110,
+      "speed": 30
+    },
     "learnset": [
       14,
       23,
@@ -5405,12 +6347,19 @@
     ]
   },
   {
-    "id": "spectrier",
-    "number": "0897",
+    "id": "0897",
     "name": "レイスポス",
     "types": [
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 65,
+      "defense": 60,
+      "spAttack": 145,
+      "spDefense": 80,
+      "speed": 130
+    },
     "learnset": [
       23,
       33,
@@ -5465,13 +6414,20 @@
     ]
   },
   {
-    "id": "calyrex",
-    "number": "0898",
+    "id": "0898",
     "name": "バドレックス",
     "types": [
       "エスパー",
       "くさ"
     ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 80,
+      "defense": 80,
+      "spAttack": 80,
+      "spDefense": 80,
+      "speed": 80
+    },
     "learnset": [
       1,
       6,
@@ -5545,13 +6501,194 @@
     ]
   },
   {
-    "id": "wyrdeer",
-    "number": "0899",
+    "id": "0898B",
+    "name": "バドレックス(こくば)",
+    "types": [
+      "エスパー",
+      "ゴースト"
+    ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 85,
+      "defense": 80,
+      "spAttack": 165,
+      "spDefense": 100,
+      "speed": 150
+    },
+    "learnset": [
+      1,
+      6,
+      36,
+      60,
+      63,
+      72,
+      78,
+      79,
+      84,
+      85,
+      87,
+      89,
+      90,
+      91,
+      92,
+      93,
+      141,
+      142,
+      145,
+      149,
+      153,
+      174,
+      179,
+      195,
+      204,
+      233,
+      250,
+      261,
+      262,
+      276,
+      281,
+      291,
+      294,
+      305,
+      312,
+      313,
+      327,
+      328,
+      353,
+      377,
+      380,
+      389,
+      417,
+      418,
+      432,
+      439,
+      443,
+      453,
+      458,
+      461,
+      470,
+      494,
+      495,
+      500,
+      516,
+      520,
+      522,
+      525,
+      570,
+      592,
+      595,
+      648,
+      655,
+      657,
+      661,
+      733,
+      748,
+      754,
+      808
+    ]
+  },
+  {
+    "id": "0898W",
+    "name": "バドレックス(はくば)",
+    "types": [
+      "エスパー",
+      "こおり"
+    ],
+    "baseStats": {
+      "hp": 100,
+      "attack": 165,
+      "defense": 150,
+      "spAttack": 85,
+      "spDefense": 130,
+      "speed": 50
+    },
+    "learnset": [
+      1,
+      6,
+      36,
+      60,
+      63,
+      72,
+      78,
+      79,
+      84,
+      85,
+      87,
+      89,
+      90,
+      91,
+      92,
+      93,
+      141,
+      142,
+      145,
+      149,
+      153,
+      174,
+      179,
+      195,
+      204,
+      233,
+      250,
+      261,
+      262,
+      276,
+      281,
+      291,
+      294,
+      305,
+      312,
+      313,
+      327,
+      328,
+      353,
+      377,
+      380,
+      389,
+      417,
+      418,
+      432,
+      439,
+      443,
+      453,
+      458,
+      461,
+      470,
+      494,
+      495,
+      500,
+      516,
+      520,
+      522,
+      525,
+      570,
+      592,
+      595,
+      648,
+      655,
+      657,
+      661,
+      733,
+      748,
+      754,
+      808
+    ]
+  },
+  {
+    "id": "0899",
     "name": "アヤシシ",
     "types": [
       "ノーマル",
       "エスパー"
     ],
+    "baseStats": {
+      "hp": 103,
+      "attack": 105,
+      "defense": 72,
+      "spAttack": 105,
+      "spDefense": 75,
+      "speed": 65
+    },
     "learnset": [
       23,
       28,
@@ -5622,13 +6759,20 @@
     ]
   },
   {
-    "id": "kleavor",
-    "number": "0900",
+    "id": "0900",
     "name": "バサギリ",
     "types": [
       "むし",
       "いわ"
     ],
+    "baseStats": {
+      "hp": 70,
+      "attack": 135,
+      "defense": 95,
+      "spAttack": 45,
+      "spDefense": 70,
+      "speed": 85
+    },
     "learnset": [
       14,
       36,
@@ -5689,13 +6833,20 @@
     ]
   },
   {
-    "id": "ursaluna",
-    "number": "0901",
+    "id": "0901",
     "name": "ガチグマ",
     "types": [
       "じめん",
       "ノーマル"
     ],
+    "baseStats": {
+      "hp": 130,
+      "attack": 140,
+      "defense": 105,
+      "spAttack": 45,
+      "spDefense": 80,
+      "speed": 50
+    },
     "learnset": [
       7,
       8,
@@ -5774,13 +6925,112 @@
     ]
   },
   {
-    "id": "basculegion",
-    "number": "0902",
+    "id": "0901A",
+    "name": "ガチグマ(アカツキ)",
+    "types": [
+      "じめん",
+      "ノーマル"
+    ],
+    "baseStats": {
+      "hp": 113,
+      "attack": 70,
+      "defense": 120,
+      "spAttack": 135,
+      "spDefense": 65,
+      "speed": 52
+    },
+    "learnset": [
+      7,
+      8,
+      9,
+      10,
+      14,
+      34,
+      36,
+      37,
+      38,
+      43,
+      63,
+      68,
+      70,
+      72,
+      86,
+      87,
+      89,
+      108,
+      111,
+      112,
+      113,
+      126,
+      137,
+      141,
+      142,
+      148,
+      150,
+      151,
+      153,
+      159,
+      170,
+      195,
+      198,
+      204,
+      228,
+      235,
+      239,
+      250,
+      262,
+      263,
+      285,
+      290,
+      298,
+      305,
+      306,
+      311,
+      312,
+      322,
+      345,
+      354,
+      375,
+      392,
+      403,
+      404,
+      407,
+      432,
+      436,
+      441,
+      443,
+      446,
+      447,
+      465,
+      501,
+      505,
+      598,
+      604,
+      646,
+      654,
+      733,
+      795,
+      808,
+      842,
+      869,
+      873
+    ]
+  },
+  {
+    "id": "0902",
     "name": "イダイトウ",
     "types": [
       "みず",
       "ゴースト"
     ],
+    "baseStats": {
+      "hp": 120,
+      "attack": 112,
+      "defense": 65,
+      "spAttack": 80,
+      "spDefense": 75,
+      "speed": 78
+    },
     "learnset": [
       29,
       33,
@@ -5841,13 +7091,94 @@
     ]
   },
   {
-    "id": "sneasler",
-    "number": "0903",
+    "id": "0902A",
+    "name": "イダイトウ♀",
+    "types": [
+      "みず",
+      "ゴースト"
+    ],
+    "baseStats": {
+      "hp": 120,
+      "attack": 92,
+      "defense": 65,
+      "spAttack": 100,
+      "spDefense": 75,
+      "speed": 78
+    },
+    "learnset": [
+      29,
+      33,
+      36,
+      37,
+      38,
+      39,
+      44,
+      55,
+      56,
+      57,
+      58,
+      63,
+      76,
+      87,
+      89,
+      92,
+      95,
+      97,
+      98,
+      121,
+      123,
+      131,
+      141,
+      151,
+      153,
+      202,
+      204,
+      242,
+      247,
+      250,
+      262,
+      277,
+      290,
+      295,
+      298,
+      305,
+      325,
+      368,
+      377,
+      385,
+      443,
+      449,
+      453,
+      475,
+      479,
+      526,
+      581,
+      684,
+      687,
+      756,
+      769,
+      791,
+      808,
+      811,
+      840,
+      843
+    ]
+  },
+  {
+    "id": "0903",
     "name": "オオニューラ",
     "types": [
       "かくとう",
       "どく"
     ],
+    "baseStats": {
+      "hp": 80,
+      "attack": 130,
+      "defense": 60,
+      "spAttack": 40,
+      "spDefense": 80,
+      "speed": 120
+    },
     "learnset": [
       7,
       10,
@@ -5917,13 +7248,20 @@
     ]
   },
   {
-    "id": "overqwil",
-    "number": "0904",
+    "id": "0904",
     "name": "ハリーマン",
     "types": [
       "あく",
       "どく"
     ],
+    "baseStats": {
+      "hp": 85,
+      "attack": 115,
+      "defense": 95,
+      "spAttack": 65,
+      "spDefense": 65,
+      "speed": 85
+    },
     "learnset": [
       14,
       33,
@@ -5992,13 +7330,89 @@
     ]
   },
   {
-    "id": "enamorus",
-    "number": "0905",
+    "id": "0905",
     "name": "ラブトロス",
     "types": [
       "フェアリー",
       "ひこう"
     ],
+    "baseStats": {
+      "hp": 74,
+      "attack": 115,
+      "defense": 70,
+      "spAttack": 135,
+      "spDefense": 80,
+      "speed": 106
+    },
+    "learnset": [
+      19,
+      34,
+      36,
+      63,
+      72,
+      87,
+      89,
+      92,
+      93,
+      105,
+      131,
+      141,
+      145,
+      151,
+      153,
+      250,
+      262,
+      289,
+      291,
+      298,
+      301,
+      302,
+      305,
+      311,
+      318,
+      328,
+      351,
+      352,
+      364,
+      370,
+      394,
+      399,
+      438,
+      441,
+      443,
+      453,
+      466,
+      470,
+      589,
+      592,
+      595,
+      596,
+      598,
+      599,
+      600,
+      610,
+      620,
+      759,
+      788,
+      808,
+      871
+    ]
+  },
+  {
+    "id": "0905A",
+    "name": "ラブトロス(れいじゅうS)",
+    "types": [
+      "フェアリー",
+      "ひこう"
+    ],
+    "baseStats": {
+      "hp": 74,
+      "attack": 115,
+      "defense": 110,
+      "spAttack": 135,
+      "spDefense": 100,
+      "speed": 46
+    },
     "learnset": [
       19,
       34,
