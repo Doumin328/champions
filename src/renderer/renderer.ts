@@ -1,5 +1,6 @@
 // レンダラープロセス用: 映像ソースをプルダウンで選択して表示
 
+
 /** ポケモン情報（data/pokemon.json と同期） */
 interface Pokemon {
   id: string;
@@ -301,10 +302,17 @@ function applyStreamLiveUI(live: boolean): void {
 
 function stopStreaming(): void {
   if (!isStreaming) return;
+
+  // MediaRecorder を停止
   if (streamMediaRecorder && streamMediaRecorder.state !== "inactive") {
     streamMediaRecorder.stop();
   }
   streamMediaRecorder = null;
+
+  // ffmpeg プロセスを停止（IPC）
+  window.electronAPI.streamStop().catch((e) => console.error("stream:stop error", e));
+  window.electronAPI.removeStreamStatusListener();
+
   if (streamTimerInterval !== null) {
     clearInterval(streamTimerInterval);
     streamTimerInterval = null;
@@ -318,18 +326,18 @@ function startStreaming(): void {
   if (isStreaming || !currentStream) return;
 
   const urlEl = document.getElementById("stream-url") as HTMLInputElement | null;
+  const keyEl = document.getElementById("stream-key") as HTMLInputElement | null;
   const label = document.getElementById("stream-status-label");
-  if (!urlEl?.value.trim()) {
+
+  const url = urlEl?.value.trim() ?? "";
+  const key = keyEl?.value.trim() ?? "";
+
+  if (!url) {
     if (label) {
       const orig = label.textContent;
       label.textContent = "URL を入力してください";
       label.style.color = "#fc8181";
-      setTimeout(() => {
-        if (!isStreaming) {
-          label.textContent = orig;
-          label.style.color = "";
-        }
-      }, 2500);
+      setTimeout(() => { if (!isStreaming) { label.textContent = orig; label.style.color = ""; } }, 2500);
     }
     return;
   }
@@ -339,28 +347,63 @@ function startStreaming(): void {
   const bitrateEl = document.getElementById("stream-bitrate") as HTMLSelectElement | null;
   const bitrate = Number(bitrateEl?.value ?? 4500000);
 
-  // MediaRecorder でキャプチャーストリームを開始
-  // NOTE: 実際の RTMP 配信は中継サーバー (ffmpeg 等) が別途必要です
-  try {
-    const options: MediaRecorderOptions = { videoBitsPerSecond: bitrate };
-    const supported = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
-    for (const mime of supported) {
-      if (MediaRecorder.isTypeSupported(mime)) {
-        options.mimeType = mime;
-        break;
-      }
-    }
-    streamMediaRecorder = new MediaRecorder(currentStream, options);
-    streamMediaRecorder.ondataavailable = (_e) => {
-      // ここで _e.data (Blob) を RTMP 中継サーバーへ転送する実装を追加できます
-    };
-    streamMediaRecorder.onerror = () => stopStreaming();
-    streamMediaRecorder.start(1000);
-  } catch (e) {
-    console.error("MediaRecorder の初期化に失敗:", e);
-    // MediaRecorder が使えなくてもタイマー・UI は動かす
+  // RTMP URL = サーバーURL / ストリームキー
+  const rtmpUrl = key ? `${url.replace(/\/+$/, "")}/${key}` : url;
+
+  // MediaRecorder でキャプチャーストリームを WebM 形式で取得
+  const options: MediaRecorderOptions = { videoBitsPerSecond: bitrate };
+  const mimes = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
+  for (const mime of mimes) {
+    if (MediaRecorder.isTypeSupported(mime)) { options.mimeType = mime; break; }
   }
 
+  let recorder: MediaRecorder;
+  try {
+    recorder = new MediaRecorder(currentStream, options);
+  } catch (e) {
+    console.error("MediaRecorder の初期化に失敗:", e);
+    setStreamError("映像エンコードに失敗しました");
+    return;
+  }
+
+  // main プロセスで ffmpeg を起動
+  window.electronAPI
+    .streamStart({ rtmpUrl, videoBitrate: bitrate })
+    .then((res) => {
+      if (!res.success) {
+        recorder.stop();
+        setStreamError(res.error ?? "配信の開始に失敗しました");
+        stopStreaming();
+      }
+    })
+    .catch((e) => {
+      recorder.stop();
+      setStreamError(String(e));
+      stopStreaming();
+    });
+
+  // ffmpeg からのステータスをコンソールに出力
+  window.electronAPI.onStreamStatus((status) => {
+    if (status.state === "error") {
+      console.error("[ffmpeg]", status.message);
+      stopStreaming();
+    } else if (status.state === "stopped" && isStreaming) {
+      stopStreaming();
+    }
+  });
+
+  // 映像チャンクを IPC 経由で ffmpeg stdin へ流す
+  recorder.ondataavailable = (e) => {
+    if (e.data.size > 0) {
+      e.data.arrayBuffer().then((buf) => {
+        if (isStreaming) window.electronAPI.streamSendData(buf);
+      }).catch(() => { /* ignore */ });
+    }
+  };
+  recorder.onerror = () => stopStreaming();
+  recorder.start(500); // 500ms ごとにチャンクを送信
+
+  streamMediaRecorder = recorder;
   isStreaming = true;
   streamStartTime = Date.now();
   applyStreamLiveUI(true);
@@ -370,6 +413,16 @@ function startStreaming(): void {
     if (!streamStartTime || !elapsed) return;
     elapsed.textContent = formatElapsed(Math.floor((Date.now() - streamStartTime) / 1000));
   }, 1000);
+}
+
+function setStreamError(message: string): void {
+  const label = document.getElementById("stream-status-label");
+  if (!label) return;
+  label.textContent = message;
+  label.style.color = "#fc8181";
+  setTimeout(() => {
+    if (!isStreaming) { label.textContent = "停止中"; label.style.color = ""; }
+  }, 4000);
 }
 
 function initStreaming(): void {
