@@ -13,6 +13,7 @@ let demoPokemon: Pokemon[] = [];
 const STORAGE_KEY_VIDEO = "champions_last_video_device_id";
 const STORAGE_KEY_AUDIO = "champions_last_audio_device_id";
 const STORAGE_KEY_TEAM = "champions_team";
+const STORAGE_KEY_STREAM = "champions_stream_settings";
 const MAX_TEAM_SIZE = 6;
 
 /** ダミー画像（SVG data URL） */
@@ -44,6 +45,19 @@ const statusEl = document.getElementById("video-status");
 
 let currentStream: MediaStream | null = null;
 
+// ---------- 配信コントロール状態 ----------
+interface StreamSettings {
+  url: string;
+  key: string;
+  bitrate: number;
+  resolution: string;
+}
+
+let isStreaming = false;
+let streamMediaRecorder: MediaRecorder | null = null;
+let streamStartTime: number | null = null;
+let streamTimerInterval: ReturnType<typeof setInterval> | null = null;
+
 /** 複数チーム（各チームは最大6匹） */
 let teams: Pokemon[][] = [];
 
@@ -70,11 +84,13 @@ function setStatus(message: string): void {
 }
 
 function stopCurrentStream(): void {
+  if (isStreaming) stopStreaming();
   if (currentStream) {
     currentStream.getTracks().forEach((t) => t.stop());
     currentStream = null;
   }
   if (videoEl) videoEl.srcObject = null;
+  updateStreamBtn();
 }
 
 async function loadDevices(): Promise<void> {
@@ -192,7 +208,10 @@ function startStream(): void {
     videoEl.srcObject = stream;
 
     videoEl.onloadedmetadata = () => {
-      videoEl.play().then(() => setStatus("再生中")).catch((e) => {
+      videoEl.play().then(() => {
+        setStatus("再生中");
+        updateStreamBtn();
+      }).catch((e) => {
         console.error(e);
         setStatus("再生に失敗しました");
       });
@@ -202,6 +221,189 @@ function startStream(): void {
     console.error(e);
     setStatus("映像の取得に失敗しました。デバイスが使用中か、許可を確認してください。");
   });
+}
+
+// ---------- 配信コントロール ----------
+
+/** 配信ボタンの有効/無効だけ更新（配信中は常に有効、非配信中は映像ソースがあれば有効） */
+function updateStreamBtn(): void {
+  const btn = document.getElementById("stream-btn") as HTMLButtonElement | null;
+  if (!btn) return;
+  btn.disabled = isStreaming ? false : !currentStream;
+}
+
+function loadStreamSettings(): StreamSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_STREAM);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<StreamSettings>;
+      return {
+        url: typeof parsed.url === "string" ? parsed.url : "",
+        key: typeof parsed.key === "string" ? parsed.key : "",
+        bitrate: typeof parsed.bitrate === "number" ? parsed.bitrate : 4500000,
+        resolution: typeof parsed.resolution === "string" ? parsed.resolution : "1080",
+      };
+    }
+  } catch { /* ignore */ }
+  return { url: "", key: "", bitrate: 4500000, resolution: "1080" };
+}
+
+function saveStreamSettings(): void {
+  const urlEl = document.getElementById("stream-url") as HTMLInputElement | null;
+  const keyEl = document.getElementById("stream-key") as HTMLInputElement | null;
+  const bitrateEl = document.getElementById("stream-bitrate") as HTMLSelectElement | null;
+  const resEl = document.getElementById("stream-resolution") as HTMLSelectElement | null;
+  try {
+    localStorage.setItem(STORAGE_KEY_STREAM, JSON.stringify({
+      url: urlEl?.value ?? "",
+      key: keyEl?.value ?? "",
+      bitrate: Number(bitrateEl?.value ?? 4500000),
+      resolution: resEl?.value ?? "1080",
+    }));
+  } catch { /* ignore */ }
+}
+
+function formatElapsed(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function applyStreamLiveUI(live: boolean): void {
+  const dot = document.getElementById("stream-dot");
+  const label = document.getElementById("stream-status-label");
+  const elapsed = document.getElementById("stream-elapsed");
+  const btn = document.getElementById("stream-btn") as HTMLButtonElement | null;
+  const urlEl = document.getElementById("stream-url") as HTMLInputElement | null;
+  const keyEl = document.getElementById("stream-key") as HTMLInputElement | null;
+  const bitrateEl = document.getElementById("stream-bitrate") as HTMLSelectElement | null;
+  const resEl = document.getElementById("stream-resolution") as HTMLSelectElement | null;
+
+  dot?.classList.toggle("stream-dot--live", live);
+  if (label) {
+    label.textContent = live ? "LIVE" : "停止中";
+    label.classList.toggle("stream-status-label--live", live);
+  }
+  if (!live && elapsed) elapsed.textContent = "";
+  if (btn) {
+    btn.textContent = live ? "配信停止" : "配信開始";
+    btn.classList.toggle("stream-btn--start", !live);
+    btn.classList.toggle("stream-btn--stop", live);
+    btn.disabled = live ? false : !currentStream;
+  }
+  if (urlEl) urlEl.disabled = live;
+  if (keyEl) keyEl.disabled = live;
+  if (bitrateEl) bitrateEl.disabled = live;
+  if (resEl) resEl.disabled = live;
+}
+
+function stopStreaming(): void {
+  if (!isStreaming) return;
+  if (streamMediaRecorder && streamMediaRecorder.state !== "inactive") {
+    streamMediaRecorder.stop();
+  }
+  streamMediaRecorder = null;
+  if (streamTimerInterval !== null) {
+    clearInterval(streamTimerInterval);
+    streamTimerInterval = null;
+  }
+  streamStartTime = null;
+  isStreaming = false;
+  applyStreamLiveUI(false);
+}
+
+function startStreaming(): void {
+  if (isStreaming || !currentStream) return;
+
+  const urlEl = document.getElementById("stream-url") as HTMLInputElement | null;
+  const label = document.getElementById("stream-status-label");
+  if (!urlEl?.value.trim()) {
+    if (label) {
+      const orig = label.textContent;
+      label.textContent = "URL を入力してください";
+      label.style.color = "#fc8181";
+      setTimeout(() => {
+        if (!isStreaming) {
+          label.textContent = orig;
+          label.style.color = "";
+        }
+      }, 2500);
+    }
+    return;
+  }
+
+  saveStreamSettings();
+
+  const bitrateEl = document.getElementById("stream-bitrate") as HTMLSelectElement | null;
+  const bitrate = Number(bitrateEl?.value ?? 4500000);
+
+  // MediaRecorder でキャプチャーストリームを開始
+  // NOTE: 実際の RTMP 配信は中継サーバー (ffmpeg 等) が別途必要です
+  try {
+    const options: MediaRecorderOptions = { videoBitsPerSecond: bitrate };
+    const supported = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
+    for (const mime of supported) {
+      if (MediaRecorder.isTypeSupported(mime)) {
+        options.mimeType = mime;
+        break;
+      }
+    }
+    streamMediaRecorder = new MediaRecorder(currentStream, options);
+    streamMediaRecorder.ondataavailable = (_e) => {
+      // ここで _e.data (Blob) を RTMP 中継サーバーへ転送する実装を追加できます
+    };
+    streamMediaRecorder.onerror = () => stopStreaming();
+    streamMediaRecorder.start(1000);
+  } catch (e) {
+    console.error("MediaRecorder の初期化に失敗:", e);
+    // MediaRecorder が使えなくてもタイマー・UI は動かす
+  }
+
+  isStreaming = true;
+  streamStartTime = Date.now();
+  applyStreamLiveUI(true);
+
+  const elapsed = document.getElementById("stream-elapsed");
+  streamTimerInterval = setInterval(() => {
+    if (!streamStartTime || !elapsed) return;
+    elapsed.textContent = formatElapsed(Math.floor((Date.now() - streamStartTime) / 1000));
+  }, 1000);
+}
+
+function initStreaming(): void {
+  const settings = loadStreamSettings();
+  const urlEl = document.getElementById("stream-url") as HTMLInputElement | null;
+  const keyEl = document.getElementById("stream-key") as HTMLInputElement | null;
+  const bitrateEl = document.getElementById("stream-bitrate") as HTMLSelectElement | null;
+  const resEl = document.getElementById("stream-resolution") as HTMLSelectElement | null;
+  const toggleBtn = document.getElementById("stream-key-toggle") as HTMLButtonElement | null;
+  const streamBtn = document.getElementById("stream-btn") as HTMLButtonElement | null;
+
+  if (urlEl) urlEl.value = settings.url;
+  if (keyEl) keyEl.value = settings.key;
+  if (bitrateEl) bitrateEl.value = String(settings.bitrate);
+  if (resEl) resEl.value = settings.resolution;
+
+  toggleBtn?.addEventListener("click", () => {
+    if (!keyEl || !toggleBtn) return;
+    const hidden = keyEl.type === "password";
+    keyEl.type = hidden ? "text" : "password";
+    toggleBtn.textContent = hidden ? "隠す" : "表示";
+  });
+
+  streamBtn?.addEventListener("click", () => {
+    if (isStreaming) stopStreaming();
+    else startStreaming();
+  });
+
+  urlEl?.addEventListener("change", saveStreamSettings);
+  keyEl?.addEventListener("change", saveStreamSettings);
+  bitrateEl?.addEventListener("change", saveStreamSettings);
+  resEl?.addEventListener("change", saveStreamSettings);
+
+  updateStreamBtn();
 }
 
 // ---------- チーム編成（タブ2） ----------
@@ -413,6 +615,7 @@ function initTabs(): void {
 
 document.addEventListener("DOMContentLoaded", () => {
   initTabs();
+  initStreaming();
 
   // チーム編成（タブ2）
   const teamCreateBtn = document.getElementById("team-create-btn");

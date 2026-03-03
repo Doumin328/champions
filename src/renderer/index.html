@@ -28,6 +28,64 @@
           <video id="video" autoplay playsinline></video>
         </div>
         <p id="video-status" class="video-status" aria-live="polite"></p>
+
+        <!-- 配信コントロールパネル -->
+        <section class="stream-section" aria-label="配信コントロール">
+          <div class="stream-header">
+            <h2 class="stream-title">配信コントロール</h2>
+            <div class="stream-live-indicator">
+              <span class="stream-dot" id="stream-dot"></span>
+              <span class="stream-status-label" id="stream-status-label">停止中</span>
+              <span class="stream-elapsed" id="stream-elapsed" aria-live="polite"></span>
+            </div>
+          </div>
+          <div class="stream-body">
+            <div class="stream-row">
+              <div class="stream-field stream-field--full">
+                <label for="stream-url" class="stream-label">RTMP サーバー URL</label>
+                <input type="text" id="stream-url" class="stream-input"
+                       placeholder="rtmp://live.twitch.tv/live" autocomplete="off"
+                       aria-label="RTMPサーバーURL" />
+              </div>
+            </div>
+            <div class="stream-row">
+              <div class="stream-field stream-field--full">
+                <label for="stream-key" class="stream-label">ストリームキー</label>
+                <div class="stream-key-row">
+                  <input type="password" id="stream-key" class="stream-input"
+                         placeholder="ストリームキーを入力" autocomplete="off"
+                         aria-label="ストリームキー" />
+                  <button type="button" id="stream-key-toggle" class="stream-toggle-btn"
+                          aria-label="ストリームキーを表示/非表示">表示</button>
+                </div>
+              </div>
+            </div>
+            <div class="stream-row">
+              <div class="stream-field">
+                <label for="stream-bitrate" class="stream-label">映像ビットレート</label>
+                <select id="stream-bitrate" class="stream-select" aria-label="映像ビットレート">
+                  <option value="1000000">1 Mbps</option>
+                  <option value="2500000">2.5 Mbps</option>
+                  <option value="4500000" selected>4.5 Mbps</option>
+                  <option value="6000000">6 Mbps</option>
+                  <option value="8000000">8 Mbps</option>
+                </select>
+              </div>
+              <div class="stream-field">
+                <label for="stream-resolution" class="stream-label">解像度</label>
+                <select id="stream-resolution" class="stream-select" aria-label="解像度">
+                  <option value="720">720p (1280×720)</option>
+                  <option value="1080" selected>1080p (1920×1080)</option>
+                  <option value="source">ソースのまま</option>
+                </select>
+              </div>
+            </div>
+            <div class="stream-actions">
+              <button type="button" id="stream-btn" class="stream-btn stream-btn--start"
+                      disabled aria-label="配信を開始する">配信開始</button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <!-- 右: タブ -->

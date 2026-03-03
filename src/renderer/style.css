@@ -469,6 +469,223 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* ========== 配信コントロールパネル ========== */
+.stream-section {
+  flex-shrink: 0;
+  background: #0a1018;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.65rem 0.75rem;
+}
+
+.stream-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+
+.stream-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stream-live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stream-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: background 0.3s, box-shadow 0.3s;
+  flex-shrink: 0;
+}
+
+.stream-dot--live {
+  background: #e53e3e;
+  box-shadow: 0 0 7px rgba(229, 62, 62, 0.8);
+  animation: stream-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes stream-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.stream-status-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.3s;
+}
+
+.stream-status-label--live {
+  color: #fc8181;
+}
+
+.stream-elapsed {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+  min-width: 4ch;
+}
+
+.stream-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.stream-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.stream-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.stream-field--full {
+  flex: 1;
+}
+
+.stream-label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+
+.stream-input {
+  height: 27px;
+  padding: 0 0.5rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.stream-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.stream-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.stream-key-row {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.stream-toggle-btn {
+  flex-shrink: 0;
+  height: 27px;
+  padding: 0 0.5rem;
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.stream-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.stream-select {
+  height: 27px;
+  padding: 0 0.4rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 0;
+  transition: border-color 0.15s;
+}
+
+.stream-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.stream-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.stream-select option {
+  background: #1a2530;
+  color: #eee;
+}
+
+.stream-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.15rem;
+}
+
+.stream-btn {
+  padding: 0.42rem 1.4rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s, transform 0.1s, opacity 0.2s;
+  letter-spacing: 0.03em;
+}
+
+.stream-btn--start {
+  background: linear-gradient(180deg, #c53030 0%, #9b2c2c 100%);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.stream-btn--start:hover:not(:disabled) {
+  background: linear-gradient(180deg, #d44040 0%, #ae3434 100%);
+}
+
+.stream-btn--stop {
+  background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+  color: #fc8181;
+  border-color: rgba(229, 62, 62, 0.4);
+}
+
+.stream-btn--stop:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3d4758 0%, #252f3c 100%);
+}
+
+.stream-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.stream-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 /* 削除確認モーダル */
 .confirm-modal-content {
   max-width: 320px;
