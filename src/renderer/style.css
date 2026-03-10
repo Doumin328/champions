@@ -263,6 +263,123 @@ body {
   color: rgba(255, 255, 255, 0.75);
 }
 
+/* ===== アイテム表示・ピッカー (タブ①) ===== */
+.damage-slot-top-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.damage-slot-name-types {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.damage-item-display {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 4px 7px;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  min-width: 110px;
+  max-width: 160px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.damage-item-display:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.damage-item-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.damage-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.damage-item-name {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.damage-item-effect {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.damage-item-picker {
+  margin-top: 4px;
+}
+
+.damage-item-picker-search {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  outline: none;
+}
+.damage-item-picker-search::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.damage-item-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+  margin-top: 5px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.damage-item-picker-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.6rem;
+  aspect-ratio: 1;
+  transition: background 0.12s;
+}
+.damage-item-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.damage-item-picker-btn img {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
 /* ===== タイプ画像 ===== */
 .type-img {
   height: 20px;
@@ -477,15 +594,16 @@ body {
 }
 
 .damage-moves-slots {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
 }
 
 .damage-move-slot {
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  min-width: 0;
 }
 
 .damage-move-slot.is-editing {
@@ -514,43 +632,48 @@ body {
 }
 
 .damage-move-slot-header {
-  padding: 0.5rem 0.75rem;
+  padding: 0.3rem 0.5rem;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .damage-move-slot-name {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .damage-move-slot-meta {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .damage-move-slot-body {
-  padding: 0.4rem 0.75rem 0.6rem;
+  padding: 0.25rem 0.5rem 0.35rem;
   background: rgba(0, 0, 0, 0.15);
-  font-size: 0.85rem;
+  font-size: 0.72rem;
 }
 
 .damage-move-damage-text {
   display: block;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.2rem;
   color: rgba(255, 255, 255, 0.95);
 }
 
 .damage-move-gauge-wrap {
-  margin-top: 0.35rem;
+  margin-top: 0.2rem;
 }
 
 .damage-move-gauge {
-  height: 10px;
+  height: 6px;
   background: rgba(0, 0, 0, 0.35);
-  border-radius: 5px;
+  border-radius: 3px;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -595,8 +718,8 @@ body {
 
 .damage-move-gauge-label {
   display: block;
-  margin-top: 0.2rem;
-  font-size: 0.75rem;
+  margin-top: 0.15rem;
+  font-size: 0.65rem;
   color: rgba(255, 255, 255, 0.7);
 }
 

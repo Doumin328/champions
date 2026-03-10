@@ -48,9 +48,31 @@
                     <img id="damage-defender-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
                   </div>
                   <div class="damage-slot-info" id="damage-defender-info">
-                    <span class="damage-slot-name" id="damage-defender-name"></span>
-                    <span class="damage-slot-types" id="damage-defender-types"></span>
+                    <div class="damage-slot-top-row">
+                      <div class="damage-slot-name-types">
+                        <span class="damage-slot-name" id="damage-defender-name"></span>
+                        <span class="damage-slot-types" id="damage-defender-types"></span>
+                      </div>
+                      <button type="button" class="damage-item-display" id="damage-defender-item-display">
+                        <img class="damage-item-icon" id="damage-defender-item-icon" alt="" hidden />
+                        <div class="damage-item-text">
+                          <span class="damage-item-name" id="damage-defender-item-name">持ち物なし</span>
+                          <span class="damage-item-effect" id="damage-defender-item-effect"></span>
+                        </div>
+                      </button>
+                    </div>
                     <div class="damage-slot-stats" id="damage-slot-stats-defender">
+                      <div class="damage-slot-stat-row">
+                        <span class="stat-label">HP</span>
+                        <span class="damage-stats-real-value" id="stats-hp-real">—</span>
+                        <div class="damage-ev-input-group">
+                          <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-hp-ev">0</button>
+                          <input type="number" id="stats-hp-ev" class="damage-ev-input" min="0" max="255" value="0" />
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-hp-ev">252</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-hp-ev" aria-label="減らす">−</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-hp-ev" aria-label="増やす">＋</button>
+                        </div>
+                      </div>
                       <div class="damage-slot-stat-row">
                         <span class="stat-label">防御</span>
                         <span class="damage-stats-real-value" id="stats-def-real">—</span>
@@ -92,6 +114,10 @@
                         <button type="button" class="rank-btn rank-btn-up" id="spdef-rank-up" aria-label="特防ランクを上げる">＋</button>
                       </div>
                     </div>
+                    <div class="damage-item-picker" id="damage-defender-item-picker" hidden>
+                      <input type="text" class="damage-item-picker-search" id="tab1-defender-item-search" placeholder="アイテム名で検索…" />
+                      <div class="damage-item-picker-grid" id="damage-defender-item-grid"></div>
+                    </div>
                   </div>
                   <button type="button" class="damage-slot-select-btn" id="damage-defender-select">選択</button>
                 </div>
@@ -104,8 +130,19 @@
                     <img id="damage-attacker-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
                   </div>
                   <div class="damage-slot-info" id="damage-attacker-info">
-                    <span class="damage-slot-name" id="damage-attacker-name"></span>
-                    <span class="damage-slot-types" id="damage-attacker-types"></span>
+                    <div class="damage-slot-top-row">
+                      <div class="damage-slot-name-types">
+                        <span class="damage-slot-name" id="damage-attacker-name"></span>
+                        <span class="damage-slot-types" id="damage-attacker-types"></span>
+                      </div>
+                      <button type="button" class="damage-item-display" id="damage-attacker-item-display">
+                        <img class="damage-item-icon" id="damage-attacker-item-icon" alt="" hidden />
+                        <div class="damage-item-text">
+                          <span class="damage-item-name" id="damage-attacker-item-name">持ち物なし</span>
+                          <span class="damage-item-effect" id="damage-attacker-item-effect"></span>
+                        </div>
+                      </button>
+                    </div>
                     <div class="damage-slot-stats" id="damage-slot-stats-attacker">
                       <div class="damage-slot-stat-row">
                         <span class="stat-label">攻撃</span>
@@ -147,6 +184,10 @@
                         <span class="rank-value" id="spatk-rank-value">0</span>
                         <button type="button" class="rank-btn rank-btn-up" id="spatk-rank-up" aria-label="特攻ランクを上げる">＋</button>
                       </div>
+                    </div>
+                    <div class="damage-item-picker" id="damage-attacker-item-picker" hidden>
+                      <input type="text" class="damage-item-picker-search" id="tab1-attacker-item-search" placeholder="アイテム名で検索…" />
+                      <div class="damage-item-picker-grid" id="damage-attacker-item-grid"></div>
                     </div>
                   </div>
                   <button type="button" class="damage-slot-select-btn" id="damage-attacker-select">選択</button>
@@ -232,6 +273,7 @@
         <div class="pokemon-modal-backdrop"></div>
         <div class="pokemon-modal-content pokemon-picker-content">
           <h2 id="tab1-pokemon-select-title" class="pokemon-modal-title">ポケモンを選択</h2>
+          <input type="text" id="tab1-pokemon-name-search" class="move-search-input" placeholder="名前で検索…" />
           <div class="pokemon-picker-type-wrap">
             <p class="pokemon-picker-type-label">タイプで絞り込み</p>
             <div class="pokemon-picker-type-buttons" id="tab1-pokemon-select-type-buttons" role="group"></div>

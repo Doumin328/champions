@@ -51,6 +51,22 @@ interface DamageResult {
   isStatusMove: boolean;
   isImmune: boolean;
 }
+/** タイプ強化アイテム → 対応タイプ */
+const TYPE_BOOSTER_ITEM_MAP: Record<string, string> = {
+  "charcoal": "ほのお", "mystic-water": "みず", "miracle-seed": "くさ",
+  "magnet": "でんき", "never-melt-ice": "こおり", "black-belt": "かくとう",
+  "poison-barb": "どく", "soft-sand": "じめん", "hard-stone": "いわ",
+  "silver-powder": "むし", "spell-tag": "ゴースト", "twisted-spoon": "エスパー",
+  "dragon-fang": "ドラゴン", "black-glasses": "あく", "metal-coat": "はがね",
+  "sharp-beak": "ひこう", "fairy-feather": "フェアリー",
+};
+
+/** タイプ半減きのみ → 対応タイプ */
+const TYPE_BERRY_MAP: Record<string, string> = {
+  "yache-berry": "こおり", "occa-berry": "ほのお", "wacan-berry": "でんき",
+  "rindo-berry": "くさ", "passho-berry": "みず",
+};
+
 function calculateDamage(input: {
   movePower: number | null;
   moveType: string;
@@ -67,9 +83,12 @@ function calculateDamage(input: {
   defenderSpDefRank?: number;
   weather?: string;
   terrain?: string;
+  attackerItem?: string;
+  defenderItem?: string;
+  defenderHpOverride?: number;
 }): DamageResult {
-  const { movePower, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain } = input;
-  const defenderHP = calcStat(defenderBaseStats.hp, true);
+  const { movePower, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain, attackerItem, defenderItem } = input;
+  const defenderHP = input.defenderHpOverride ?? calcStat(defenderBaseStats.hp, true);
   if (moveCategory === "変化" || movePower == null || movePower <= 0) {
     return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: true, isImmune: false };
   }
@@ -86,8 +105,17 @@ function calculateDamage(input: {
     : (defenderStatOverride?.spDefense ?? calcStat(defenderBaseStats.spDefense, false));
   const atkRank = moveCategory === "物理" ? (input.attackerAtkRank ?? 0) : (input.attackerSpAtkRank ?? 0);
   const defRank = moveCategory === "物理" ? (input.defenderDefRank ?? 0) : (input.defenderSpDefRank ?? 0);
-  const atkStat = Math.max(1, Math.floor(atkBase * rankMult(atkRank)));
-  const defStat = Math.max(1, Math.floor(defBase * rankMult(defRank)));
+
+  // 攻撃側持ち物：ステータス補正
+  const atkItemMult = (attackerItem === "choice-band" && moveCategory === "物理") ? 1.5
+    : (attackerItem === "choice-specs" && moveCategory === "特殊") ? 1.5 : 1;
+  // 防御側持ち物：ステータス補正
+  const defItemMult = moveCategory === "物理"
+    ? (defenderItem === "eviolite" ? 1.5 : 1)
+    : (defenderItem === "assault-vest" || defenderItem === "eviolite" ? 1.5 : 1);
+
+  const atkStat = Math.max(1, Math.floor(Math.floor(atkBase * rankMult(atkRank)) * atkItemMult));
+  const defStat = Math.max(1, Math.floor(Math.floor(defBase * rankMult(defRank)) * defItemMult));
   const base = Math.floor((Math.floor((2 * DMG_LEVEL) / 5 + 2) * movePower * atkStat) / defStat / 50) + 2;
   let weatherMult = 1;
   if (weather === "はれ") {
@@ -102,7 +130,18 @@ function calculateDamage(input: {
   else if (terrain === "グラスフィールド" && moveType === "くさ") terrainMult = 1.3;
   else if (terrain === "サイコフィールド" && moveType === "エスパー") terrainMult = 1.3;
   else if (terrain === "ミストフィールド" && moveType === "ドラゴン") terrainMult = 0.5;
-  const modifier = stab * typeEff * weatherMult * terrainMult;
+
+  // 攻撃側持ち物：ダメージ補正
+  let attackerDamageMult = 1;
+  if (attackerItem === "life-orb") attackerDamageMult = 1.3;
+  else if (attackerItem === "expert-belt" && typeEff > 1) attackerDamageMult = 1.2;
+  else if (attackerItem && TYPE_BOOSTER_ITEM_MAP[attackerItem] === moveType) attackerDamageMult = 1.2;
+
+  // 防御側持ち物：ダメージ軽減
+  let defenderDamageReduceMult = 1;
+  if (defenderItem && TYPE_BERRY_MAP[defenderItem] === moveType && typeEff > 1) defenderDamageReduceMult = 0.5;
+
+  const modifier = stab * typeEff * weatherMult * terrainMult * attackerDamageMult * defenderDamageReduceMult;
   const damageMin = Math.floor(Math.max(1, Math.floor(base * modifier * 0.85)));
   const damageMax = Math.floor(Math.max(1, Math.floor(base * modifier * 1.0)));
   return {
@@ -221,6 +260,9 @@ let tab1SelectTarget: "attack" | "defend" | "box" | null = null;
 /** タブ1: 単体選択モーダルのタイプ絞り込み */
 let tab1SelectTypeFilter: string | null = null;
 
+/** タブ1: 単体選択モーダルの名前検索テキスト */
+let tab1NameSearchText = "";
+
 /** タブ1: 選択中ワザ4つ */
 let selectedMoves: number[] = [];
 
@@ -233,7 +275,8 @@ let damageMovesTypeFilter: string | null = null;
 /** タブ1: 技一覧の分類絞り込み（null または "すべて" で全件） */
 let damageMovesCategoryFilter: string | null = null;
 
-/** タブ1: 防御側の努力値・性格（防御・特防） */
+/** タブ1: 防御側の努力値・性格（HP・防御・特防） */
+let defenderHpEV = 0;
 let defenderDefEV = 0;
 let defenderDefNature = 1.0;
 let defenderSpDefEV = 0;
@@ -254,6 +297,14 @@ let defenderSpDefRank = 0;
 /** タブ1: 天候・フィールド */
 let currentWeather = "";
 let currentTerrain = "";
+
+/** タブ1: 攻撃側の持ち物 */
+let tab1AttackerItem = "";
+/** タブ1: 防御側の持ち物 */
+let tab1DefenderItem = "";
+/** タブ1: アイテムピッカーの検索テキスト */
+let tab1AttackerItemSearch = "";
+let tab1DefenderItemSearch = "";
 
 /** 技データ（moves.json） */
 interface Move {
@@ -397,6 +448,24 @@ const COMPETITIVE_ITEMS: CompetitiveItem[] = [
   { id: "sharp-beak",         nameJa: "するどいくちばし",   effect: "ひこう技威力×1.2。" },
   { id: "fairy-feather",      nameJa: "フェアリーはね",     effect: "フェアリー技威力×1.2。" },
 ];
+
+/** 攻撃する側のダメージに補正がかかるアイテム */
+const ATTACKER_ITEM_IDS = new Set([
+  "choice-band", "choice-specs",
+  "life-orb", "expert-belt", "punching-glove",
+  // タイプ強化プレート
+  "charcoal", "mystic-water", "miracle-seed", "magnet", "never-melt-ice",
+  "black-belt", "poison-barb", "soft-sand", "hard-stone", "silver-powder",
+  "spell-tag", "twisted-spoon", "dragon-fang", "black-glasses", "metal-coat",
+  "sharp-beak", "fairy-feather",
+]);
+
+/** 防御する側のダメージに補正がかかるアイテム */
+const DEFENDER_ITEM_IDS = new Set([
+  "eviolite", "assault-vest",
+  // タイプ半減きのみ
+  "yache-berry", "occa-berry", "wacan-berry", "rindo-berry", "passho-berry",
+]);
 
 const STORAGE_KEY_BOX = "champions_box";
 let box: BoxEntry[] = [];
@@ -1421,6 +1490,101 @@ function addPokemonToTeam(pokemon: Pokemon): void {
   updatePickerListButtons();
 }
 
+// ---------- タブ1: アイテムピッカー ----------
+
+function renderTab1ItemDisplay(slot: "attacker" | "defender"): void {
+  const isMegaAttacker = slot === "attacker" && !!attackPokemon?.id.includes("Mega");
+  const item = slot === "attacker" ? tab1AttackerItem : tab1DefenderItem;
+  const found = (!isMegaAttacker && item) ? COMPETITIVE_ITEMS.find((it) => it.id === item) : null;
+  const iconEl = document.getElementById(`damage-${slot}-item-icon`) as HTMLImageElement | null;
+  const nameEl = document.getElementById(`damage-${slot}-item-name`);
+  const effectEl = document.getElementById(`damage-${slot}-item-effect`);
+  if (isMegaAttacker) {
+    if (iconEl) { iconEl.src = ""; iconEl.hidden = true; }
+    if (nameEl) nameEl.textContent = "メガストーン";
+    if (effectEl) effectEl.textContent = "";
+    return;
+  }
+  if (iconEl) {
+    if (found) {
+      iconEl.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${found.id}.png`;
+      iconEl.hidden = false;
+    } else {
+      iconEl.src = "";
+      iconEl.hidden = true;
+    }
+  }
+  if (nameEl) nameEl.textContent = found ? found.nameJa : "持ち物なし";
+  if (effectEl) effectEl.textContent = found ? found.effect : "";
+}
+
+function openTab1ItemPicker(slot: "attacker" | "defender"): void {
+  const stats = document.getElementById(`damage-slot-stats-${slot}`);
+  const picker = document.getElementById(`damage-${slot}-item-picker`);
+  if (stats) stats.hidden = true;
+  if (picker) picker.hidden = false;
+  const searchEl = document.getElementById(`tab1-${slot}-item-search`) as HTMLInputElement | null;
+  if (searchEl) searchEl.value = "";
+  if (slot === "attacker") tab1AttackerItemSearch = "";
+  else tab1DefenderItemSearch = "";
+  renderTab1ItemGrid(slot);
+}
+
+function closeTab1ItemPicker(slot: "attacker" | "defender"): void {
+  const stats = document.getElementById(`damage-slot-stats-${slot}`);
+  const picker = document.getElementById(`damage-${slot}-item-picker`);
+  if (stats) stats.hidden = false;
+  if (picker) picker.hidden = true;
+}
+
+function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
+  const gridEl = document.getElementById(`damage-${slot}-item-grid`);
+  if (!gridEl) return;
+  gridEl.innerHTML = "";
+  const searchText = slot === "attacker" ? tab1AttackerItemSearch : tab1DefenderItemSearch;
+  const slotItems = COMPETITIVE_ITEMS.filter((it) =>
+    slot === "attacker" ? ATTACKER_ITEM_IDS.has(it.id) : DEFENDER_ITEM_IDS.has(it.id)
+  );
+  const filtered = searchText.trim()
+    ? slotItems.filter((it) => it.nameJa.includes(searchText.trim()))
+    : slotItems;
+
+  // 「なし」ボタン
+  const noneBtn = document.createElement("button");
+  noneBtn.type = "button";
+  noneBtn.className = "damage-item-picker-btn";
+  noneBtn.title = "持ち物なし";
+  noneBtn.textContent = "なし";
+  noneBtn.addEventListener("click", () => {
+    if (slot === "attacker") tab1AttackerItem = "";
+    else tab1DefenderItem = "";
+    renderTab1ItemDisplay(slot);
+    closeTab1ItemPicker(slot);
+    renderTab1DamageDisplay();
+  });
+  gridEl.appendChild(noneBtn);
+
+  filtered.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "damage-item-picker-btn";
+    btn.title = `${item.nameJa}\n${item.effect}`;
+    const img = document.createElement("img");
+    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png`;
+    img.alt = item.nameJa;
+    img.onerror = () => { img.style.display = "none"; btn.textContent = item.nameJa.slice(0, 3); };
+    btn.appendChild(img);
+    btn.addEventListener("click", () => {
+      if (slot === "attacker") tab1AttackerItem = item.id;
+      else tab1DefenderItem = item.id;
+      renderTab1ItemDisplay(slot);
+      closeTab1ItemPicker(slot);
+      renderTab1DamageDisplay();
+    });
+    gridEl.appendChild(btn);
+  });
+}
+
 // ---------- タブ1: ダメージ計算 ----------
 
 function renderTab1DamageDisplay(): void {
@@ -1440,11 +1604,19 @@ function renderTab1DamageDisplay(): void {
       defenderImg.onerror = () => { defenderImg.src = BALL_MONSTER_IMAGE; };
       if (defenderName) defenderName.textContent = defendPokemon.name;
       if (defenderTypes) defenderTypes.innerHTML = typeBadgesHtml(defendPokemon.types);
+      const defDisplayBtn = document.getElementById("damage-defender-item-display") as HTMLButtonElement | null;
+      if (defDisplayBtn) {
+        const isMega = defendPokemon.id.includes("Mega");
+        defDisplayBtn.hidden = isMega;
+        if (isMega) { tab1DefenderItem = ""; closeTab1ItemPicker("defender"); }
+      }
+      renderTab1ItemDisplay("defender");
     } else {
       defenderImg.src = BALL_MONSTER_IMAGE;
       defenderImg.alt = "";
       if (defenderName) defenderName.textContent = "";
       if (defenderTypes) defenderTypes.innerHTML = "";
+      closeTab1ItemPicker("defender");
     }
   }
   if (attackerImg) {
@@ -1456,11 +1628,20 @@ function renderTab1DamageDisplay(): void {
       attackerImg.onerror = () => { attackerImg.src = BALL_MONSTER_IMAGE; };
       if (attackerName) attackerName.textContent = attackPokemon.name;
       if (attackerTypes) attackerTypes.innerHTML = typeBadgesHtml(attackPokemon.types);
+      const atkDisplayBtn = document.getElementById("damage-attacker-item-display") as HTMLButtonElement | null;
+      if (atkDisplayBtn) {
+        const isMega = attackPokemon.id.includes("Mega");
+        atkDisplayBtn.disabled = isMega;
+        atkDisplayBtn.hidden = false;
+        if (isMega) { tab1AttackerItem = ""; closeTab1ItemPicker("attacker"); }
+      }
+      renderTab1ItemDisplay("attacker");
     } else {
       attackerImg.src = BALL_MONSTER_IMAGE;
       attackerImg.alt = "";
       if (attackerName) attackerName.textContent = "";
       if (attackerTypes) attackerTypes.innerHTML = "";
+      closeTab1ItemPicker("attacker");
     }
   }
   const defenderStatsBlock = document.getElementById("damage-slot-stats-defender");
@@ -1483,6 +1664,7 @@ function renderTab1DamageDisplay(): void {
 }
 
 function syncStatsInputsFromState(): void {
+  const hpEv = document.getElementById("stats-hp-ev") as HTMLInputElement | null;
   const defEv = document.getElementById("stats-def-ev") as HTMLInputElement | null;
   const defNat = document.getElementById("stats-def-nature") as HTMLSelectElement | null;
   const spDefEv = document.getElementById("stats-spdef-ev") as HTMLInputElement | null;
@@ -1491,6 +1673,7 @@ function syncStatsInputsFromState(): void {
   const atkNat = document.getElementById("stats-atk-nature") as HTMLSelectElement | null;
   const spatkEv = document.getElementById("stats-spatk-ev") as HTMLInputElement | null;
   const spatkNat = document.getElementById("stats-spatk-nature") as HTMLSelectElement | null;
+  if (hpEv) hpEv.value = String(defenderHpEV);
   if (defEv) defEv.value = String(defenderDefEV);
   if (defNat) defNat.value = String(defenderDefNature);
   if (spDefEv) spDefEv.value = String(defenderSpDefEV);
@@ -1503,6 +1686,7 @@ function syncStatsInputsFromState(): void {
 }
 
 function updateStatsRealValues(): void {
+  const hpEv = document.getElementById("stats-hp-ev") as HTMLInputElement | null;
   const defEv = document.getElementById("stats-def-ev") as HTMLInputElement | null;
   const defNat = document.getElementById("stats-def-nature") as HTMLSelectElement | null;
   const spDefEv = document.getElementById("stats-spdef-ev") as HTMLInputElement | null;
@@ -1511,10 +1695,17 @@ function updateStatsRealValues(): void {
   const atkNat = document.getElementById("stats-atk-nature") as HTMLSelectElement | null;
   const spatkEv = document.getElementById("stats-spatk-ev") as HTMLInputElement | null;
   const spatkNat = document.getElementById("stats-spatk-nature") as HTMLSelectElement | null;
+  const hpReal = document.getElementById("stats-hp-real");
   const defReal = document.getElementById("stats-def-real");
   const spDefReal = document.getElementById("stats-spdef-real");
   const atkReal = document.getElementById("stats-atk-real");
   const spatkReal = document.getElementById("stats-spatk-real");
+
+  if (defendPokemon && hpReal) {
+    const base = getBaseStats(defendPokemon);
+    const ev = clampEv(Number(hpEv?.value) || 0);
+    hpReal.textContent = String(Math.floor((2 * base.hp + Math.floor(ev / 4)) * 50 / 100) + 60);
+  } else if (hpReal) hpReal.textContent = "—";
 
   if (defendPokemon && defReal && defEv && defNat) {
     const base = getBaseStats(defendPokemon);
@@ -1542,6 +1733,7 @@ function updateStatsRealValues(): void {
 }
 
 function readStatsInputsToState(): void {
+  const hpEv = document.getElementById("stats-hp-ev") as HTMLInputElement | null;
   const defEv = document.getElementById("stats-def-ev") as HTMLInputElement | null;
   const defNat = document.getElementById("stats-def-nature") as HTMLSelectElement | null;
   const spDefEv = document.getElementById("stats-spdef-ev") as HTMLInputElement | null;
@@ -1550,6 +1742,7 @@ function readStatsInputsToState(): void {
   const atkNat = document.getElementById("stats-atk-nature") as HTMLSelectElement | null;
   const spatkEv = document.getElementById("stats-spatk-ev") as HTMLInputElement | null;
   const spatkNat = document.getElementById("stats-spatk-nature") as HTMLSelectElement | null;
+  defenderHpEV = clampEv(Number(hpEv?.value) || 0);
   defenderDefEV = clampEv(Number(defEv?.value) || 0);
   defenderDefNature = clampNature(Number(defNat?.value) || 1);
   defenderSpDefEV = clampEv(Number(spDefEv?.value) || 0);
@@ -1621,8 +1814,14 @@ function applyStatsFromInputsAndRecalc(): void {
 }
 
 function getTab1FilteredPokemonList(): Pokemon[] {
-  if (!tab1SelectTypeFilter || tab1SelectTypeFilter === "すべて") return demoPokemon;
-  return demoPokemon.filter((p) => p.types.includes(tab1SelectTypeFilter!));
+  let list = demoPokemon;
+  if (tab1SelectTypeFilter && tab1SelectTypeFilter !== "すべて") {
+    list = list.filter((p) => p.types.includes(tab1SelectTypeFilter!));
+  }
+  if (tab1NameSearchText.trim()) {
+    list = list.filter((p) => p.name.includes(tab1NameSearchText.trim()));
+  }
+  return list;
 }
 
 function getTab1UniqueTypes(): string[] {
@@ -1692,6 +1891,9 @@ function renderTab1SelectList(): void {
 function openTab1PokemonSelect(target: "attack" | "defend" | "box"): void {
   tab1SelectTarget = target;
   tab1SelectTypeFilter = null;
+  tab1NameSearchText = "";
+  const nameSearch = document.getElementById("tab1-pokemon-name-search") as HTMLInputElement | null;
+  if (nameSearch) nameSearch.value = "";
   const modal = document.getElementById("tab1-pokemon-select-modal");
   const titleEl = document.getElementById("tab1-pokemon-select-title");
   if (titleEl) {
@@ -1730,6 +1932,7 @@ function onTab1PokemonSelected(pokemon: Pokemon): void {
     attackerSpAtkRank = 0;
   } else if (tab1SelectTarget === "defend") {
     defendPokemon = pokemon;
+    defenderHpEV = 0;
     defenderDefEV = 0;
     defenderDefNature = 1.0;
     defenderSpDefEV = 0;
@@ -1839,6 +2042,7 @@ function renderTab1MovesSlots(): void {
       if (defendPokemon && defenderStats) {
         const atkOverride = { attack: calcStatWithEV(attackerStats.attack, attackerAtkEV, attackerAtkNature), spAttack: calcStatWithEV(attackerStats.spAttack, attackerSpAtkEV, attackerSpAtkNature) };
         const defOverride = { defense: calcStatWithEV(defenderStats.defense, defenderDefEV, defenderDefNature), spDefense: calcStatWithEV(defenderStats.spDefense, defenderSpDefEV, defenderSpDefNature) };
+        const defenderHpWithEV = Math.floor((2 * defenderStats.hp + Math.floor(defenderHpEV / 4)) * 50 / 100) + 60;
         damageResult = calculateDamage({
           movePower: move.power,
           moveType: move.type,
@@ -1855,6 +2059,9 @@ function renderTab1MovesSlots(): void {
           defenderSpDefRank,
           weather: currentWeather || undefined,
           terrain: currentTerrain || undefined,
+          attackerItem: tab1AttackerItem || undefined,
+          defenderItem: tab1DefenderItem || undefined,
+          defenderHpOverride: defenderHpWithEV,
         });
       }
 
@@ -1936,12 +2143,11 @@ function renderTab1MovesListCategoryButtons(): void {
   if (!wrap || !attackPokemon) return;
   wrap.innerHTML = "";
   const options = [
-    { label: "すべて", value: null },
     { label: "物理", value: "物理" },
     { label: "特殊", value: "特殊" },
   ];
   options.forEach(({ label, value }) => {
-    const isActive = (value === null && !damageMovesCategoryFilter) || (value !== null && damageMovesCategoryFilter === value);
+    const isActive = damageMovesCategoryFilter === value;
     const btn = document.createElement("button");
     btn.type = "button";
     let cls = "damage-move-category-btn";
@@ -1951,7 +2157,8 @@ function renderTab1MovesListCategoryButtons(): void {
     btn.className = cls;
     btn.textContent = label;
     btn.addEventListener("click", () => {
-      damageMovesCategoryFilter = value;
+      // アクティブなボタンをクリックしたら解除（全件表示に戻る）
+      damageMovesCategoryFilter = damageMovesCategoryFilter === value ? null : value;
       renderTab1MovesListCategoryButtons();
       renderTab1MovesList();
     });
@@ -2206,6 +2413,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // 技検索（タブ①）
   document.getElementById("damage-moves-search")?.addEventListener("input", () => {
     renderTab1MovesList();
+  });
+  // ポケモン名検索（タブ①選択モーダル）
+  document.getElementById("tab1-pokemon-name-search")?.addEventListener("input", (e) => {
+    tab1NameSearchText = (e.target as HTMLInputElement).value;
+    renderTab1SelectList();
+  });
+  // アイテムピッカー（タブ①）
+  document.getElementById("damage-attacker-item-display")?.addEventListener("click", () => openTab1ItemPicker("attacker"));
+  document.getElementById("damage-defender-item-display")?.addEventListener("click", () => openTab1ItemPicker("defender"));
+  document.getElementById("tab1-attacker-item-search")?.addEventListener("input", (e) => {
+    tab1AttackerItemSearch = (e.target as HTMLInputElement).value;
+    renderTab1ItemGrid("attacker");
+  });
+  document.getElementById("tab1-defender-item-search")?.addEventListener("input", (e) => {
+    tab1DefenderItemSearch = (e.target as HTMLInputElement).value;
+    renderTab1ItemGrid("defender");
   });
   // BOX詳細モーダル内のEVボタン委譲
   document.getElementById("box-detail-modal")?.addEventListener("click", (e) => {
