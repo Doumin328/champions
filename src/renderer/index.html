@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://raw.githubusercontent.com" />
+    <title>Champions</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- 左: 映像エリア -->
+      <section class="video-section">
+        <div class="video-controls">
+          <label for="device-select">映像ソース</label>
+          <select id="device-select" aria-label="映像ソースを選択">
+            <option value="">映像ソースを選択</option>
+          </select>
+          <label for="audio-select">音声ソース</label>
+          <select id="audio-select" aria-label="音声ソースを選択">
+            <option value="">音声ソースを選択</option>
+          </select>
+          <label for="volume-slider" class="volume-label">音量</label>
+          <input type="range" id="volume-slider" min="0" max="100" value="80" aria-label="音量" />
+          <button type="button" id="refresh-devices">一覧を更新</button>
+        </div>
+        <div class="video-wrap">
+          <video id="video" autoplay playsinline></video>
+        </div>
+        <p id="video-status" class="video-status" aria-live="polite"></p>
+      </section>
+
+      <!-- 右: タブ -->
+      <aside class="tabs-section">
+        <div class="tab-buttons">
+          <button type="button" class="tab-btn is-active" data-tab="tab1">タブ1</button>
+          <button type="button" class="tab-btn" data-tab="tab2">タブ2</button>
+          <button type="button" class="tab-btn" data-tab="tab3">タブ3</button>
+        </div>
+        <div class="tab-panels">
+          <div id="tab1" class="tab-panel tab-damage is-active" role="tabpanel">
+            <div class="damage-panel">
+              <!-- ② 防御側 -->
+              <section class="damage-slot damage-slot-defender" aria-labelledby="damage-defender-label">
+                <h2 id="damage-defender-label" class="damage-slot-label">防御側</h2>
+                <div class="damage-slot-body">
+                  <div class="damage-slot-img-wrap">
+                    <img id="damage-defender-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
+                  </div>
+                  <div class="damage-slot-info" id="damage-defender-info">
+                    <div class="damage-slot-top-row">
+                      <div class="damage-slot-name-types">
+                        <span class="damage-slot-name" id="damage-defender-name"></span>
+                        <span class="damage-slot-types" id="damage-defender-types"></span>
+                      </div>
+                      <button type="button" class="damage-item-display" id="damage-defender-item-display">
+                        <img class="damage-item-icon" id="damage-defender-item-icon" alt="" hidden />
+                        <div class="damage-item-text">
+                          <span class="damage-item-name" id="damage-defender-item-name">持ち物なし</span>
+                          <span class="damage-item-effect" id="damage-defender-item-effect"></span>
+                        </div>
+                      </button>
+                    </div>
+                    <div class="damage-slot-stats" id="damage-slot-stats-defender">
+                      <div class="damage-slot-stat-row">
+                        <span class="stat-label">HP</span>
+                        <span class="damage-stats-real-value" id="stats-hp-real">—</span>
+                        <div class="damage-ev-input-group">
+                          <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-hp-ev">0</button>
+                          <input type="number" id="stats-hp-ev" class="damage-ev-input" min="0" max="255" value="0" />
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-hp-ev">252</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-hp-ev" aria-label="減らす">−</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-hp-ev" aria-label="増やす">＋</button>
+                        </div>
+                      </div>
+                      <div class="damage-slot-stat-row">
+                        <span class="stat-label">防御</span>
+                        <span class="damage-stats-real-value" id="stats-def-real">—</span>
+                        <div class="damage-ev-input-group">
+                          <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-def-ev">0</button>
+                          <input type="number" id="stats-def-ev" class="damage-ev-input" min="0" max="255" value="0" />
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-def-ev">252</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-def-ev" aria-label="減らす">−</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-def-ev" aria-label="増やす">＋</button>
+                        </div>
+                        <select id="stats-def-nature">
+                          <option value="0.9">↓</option>
+                          <option value="1.0" selected>普</option>
+                          <option value="1.1">↑</option>
+                        </select>
+                        <span class="rank-label">ランク</span>
+                        <button type="button" class="rank-btn rank-btn-down" id="def-rank-down" aria-label="防御ランクを下げる">−</button>
+                        <span class="rank-value" id="def-rank-value">0</span>
+                        <button type="button" class="rank-btn rank-btn-up" id="def-rank-up" aria-label="防御ランクを上げる">＋</button>
+                      </div>
+                      <div class="damage-slot-stat-row">
+                        <span class="stat-label">特防</span>
+                        <span class="damage-stats-real-value" id="stats-spdef-real">—</span>
+                        <div class="damage-ev-input-group">
+                          <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-spdef-ev">0</button>
+                          <input type="number" id="stats-spdef-ev" class="damage-ev-input" min="0" max="255" value="0" />
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spdef-ev">252</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-spdef-ev" aria-label="減らす">−</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-spdef-ev" aria-label="増やす">＋</button>
+                        </div>
+                        <select id="stats-spdef-nature">
+                          <option value="0.9">↓</option>
+                          <option value="1.0" selected>普</option>
+                          <option value="1.1">↑</option>
+                        </select>
+                        <span class="rank-label">ランク</span>
+                        <button type="button" class="rank-btn rank-btn-down" id="spdef-rank-down" aria-label="特防ランクを下げる">−</button>
+                        <span class="rank-value" id="spdef-rank-value">0</span>
+                        <button type="button" class="rank-btn rank-btn-up" id="spdef-rank-up" aria-label="特防ランクを上げる">＋</button>
+                      </div>
+                    </div>
+                    <div class="damage-item-picker" id="damage-defender-item-picker" hidden>
+                      <input type="text" class="damage-item-picker-search" id="tab1-defender-item-search" placeholder="アイテム名で検索…" />
+                      <div class="damage-item-picker-grid" id="damage-defender-item-grid"></div>
+                    </div>
+                  </div>
+                  <button type="button" class="damage-slot-select-btn" id="damage-defender-select">選択</button>
+                </div>
+              </section>
+              <!-- ① 攻撃側 -->
+              <section class="damage-slot damage-slot-attacker" aria-labelledby="damage-attacker-label">
+                <h2 id="damage-attacker-label" class="damage-slot-label">攻撃側</h2>
+                <div class="damage-slot-body">
+                  <div class="damage-slot-img-wrap">
+                    <img id="damage-attacker-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
+                  </div>
+                  <div class="damage-slot-info" id="damage-attacker-info">
+                    <div class="damage-slot-top-row">
+                      <div class="damage-slot-name-types">
+                        <span class="damage-slot-name" id="damage-attacker-name"></span>
+                        <span class="damage-slot-types" id="damage-attacker-types"></span>
+                      </div>
+                      <button type="button" class="damage-item-display" id="damage-attacker-item-display">
+                        <img class="damage-item-icon" id="damage-attacker-item-icon" alt="" hidden />
+                        <div class="damage-item-text">
+                          <span class="damage-item-name" id="damage-attacker-item-name">持ち物なし</span>
+                          <span class="damage-item-effect" id="damage-attacker-item-effect"></span>
+                        </div>
+                      </button>
+                    </div>
+                    <div class="damage-slot-stats" id="damage-slot-stats-attacker">
+                      <div class="damage-slot-stat-row">
+                        <span class="stat-label">攻撃</span>
+                        <span class="damage-stats-real-value" id="stats-atk-real">—</span>
+                        <div class="damage-ev-input-group">
+                          <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-atk-ev">0</button>
+                          <input type="number" id="stats-atk-ev" class="damage-ev-input" min="0" max="255" value="0" />
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-atk-ev">252</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-atk-ev" aria-label="減らす">−</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-atk-ev" aria-label="増やす">＋</button>
+                        </div>
+                        <select id="stats-atk-nature">
+                          <option value="0.9">↓</option>
+                          <option value="1.0" selected>普</option>
+                          <option value="1.1">↑</option>
+                        </select>
+                        <span class="rank-label">ランク</span>
+                        <button type="button" class="rank-btn rank-btn-down" id="atk-rank-down" aria-label="攻撃ランクを下げる">−</button>
+                        <span class="rank-value" id="atk-rank-value">0</span>
+                        <button type="button" class="rank-btn rank-btn-up" id="atk-rank-up" aria-label="攻撃ランクを上げる">＋</button>
+                      </div>
+                      <div class="damage-slot-stat-row">
+                        <span class="stat-label">特攻</span>
+                        <span class="damage-stats-real-value" id="stats-spatk-real">—</span>
+                        <div class="damage-ev-input-group">
+                          <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-spatk-ev">0</button>
+                          <input type="number" id="stats-spatk-ev" class="damage-ev-input" min="0" max="255" value="0" />
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spatk-ev">252</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-spatk-ev" aria-label="減らす">−</button>
+                          <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-spatk-ev" aria-label="増やす">＋</button>
+                        </div>
+                        <select id="stats-spatk-nature">
+                          <option value="0.9">↓</option>
+                          <option value="1.0" selected>普</option>
+                          <option value="1.1">↑</option>
+                        </select>
+                        <span class="rank-label">ランク</span>
+                        <button type="button" class="rank-btn rank-btn-down" id="spatk-rank-down" aria-label="特攻ランクを下げる">−</button>
+                        <span class="rank-value" id="spatk-rank-value">0</span>
+                        <button type="button" class="rank-btn rank-btn-up" id="spatk-rank-up" aria-label="特攻ランクを上げる">＋</button>
+                      </div>
+                    </div>
+                    <div class="damage-item-picker" id="damage-attacker-item-picker" hidden>
+                      <input type="text" class="damage-item-picker-search" id="tab1-attacker-item-search" placeholder="アイテム名で検索…" />
+                      <div class="damage-item-picker-grid" id="damage-attacker-item-grid"></div>
+                    </div>
+                  </div>
+                  <button type="button" class="damage-slot-select-btn" id="damage-attacker-select">選択</button>
+                </div>
+              </section>
+              <!-- 天候・フィールド -->
+              <section id="damage-weather-section" class="damage-weather-section">
+                <div class="damage-weather-row">
+                  <span class="damage-weather-label">天候</span>
+                  <select id="damage-weather-select">
+                    <option value="">なし</option>
+                    <option value="はれ">はれ</option>
+                    <option value="あめ">あめ</option>
+                    <option value="すなあらし">すなあらし</option>
+                    <option value="ゆき">ゆき</option>
+                  </select>
+                  <span class="damage-weather-label">フィールド</span>
+                  <select id="damage-terrain-select">
+                    <option value="">なし</option>
+                    <option value="エレキフィールド">エレキ</option>
+                    <option value="グラスフィールド">グラス</option>
+                    <option value="サイコフィールド">サイコ</option>
+                    <option value="ミストフィールド">ミスト</option>
+                  </select>
+                </div>
+              </section>
+              <!-- ③ 技選択・ダメージ結果 -->
+              <section class="damage-moves-section" aria-labelledby="damage-moves-label">
+                <h2 id="damage-moves-label" class="damage-moves-label">技を選択 <span class="damage-moves-note">（Lv50）</span></h2>
+                <div id="damage-moves-area" class="damage-moves-area damage-moves-area--disabled" aria-disabled="true">
+                  <p class="damage-moves-placeholder">攻撃側のポケモンを選択してください</p>
+                  <div id="damage-moves-slots-wrap" class="damage-moves-slots-wrap" hidden>
+                    <p class="damage-moves-slots-label">選択中の技（クリックで変更）</p>
+                    <div class="damage-moves-slots" id="damage-moves-slots"></div>
+                  </div>
+                  <div id="damage-moves-list-wrap" class="damage-moves-list-wrap" hidden>
+                    <p class="damage-moves-list-label" id="damage-moves-list-label">技一覧</p>
+                    <input type="text" id="damage-moves-search" class="move-search-input" placeholder="技名で検索…" />
+                    <div class="damage-moves-list-type-buttons" id="damage-moves-list-type-buttons" role="group"></div>
+                    <div class="damage-moves-list-category-buttons" id="damage-moves-list-category-buttons" role="group"></div>
+                    <div class="damage-moves-list-scroll" id="damage-moves-list-scroll">
+                      <div id="damage-moves-list" class="damage-moves-list"></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+          <div id="tab2" class="tab-panel tab-team" role="tabpanel" hidden>
+            <div class="team-panel">
+              <button type="button" class="team-create-btn" id="team-create-btn">チームを作成する</button>
+              <section class="team-list-section" aria-labelledby="team-list-heading">
+                <div class="team-list-header">
+                  <h2 id="team-list-heading" class="team-list-heading">チーム一覧</h2>
+                  <div class="team-list-header-actions">
+                    <button type="button" class="team-edit-btn" id="team-edit-btn">編集</button>
+                    <button type="button" class="team-reset-storage-btn" id="team-reset-storage-btn">データを初期化</button>
+                  </div>
+                </div>
+                <ul class="team-list" id="team-list" aria-label="登録したチームの一覧">
+                  <!-- チーム項目は JS で追加 -->
+                </ul>
+              </section>
+            </div>
+          </div>
+          <div id="tab3" class="tab-panel" role="tabpanel" hidden>
+            <div class="box-panel">
+              <div class="box-header">
+                <h2 class="box-title">BOX</h2>
+                <button type="button" id="box-create-btn" class="box-create-btn">新規作成</button>
+              </div>
+              <div id="box-pokemon-grid" class="box-pokemon-grid"></div>
+              <div class="box-type-filter-wrap">
+                <div id="box-type-buttons" class="box-type-buttons"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ポケモン単体選択モーダル（タブ1で使用） -->
+      <div id="tab1-pokemon-select-modal" class="pokemon-modal" role="dialog" aria-modal="true" aria-labelledby="tab1-pokemon-select-title" hidden>
+        <div class="pokemon-modal-backdrop"></div>
+        <div class="pokemon-modal-content pokemon-picker-content">
+          <h2 id="tab1-pokemon-select-title" class="pokemon-modal-title">ポケモンを選択</h2>
+          <input type="text" id="tab1-pokemon-name-search" class="move-search-input" placeholder="名前で検索…" />
+          <div class="pokemon-picker-type-wrap">
+            <p class="pokemon-picker-type-label">タイプで絞り込み</p>
+            <div class="pokemon-picker-type-buttons" id="tab1-pokemon-select-type-buttons" role="group"></div>
+          </div>
+          <p class="pokemon-modal-note">一覧からクリックで選択</p>
+          <ul class="pokemon-picker-list" id="tab1-pokemon-select-list"></ul>
+          <div class="pokemon-modal-actions">
+            <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="tab1-pokemon-select-cancel">キャンセル</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ポケモン選択モーダル（タブ2で使用） -->
+      <div id="pokemon-picker-modal" class="pokemon-modal" role="dialog" aria-modal="true" aria-labelledby="pokemon-picker-title" hidden>
+        <div class="pokemon-modal-backdrop"></div>
+        <div class="pokemon-modal-content pokemon-picker-content">
+          <h2 id="pokemon-picker-title" class="pokemon-modal-title">ポケモンを選択</h2>
+          <div class="pokemon-picker-team-wrap">
+            <p class="pokemon-picker-team-label">選んだチーム（クリックで解除）</p>
+            <div class="pokemon-picker-team-preview" id="pokemon-picker-team-preview"></div>
+          </div>
+          <div class="pokemon-picker-type-wrap">
+            <p class="pokemon-picker-type-label">タイプで絞り込み</p>
+            <div class="pokemon-picker-type-buttons" id="pokemon-picker-type-buttons"></div>
+          </div>
+          <p class="pokemon-modal-note">下の一覧からクリックでチームに追加（最大6匹）</p>
+          <ul class="pokemon-picker-list" id="pokemon-picker-list"></ul>
+          <div class="pokemon-modal-actions">
+            <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="pokemon-picker-cancel">キャンセル</button>
+            <button type="button" class="pokemon-modal-btn pokemon-modal-confirm" id="pokemon-picker-confirm">作成</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOX詳細モーダル -->
+      <div id="box-detail-modal" class="pokemon-modal" role="dialog" aria-modal="true" aria-labelledby="box-detail-title" hidden>
+        <div class="pokemon-modal-backdrop" id="box-detail-backdrop"></div>
+        <div class="pokemon-modal-content box-detail-content">
+          <div class="box-detail-header">
+            <img id="box-detail-img" class="box-detail-pokemon-img" src="img/ball_monster.png" alt="" />
+            <div class="box-detail-header-info">
+              <h2 id="box-detail-title" class="pokemon-modal-title">ポケモン名</h2>
+              <span id="box-detail-types" class="box-detail-types"></span>
+            </div>
+          </div>
+
+          <!-- 詳細確認モード -->
+          <div id="box-detail-view" hidden>
+            <div id="box-view-content" class="box-view-content"></div>
+            <div class="pokemon-modal-actions">
+              <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="box-detail-view-close">閉じる</button>
+              <button type="button" class="pokemon-modal-btn pokemon-modal-confirm" id="box-detail-edit-btn">編集</button>
+            </div>
+          </div>
+
+          <!-- 編集モード -->
+          <div id="box-detail-edit">
+            <!-- 性格 -->
+            <div class="box-detail-section">
+              <label class="box-detail-label" for="box-detail-nature">性格</label>
+              <select id="box-detail-nature" class="box-detail-nature-select"></select>
+            </div>
+            <!-- 努力値 -->
+            <div class="box-detail-section">
+              <span class="box-detail-label">努力値</span>
+              <div class="box-ev-grid" id="box-ev-grid">
+                <!-- JS で動的生成 -->
+              </div>
+            </div>
+            <!-- 持ち物 -->
+            <div class="box-detail-section">
+              <span class="box-detail-label">持ち物</span>
+              <div class="box-detail-item-row">
+                <img id="box-detail-item-img" class="box-detail-item-preview" alt="" hidden />
+                <span id="box-detail-item-name" class="box-detail-item-name">—</span>
+                <button type="button" id="box-detail-item-select-btn" class="box-detail-item-select-btn">選択する</button>
+                <button type="button" id="box-detail-item-clear-btn" class="box-detail-item-clear-btn" hidden>×</button>
+              </div>
+              <div id="box-item-picker" class="box-item-picker" hidden>
+                <input type="text" id="box-item-search" class="box-item-search" placeholder="名前で検索…" />
+                <div id="box-item-list" class="box-item-list"></div>
+              </div>
+            </div>
+            <!-- 技 -->
+            <div class="box-detail-section">
+              <span class="box-detail-label">技</span>
+              <div id="box-moves-area" class="box-moves-area">
+                <div id="box-moves-slots" class="box-moves-slots"></div>
+                <div id="box-moves-list-wrap" class="box-moves-list-wrap" hidden>
+                  <input type="text" id="box-moves-search" class="move-search-input" placeholder="技名で検索…" />
+                  <div id="box-moves-list-type-btns" class="damage-moves-list-type-buttons" role="group"></div>
+                  <div id="box-moves-list-cat-btns" class="damage-moves-list-category-buttons" role="group"></div>
+                  <div class="box-moves-list-scroll">
+                    <div id="box-moves-list" class="damage-moves-list"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="pokemon-modal-actions">
+              <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="box-detail-cancel">キャンセル</button>
+              <button type="button" class="pokemon-modal-btn pokemon-modal-confirm" id="box-detail-save">保存</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 削除確認モーダル -->
+      <div id="team-delete-confirm-modal" class="pokemon-modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="team-delete-confirm-title" hidden>
+        <div class="pokemon-modal-backdrop"></div>
+        <div class="pokemon-modal-content confirm-modal-content">
+          <h2 id="team-delete-confirm-title" class="pokemon-modal-title">削除しますか？</h2>
+          <div class="confirm-modal-actions">
+            <button type="button" class="pokemon-modal-btn confirm-delete-btn" id="team-delete-confirm-ok">削除</button>
+            <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="team-delete-confirm-cancel">キャンセル</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
