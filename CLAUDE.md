@@ -1,262 +1,282 @@
-# CLAUDE.md — Champions Codebase Guide
+# CLAUDE.md
 
-This file provides AI assistants with a complete understanding of the Champions repository: its architecture, development workflows, and conventions.
-
----
-
-## Project Overview
-
-**Champions** is an Electron desktop application built with TypeScript. It serves two primary purposes:
-
-1. **RTMP Live Streaming** — Captures webcam/microphone input and streams to RTMP endpoints (YouTube Live, Twitch, etc.) via ffmpeg.
-2. **Pokémon Team Manager** — A tabbed UI for composing and persisting competitive Pokémon team rosters.
-
-The app targets a 1920×1080 fullscreen display and is written entirely in Japanese (UI labels and commit messages).
+このファイルはAIアシスタントがこのリポジトリで作業する際のルールと、コードベースを理解するための情報をまとめたものです。
 
 ---
 
-## Tech Stack
+## AIアシスタントへのルール
 
-| Layer | Technology |
+### 必須ルール
+
+1. **日本語で応答すること**
+   コードの説明・提案・質問への回答はすべて日本語で行う。コード本体（変数名・関数名）は英語のままでよい。
+
+2. **動作確認してからコードを変更する**
+   変更前に対象ファイルを必ず読み、既存の実装を理解してから手を入れる。推測で変更しない。
+
+3. **変更範囲を最小限に抑える**
+   依頼されたこと以外は変更しない。リファクタリング・コメント追加・スタイル修正を勝手に行わない。
+
+4. **破壊的な操作は必ず確認を取る**
+   ファイル削除・ブランチ削除・`git reset --hard` などは実行前にユーザーへ確認する。
+
+5. **TypeScript の型安全を守る**
+   `any` の使用は禁止。型が不明な場合はユーザーに確認するか、適切な型定義を追加する。
+
+6. **セキュリティモデルを破らない**
+   Electron のプロセス分離（main / preload / renderer）を厳守する。`nodeIntegration` を有効にしない。生の `ipcRenderer` を renderer に露出しない。
+
+### 推奨ルール
+
+- コミットメッセージは `feat:`, `fix:`, `chore:`, `docs:`, `refactor:` などのプレフィックスを付け、内容を日本語で説明する
+- エラー処理は省略しない。IPC 通信・ffmpeg 操作など外部依存がある箇所は必ずエラーをハンドリングする
+- `localStorage` に新しいキーを追加したら、このファイルの「localStorageキー一覧」を更新する
+- IPC チャンネル名を追加・変更したら、このファイルの「IPC API」セクションを更新する
+
+---
+
+## プロジェクト概要
+
+**Champions** は Electron 製デスクトップアプリ。主な機能は2つ。
+
+1. **RTMP ライブ配信** — カメラ・マイク入力をキャプチャし、ffmpeg 経由で YouTube Live / Twitch などへ配信する
+2. **ポケモンチーム編成マネージャー** — チームを作成・保存・管理するタブ UI
+
+対象解像度: 1920×1080 フルスクリーン
+
+---
+
+## 技術スタック
+
+| 区分 | 技術 |
 |---|---|
-| Desktop framework | Electron 28 |
-| Language | TypeScript 5.3 (strict mode) |
-| Build | `tsc` + `copyfiles` |
-| Runtime target | ES2020, CommonJS |
-| Video encoding | ffmpeg (spawned as child process) |
-| Video capture | Browser MediaRecorder API (WebM) |
-| State persistence | `localStorage` |
-| Package manager | npm |
+| デスクトップフレームワーク | Electron 28 |
+| 言語 | TypeScript 5.3（strict モード） |
+| ビルド | `tsc` + `copyfiles` |
+| ランタイムターゲット | ES2020 / CommonJS |
+| 動画エンコード | ffmpeg（子プロセスとして起動） |
+| 動画キャプチャ | MediaRecorder API（WebM） |
+| 状態の永続化 | `localStorage` |
+| パッケージマネージャー | npm |
 
 ---
 
-## Repository Structure
+## ディレクトリ構成
 
 ```
 champions/
 ├── src/
 │   ├── main/
-│   │   ├── main.ts          # Electron main process — window, IPC handlers, ffmpeg
-│   │   └── caputure.ts      # Legacy/unused boilerplate (not integrated)
+│   │   ├── main.ts           # Electron メインプロセス（ウィンドウ・IPC・ffmpeg）
+│   │   └── caputure.ts       # 未使用の旧ボイラープレート（無視してよい）
 │   ├── preload/
-│   │   └── preload.ts       # contextBridge — exposes safe APIs to renderer
+│   │   └── preload.ts        # contextBridge でレンダラーに安全な API を公開
 │   └── renderer/
-│       ├── index.html       # Single-page shell (all UI declared here)
-│       ├── style.css        # Dark-theme CSS (~500 lines, Flexbox layout)
-│       ├── renderer.ts      # All renderer logic (~742 lines)
-│       ├── electron-api.d.ts # Window.electronAPI type declaration
+│       ├── index.html         # UI の HTML シェル
+│       ├── style.css          # ダークテーマ CSS（Flexbox レイアウト）
+│       ├── renderer.ts        # レンダラーの全ロジック
+│       ├── electron-api.d.ts  # window.electronAPI の型定義
 │       └── data/
-│           └── pokemon.json # 10 Pokémon entries (id, name, types)
-├── dist/                    # Build output (gitignored)
+│           └── pokemon.json   # ポケモンデータ（10件）
+├── dist/                      # ビルド出力（gitignore 対象）
 ├── tsconfig.json
 ├── package.json
 ├── .vscode/
-│   ├── launch.json          # Electron debug config
-│   └── tasks.json           # npm build task
+│   ├── launch.json            # Electron デバッグ設定
+│   └── tasks.json             # ビルドタスク
 └── .gitignore
 ```
 
 ---
 
-## Architecture: Electron Process Model
+## アーキテクチャ：Electron プロセスモデル
 
-Electron separates code into three isolated layers. **Never mix concerns across these boundaries.**
+**プロセス間の責務を絶対に混在させないこと。**
 
 ```
-┌─────────────────────────────────────────────┐
-│  Renderer Process  (src/renderer/renderer.ts) │
-│  - DOM manipulation, MediaRecorder, UI state  │
-│  - Calls window.electronAPI.* for IPC         │
-└────────────────┬────────────────────────────┘
-                 │ contextBridge (secure)
-┌────────────────▼────────────────────────────┐
-│  Preload Script  (src/preload/preload.ts)    │
-│  - Exposes safe subset of Electron APIs      │
-│  - All ipcRenderer calls go here             │
-└────────────────┬────────────────────────────┘
-                 │ IPC channel
-┌────────────────▼────────────────────────────┐
-│  Main Process  (src/main/main.ts)            │
-│  - BrowserWindow creation                    │
-│  - ipcMain.handle / ipcMain.on handlers      │
-│  - Spawns ffmpeg child process               │
-│  - File system, OS, native APIs              │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Renderer Process  (src/renderer/renderer.ts)  │
+│  DOM 操作・MediaRecorder・UI 状態管理          │
+│  → window.electronAPI.* で IPC 呼び出し       │
+└───────────────────┬──────────────────────────┘
+                    │ contextBridge（セキュア）
+┌───────────────────▼──────────────────────────┐
+│  Preload Script  (src/preload/preload.ts)     │
+│  ipcRenderer を安全にラップして公開する        │
+└───────────────────┬──────────────────────────┘
+                    │ IPC チャンネル
+┌───────────────────▼──────────────────────────┐
+│  Main Process  (src/main/main.ts)             │
+│  BrowserWindow 生成・ipcMain ハンドラー        │
+│  ffmpeg 子プロセス管理・OS ネイティブ API      │
+└──────────────────────────────────────────────┘
 ```
 
-### Security model
-- `nodeIntegration: false` — renderer cannot access Node APIs directly
-- `contextIsolation: true` — preload exposes only the `electronAPI` object
-- CSP header: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`
+### セキュリティ設定（変更禁止）
+- `nodeIntegration: false` — レンダラーから Node API に直接アクセスさせない
+- `contextIsolation: true` — preload 経由でのみ API を公開する
+- CSP: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`
 
 ---
 
-## IPC API Contract
+## IPC API
 
-Defined in `src/renderer/electron-api.d.ts`. All communication between renderer and main goes through `window.electronAPI`:
+`src/renderer/electron-api.d.ts` に型定義。レンダラーは必ず `window.electronAPI` 経由で通信する。
 
-| Method | Direction | Description |
+| メソッド | 方向 | 説明 |
 |---|---|---|
-| `getAppVersion()` | R→M | Returns app version string |
-| `streamStart(settings)` | R→M (invoke) | Start ffmpeg RTMP stream; resolves `{ success, error? }` |
-| `streamStop()` | R→M (invoke) | Stop active stream; resolves `{ success }` |
-| `streamSendData(buffer)` | R→M (send) | Send WebM video chunk to ffmpeg stdin |
-| `onStreamStatus(cb)` | M→R | Register callback for stream state updates |
-| `removeStreamStatusListener()` | — | Unregister the status callback |
+| `getAppVersion()` | R→M | アプリバージョンを返す |
+| `streamStart(settings)` | R→M（invoke） | 配信開始。`{ success, error? }` を返す |
+| `streamStop()` | R→M（invoke） | 配信停止。`{ success }` を返す |
+| `streamSendData(buffer)` | R→M（send） | WebM チャンクを ffmpeg stdin へ送る |
+| `onStreamStatus(cb)` | M→R | 配信状態の変化をレンダラーに通知 |
+| `removeStreamStatusListener()` | — | 上記コールバックを解除 |
 
-### IPC channel names (in main.ts)
+### IPC チャンネル名（main.ts 内）
 - `stream:start`
 - `stream:stop`
 - `stream:data`
-- `stream:status` (main → renderer push)
+- `stream:status`（メイン → レンダラーへの push）
 
 ---
 
-## Streaming Pipeline
+## 配信パイプライン
 
 ```
-Camera/Mic
+カメラ・マイク
     ↓ getUserMedia
-MediaRecorder (WebM, ~100ms chunks)
+MediaRecorder（WebM・約100msチャンク）
     ↓ ondataavailable
 electronAPI.streamSendData(buffer)
     ↓ IPC stream:data
-ffmpeg stdin (pipe:0)
+ffmpeg stdin（pipe:0）
     ↓ -vcodec libx264 -acodec aac -f flv
-RTMP server (YouTube / Twitch / custom)
+RTMP サーバー（YouTube / Twitch / カスタム）
 ```
 
-ffmpeg is resolved from:
-1. Bundled binary at `resources/ffmpeg` (platform-specific)
-2. System PATH fallback
+ffmpeg の解決順:
+1. `resources/ffmpeg`（バンドル済みバイナリ）
+2. システム PATH のフォールバック
 
 ---
 
-## Renderer UI Structure
+## レンダラー UI 構成
 
-The renderer is a single TypeScript file managing all UI. Key logical sections:
-
-| Section | Responsibility |
+| セクション | 役割 |
 |---|---|
-| Device enumeration | Lists and selects video/audio devices on load |
-| Stream controls | RTMP URL + stream key input, start/stop, bitrate select |
-| Status indicator | Live dot, elapsed timer, error messages |
-| Team manager | CRUD for Pokémon teams (max 6 per team) via modal |
-| Tab system | Tab 1 = stream, Tab 2 = teams, Tab 3 = placeholder |
+| デバイス列挙 | 起動時にカメラ・マイクデバイスを取得・選択 |
+| 配信コントロール | RTMP URL・ストリームキー入力、開始/停止、ビットレート選択 |
+| ステータス表示 | LIVE インジケーター・経過時間・エラーメッセージ |
+| チームマネージャー | ポケモンチームの CRUD（最大6匹/チーム）、モーダル UI |
+| タブシステム | タブ1=配信、タブ2=チーム編成、タブ3=未実装 |
 
-### localStorage keys
-| Key | Value |
+### localStorageキー一覧
+
+| キー | 内容 |
 |---|---|
-| `champions_last_video_device_id` | Last selected camera device ID |
-| `champions_last_audio_device_id` | Last selected microphone device ID |
-| `champions_team` | JSON array of team objects |
+| `champions_last_video_device_id` | 最後に選択したカメラのデバイス ID |
+| `champions_last_audio_device_id` | 最後に選択したマイクのデバイス ID |
+| `champions_team` | チームオブジェクトの JSON 配列 |
 | `champions_stream_settings` | `{ rtmpUrl, videoBitrate }` |
 
 ---
 
-## Data
+## データ
 
-**`src/renderer/data/pokemon.json`** — Array of 10 Pokémon:
+**`src/renderer/data/pokemon.json`** — ポケモン10件のリスト
+
 ```json
 { "id": 1, "name": "Pikachu", "types": ["Electric"] }
 ```
-Fields: `id` (number), `name` (string), `types` (string[]).
+
+フィールド: `id`（number）、`name`（string）、`types`（string[]）
 
 ---
 
-## Development Commands
+## 開発コマンド
 
 ```bash
-# Install dependencies
+# 依存パッケージのインストール
 npm install
 
-# Build (TypeScript compile + copy assets to dist/)
+# TypeScript コンパイル + アセットを dist/ へコピー
 npm run build
 
-# Build and launch the Electron app
+# ビルド後に Electron を起動
 npm run dev
-# or
+# または
 npm start
 ```
 
-There is **no watch mode** — you must re-run `npm run build` after every TypeScript change before launching.
+**ウォッチモードはない**。TypeScript を変更したら `npm run build` を再実行してから起動すること。
 
-### Build output
-`dist/` mirrors `src/` structure:
-- `dist/main/main.js` — Electron entry point
+### ビルド出力（dist/）
+- `dist/main/main.js` — Electron エントリーポイント
 - `dist/preload/preload.js`
-- `dist/renderer/index.html`, `style.css`, `renderer.js`, `data/pokemon.json`
+- `dist/renderer/index.html`、`style.css`、`renderer.js`、`data/pokemon.json`
 
 ---
 
-## TypeScript Configuration
+## TypeScript 設定
 
-`tsconfig.json` key settings:
-- `"strict": true` — all strict checks enabled; **do not disable**
-- `"target": "ES2020"` and `"lib": ["ES2020", "DOM"]`
-- `"module": "commonjs"` — required for Electron main process
-- `"outDir": "dist"`, `"rootDir": "src"`
-- `"sourceMap": true`, `"declaration": true`
+`tsconfig.json` の重要な設定（変更禁止）:
 
----
-
-## Coding Conventions
-
-### General
-- All source files use TypeScript with strict typing — no `any` unless absolutely necessary
-- Use `async/await` for async operations (IPC invoke calls return Promises)
-- UI text and comments are written in **Japanese**
-- Commit messages follow Japanese conventions with English prefixes (`feat:`, `fix:`)
-
-### Renderer (renderer.ts)
-- Direct DOM manipulation (no framework) — use `document.getElementById()` with null checks
-- LocalStorage read/write for all user preferences
-- Event listeners attached in a top-level init sequence after DOM load
-
-### Main process (main.ts)
-- Use `ipcMain.handle()` for request/response patterns (returns value to renderer)
-- Use `ipcMain.on()` for fire-and-forget (e.g., streaming data chunks)
-- Use `webContents.send()` to push events from main to renderer
-- Spawn ffmpeg with `child_process.spawn()`, pipe stdin for video data
-
-### Preload (preload.ts)
-- Only add to `contextBridge.exposeInMainWorld` — never expose raw `ipcRenderer`
-- Keep the preload thin; logic belongs in main or renderer
+| 設定 | 値 | 理由 |
+|---|---|---|
+| `strict` | `true` | 型安全を強制 |
+| `target` | `ES2020` | Electron の対応バージョン |
+| `module` | `commonjs` | Electron メインプロセスの要件 |
+| `lib` | `["ES2020", "DOM"]` | DOM API を利用するため |
 
 ---
 
-## VSCode Configuration
+## コーディング規約
 
-`.vscode/launch.json` provides two debug profiles:
-- **"Debug Main Process"** — builds first, then attaches debugger to Electron main
-- **"Debug (no build)"** — skips build, useful when dist/ is already up to date
+### 共通
+- `any` は使用禁止。型不明な場合はジェネリクスか `unknown` を使う
+- 非同期処理は `async/await` で統一する（IPC invoke は Promise を返す）
+- UI テキスト・コメント・コミットメッセージは**日本語**で書く
 
-`.vscode/tasks.json` defines a `npm: build` task used as `preLaunchTask`.
+### レンダラー（renderer.ts）
+- フレームワークなしの素の DOM 操作。`document.getElementById()` 後は必ず null チェックを行う
+- ユーザー設定は `localStorage` で永続化する
+- イベントリスナーは DOM load 後の初期化シーケンスでまとめて登録する
 
----
+### メインプロセス（main.ts）
+- 返り値が必要な IPC は `ipcMain.handle()`、一方向の通知は `ipcMain.on()` を使う
+- レンダラーへの push は `webContents.send()` を使う
+- ffmpeg は `child_process.spawn()` で起動し、stdin にデータをパイプする
 
-## No-Test / No-CI Status
-
-This project currently has:
-- No automated tests (no Jest, Mocha, or other test framework)
-- No CI/CD pipelines (no `.github/workflows/`)
-- No linting configuration (no ESLint or Prettier)
-
-When adding tests or linting, update this file accordingly.
-
----
-
-## Git Workflow
-
-- Branch from `master` for features: `feature/<description>`
-- Merge via pull requests
-- Commit messages in Japanese with conventional prefixes: `feat:`, `fix:`, `chore:`, etc.
-- The `dist/` directory and `node_modules/` are gitignored and never committed
+### Preload（preload.ts）
+- `contextBridge.exposeInMainWorld` にのみ追記する
+- 生の `ipcRenderer` を露出しない
+- ロジックは main か renderer に置き、preload は薄く保つ
 
 ---
 
-## Known Quirks
+## Git ワークフロー
 
-- `src/main/caputure.ts` — misspelled filename ("caputure" not "capture"), unused legacy file; safe to ignore
-- ffmpeg binary must be present at runtime; if missing, `stream:start` will fail gracefully with an error message sent back to the renderer via `stream:status`
-- The app hardcodes a 1920×1080 window on fullscreen; layout is not responsive below that resolution
+- `master` からフィーチャーブランチを切る: `feature/<内容>`
+- プルリクエストでマージする
+- コミットメッセージの形式: `<prefix>: <日本語の説明>`
+  - プレフィックス例: `feat`, `fix`, `chore`, `docs`, `refactor`, `style`, `test`
+- `dist/` と `node_modules/` はコミットしない（gitignore 済み）
+
+---
+
+## テスト・CI の現状
+
+現時点では以下が存在しない:
+- 自動テスト（Jest / Mocha 等）
+- CI/CD パイプライン（GitHub Actions 等）
+- リント設定（ESLint / Prettier 等）
+
+追加した際は、このファイルに手順とコマンドを追記すること。
+
+---
+
+## 既知の問題・注意点
+
+- `src/main/caputure.ts` — ファイル名のタイポ（"capture" の誤り）、未使用。削除しても問題ない
+- ffmpeg バイナリが存在しない場合、`stream:start` は失敗する。エラーは `stream:status` チャンネル経由でレンダラーに通知される
+- ウィンドウサイズは 1920×1080 にハードコードされており、それ以下の解像度ではレイアウトが崩れる
