@@ -28,6 +28,44 @@
           <video id="video" autoplay playsinline></video>
         </div>
         <p id="video-status" class="video-status" aria-live="polite"></p>
+
+        <!-- 配信コントロールパネル -->
+        <section class="streaming-panel" aria-label="配信コントロール">
+          <div class="streaming-tab-buttons" role="tablist">
+            <button type="button" class="streaming-tab-btn is-active" data-streaming-tab="stream" role="tab" aria-selected="true">配信</button>
+            <button type="button" class="streaming-tab-btn" data-streaming-tab="record" role="tab" aria-selected="false">録画</button>
+            <button type="button" class="streaming-settings-open-btn" id="stream-settings-open-btn">設定</button>
+          </div>
+
+          <div class="streaming-tab-panels">
+            <!-- ① 配信タブ: 音量ミキサー + 配信ボタン -->
+            <div id="streaming-tab-stream" class="streaming-tab-panel is-active" role="tabpanel">
+              <div class="stream-mixer">
+                <div class="stream-section-header">
+                  <span class="stream-section-title">音量ミキサー</span>
+                </div>
+                <div class="stream-mixer-channels" id="stream-mixer-channels">
+                  <p class="stream-mixer-empty" id="stream-mixer-empty">音声デバイスを選択してください</p>
+                </div>
+              </div>
+              <div class="streaming-controls">
+                <div class="streaming-status" id="stream-status" data-state="idle">
+                  <span class="streaming-status-dot"></span>
+                  <span class="streaming-status-text" id="stream-status-text">停止中</span>
+                </div>
+                <button type="button" id="stream-toggle-btn" class="streaming-btn streaming-btn--start">配信開始</button>
+              </div>
+            </div>
+
+            <!-- ② 録画タブ -->
+            <div id="streaming-tab-record" class="streaming-tab-panel" role="tabpanel" hidden>
+              <div class="streaming-placeholder">
+                <span class="streaming-placeholder-text">録画機能は準備中です</span>
+              </div>
+            </div>
+
+          </div>
+        </section>
       </section>
 
       <!-- 右: タブ -->
@@ -392,6 +430,214 @@
         </div>
       </div>
     </div>
+    <!-- 配信設定ダイアログ -->
+    <div id="stream-settings-dialog" class="ssd-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="ssd-title">
+      <div class="ssd-dialog">
+        <div class="ssd-header">
+          <h2 class="ssd-title" id="ssd-title">配信設定</h2>
+          <button type="button" class="ssd-close-btn" id="ssd-close-btn" aria-label="閉じる">✕</button>
+        </div>
+
+        <div class="ssd-body">
+
+          <!-- ━━━ サービス ━━━ -->
+          <section class="ssd-section">
+            <h3 class="ssd-section-title">サービス</h3>
+
+            <div class="ssd-field">
+              <label class="ssd-label" for="setting-service">配信サービス</label>
+              <select id="setting-service" class="ssd-select">
+                <option value="youtube">YouTube</option>
+                <option value="twitch">Twitch</option>
+                <option value="custom">カスタム RTMP</option>
+              </select>
+            </div>
+
+            <div class="ssd-field" id="setting-server-field">
+              <label class="ssd-label" for="setting-server">RTMP サーバー</label>
+              <input type="text" id="setting-server" class="ssd-input" placeholder="rtmp://..." />
+            </div>
+
+            <div class="ssd-field">
+              <label class="ssd-label" for="setting-stream-key">ストリームキー</label>
+              <div class="ssd-key-row">
+                <input type="password" id="setting-stream-key" class="ssd-input ssd-input--key" placeholder="ストリームキーを入力" />
+                <button type="button" id="setting-stream-key-toggle" class="ssd-key-toggle">表示</button>
+              </div>
+            </div>
+
+            <!-- サービス別ヘルプ -->
+            <div id="ssd-help-youtube" class="ssd-help-box">
+              <p class="ssd-help-title">YouTube でのストリームキー取得手順</p>
+              <ol class="ssd-help-list">
+                <li>YouTube Studio を開く</li>
+                <li>左メニュー「ライブ配信」→「スケジュール設定なし」でライブ管理画面へ</li>
+                <li>「ストリームの設定」タブ → <strong>ストリームキー</strong> をコピーして上に貼り付ける</li>
+              </ol>
+              <p class="ssd-help-note">RTMP サーバーは自動入力されます。ストリームキーのみ設定してください。</p>
+            </div>
+            <div id="ssd-help-twitch" class="ssd-help-box" hidden>
+              <p class="ssd-help-title">Twitch でのストリームキー取得手順</p>
+              <ol class="ssd-help-list">
+                <li>Twitch Creator Dashboard を開く</li>
+                <li>設定 → ストリーム → <strong>プライマリストリームキー</strong> をコピー</li>
+              </ol>
+            </div>
+          </section>
+
+          <!-- ━━━ 出力 ━━━ -->
+          <section class="ssd-section">
+            <h3 class="ssd-section-title">出力</h3>
+
+            <div class="ssd-row2">
+              <div class="ssd-field">
+                <label class="ssd-label" for="setting-encoder">エンコーダー</label>
+                <select id="setting-encoder" class="ssd-select">
+                  <option value="x264">ソフトウェア (x264)</option>
+                  <option value="nvenc">NVIDIA NVENC H.264</option>
+                  <option value="amf">AMD AMF H.264</option>
+                  <option value="qsv">Intel QSV H.264</option>
+                </select>
+              </div>
+              <div class="ssd-field">
+                <label class="ssd-label" for="setting-rate-control">レートコントロール</label>
+                <select id="setting-rate-control" class="ssd-select">
+                  <option value="CBR" selected>CBR（固定ビットレート）</option>
+                  <option value="VBR">VBR（可変ビットレート）</option>
+                  <option value="CRF">CRF</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="ssd-row2">
+              <div class="ssd-field">
+                <label class="ssd-label" for="setting-video-bitrate">映像ビットレート</label>
+                <div class="ssd-input-suffix-row">
+                  <input type="number" id="setting-video-bitrate" class="ssd-input ssd-input--number" min="500" max="20000" value="6000" />
+                  <span class="ssd-suffix">kbps</span>
+                </div>
+                <p class="ssd-field-hint">YouTube 推奨: 1080p30 = 4500–6000 kbps</p>
+              </div>
+              <div class="ssd-field">
+                <label class="ssd-label" for="setting-audio-bitrate">音声ビットレート</label>
+                <select id="setting-audio-bitrate" class="ssd-select">
+                  <option value="64">64 kbps</option>
+                  <option value="96">96 kbps</option>
+                  <option value="128">128 kbps</option>
+                  <option value="160" selected>160 kbps</option>
+                  <option value="192">192 kbps</option>
+                  <option value="320">320 kbps</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="ssd-row2">
+              <div class="ssd-field">
+                <label class="ssd-label" for="setting-keyframe">キーフレーム間隔</label>
+                <select id="setting-keyframe" class="ssd-select">
+                  <option value="0">自動</option>
+                  <option value="1">1秒</option>
+                  <option value="2" selected>2秒（YouTube 推奨）</option>
+                  <option value="3">3秒</option>
+                  <option value="5">5秒</option>
+                </select>
+              </div>
+              <div class="ssd-field" id="ssd-preset-field">
+                <label class="ssd-label" for="setting-preset">プリセット（x264）</label>
+                <select id="setting-preset" class="ssd-select">
+                  <option value="ultrafast">ultrafast（最速・低品質）</option>
+                  <option value="superfast">superfast</option>
+                  <option value="veryfast" selected>veryfast（推奨）</option>
+                  <option value="faster">faster</option>
+                  <option value="fast">fast</option>
+                  <option value="medium">medium</option>
+                  <option value="slow">slow（高品質・高負荷）</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="ssd-row2">
+              <div class="ssd-field" id="ssd-profile-field">
+                <label class="ssd-label" for="setting-profile">プロファイル（x264）</label>
+                <select id="setting-profile" class="ssd-select">
+                  <option value="baseline">baseline</option>
+                  <option value="main">main</option>
+                  <option value="high" selected>high</option>
+                </select>
+              </div>
+              <div class="ssd-field"></div>
+            </div>
+          </section>
+
+          <!-- ━━━ 映像 ━━━ -->
+          <section class="ssd-section">
+            <h3 class="ssd-section-title">映像</h3>
+
+            <div class="ssd-row2">
+              <div class="ssd-field">
+                <label class="ssd-label" for="setting-resolution">出力解像度</label>
+                <select id="setting-resolution" class="ssd-select">
+                  <option value="1920x1080" selected>1920 × 1080（フルHD）</option>
+                  <option value="1280x720">1280 × 720（HD）</option>
+                  <option value="960x540">960 × 540</option>
+                  <option value="640x360">640 × 360</option>
+                </select>
+              </div>
+              <div class="ssd-field">
+                <label class="ssd-label" for="setting-fps">フレームレート</label>
+                <select id="setting-fps" class="ssd-select">
+                  <option value="24">24 fps</option>
+                  <option value="30" selected>30 fps</option>
+                  <option value="60">60 fps</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- ━━━ 必要なもの（チェックリスト） ━━━ -->
+          <section class="ssd-section ssd-section--requirements">
+            <h3 class="ssd-section-title">配信に必要なもの</h3>
+            <ul class="ssd-req-list">
+              <li class="ssd-req-item">
+                <span class="ssd-req-icon">&#9745;</span>
+                <div>
+                  <strong>ストリームキー</strong>
+                  <span class="ssd-req-desc">各サービスのダッシュボードから取得し、上の「ストリームキー」欄に入力</span>
+                </div>
+              </li>
+              <li class="ssd-req-item">
+                <span class="ssd-req-icon">&#9745;</span>
+                <div>
+                  <strong>FFmpeg（アプリに組み込み済み）</strong>
+                  <span class="ssd-req-desc">FFmpeg はアプリにバンドルされているため、別途インストール不要です</span>
+                </div>
+              </li>
+              <li class="ssd-req-item">
+                <span class="ssd-req-icon">&#9745;</span>
+                <div>
+                  <strong>映像ソース・音声ソースの選択</strong>
+                  <span class="ssd-req-desc">左上のデバイス選択でキャプチャーボード等を選択した状態にする</span>
+                </div>
+              </li>
+              <li class="ssd-req-item">
+                <span class="ssd-req-icon">&#9744;</span>
+                <div>
+                  <strong>十分なアップロード回線</strong>
+                  <span class="ssd-req-desc">YouTube 1080p30 の場合、最低 6 Mbps 以上のアップロード速度を推奨</span>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+        </div><!-- /.ssd-body -->
+
+        <div class="ssd-footer">
+          <button type="button" class="ssd-btn ssd-btn--cancel" id="ssd-cancel-btn">キャンセル</button>
+          <button type="button" class="ssd-btn ssd-btn--save" id="ssd-save-btn">保存して閉じる</button>
+        </div>
+      </div>
+    </div><!-- /#stream-settings-dialog -->
+
     <script src="renderer.js"></script>
   </body>
 </html>

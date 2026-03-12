@@ -1850,3 +1850,733 @@ body {
   background: rgba(100, 180, 255, 0.15);
   border-left-color: rgba(100, 180, 255, 0.6);
 }
+
+/* ========== 配信コントロールパネル ========== */
+.streaming-panel {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0d111a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.streaming-tab-buttons {
+  display: flex;
+  gap: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.streaming-tab-btn {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.streaming-tab-btn:last-child {
+  border-right: none;
+}
+
+.streaming-tab-btn:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.streaming-tab-btn.is-active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid #e05252;
+}
+
+.streaming-tab-panels {
+  flex: 1;
+}
+
+.streaming-tab-panel {
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.streaming-tab-panel[hidden] {
+  display: none !important;
+}
+
+/* フォーム */
+.streaming-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.streaming-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.streaming-label {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  width: 6rem;
+}
+
+.streaming-select,
+.streaming-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  outline: none;
+}
+
+.streaming-select option {
+  background: #1a2230;
+  color: #eee;
+}
+
+.streaming-input:focus,
+.streaming-select:focus {
+  border-color: rgba(180, 180, 255, 0.5);
+}
+
+.streaming-input--number {
+  width: 5rem;
+  flex: 0 0 5rem;
+  text-align: right;
+}
+
+.streaming-key-row {
+  flex: 1;
+  display: flex;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.streaming-input--key {
+  flex: 1;
+  min-width: 0;
+}
+
+.streaming-key-toggle {
+  flex-shrink: 0;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.streaming-key-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.streaming-input-suffix-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.streaming-input-suffix {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+/* コントロール行（ステータス + ボタン） */
+.streaming-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.streaming-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.streaming-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.streaming-status[data-state="live"] .streaming-status-dot {
+  background: #e05252;
+  box-shadow: 0 0 6px rgba(224, 82, 82, 0.8);
+  animation: streaming-pulse 1.8s infinite;
+}
+
+.streaming-status[data-state="connecting"] .streaming-status-dot {
+  background: #e8a040;
+  animation: streaming-blink 0.8s step-start infinite;
+}
+
+@keyframes streaming-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes streaming-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.streaming-status-text {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.streaming-status[data-state="live"] .streaming-status-text {
+  color: #f08080;
+  font-weight: 600;
+}
+
+.streaming-status[data-state="connecting"] .streaming-status-text {
+  color: #e8a040;
+}
+
+/* 配信ボタン */
+.streaming-btn {
+  padding: 0.45rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.streaming-btn:active {
+  transform: translateY(1px);
+}
+
+.streaming-btn--start {
+  background: linear-gradient(180deg, #c04040 0%, #a03030 100%);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.streaming-btn--start:hover {
+  background: linear-gradient(180deg, #d05050 0%, #b04040 100%);
+}
+
+.streaming-btn--stop {
+  background: linear-gradient(180deg, #404040 0%, #303030 100%);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.streaming-btn--stop:hover {
+  background: linear-gradient(180deg, #505050 0%, #404040 100%);
+}
+
+/* プレースホルダー */
+.streaming-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.streaming-placeholder-text {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ========== 音量ミキサー ========== */
+.stream-mixer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.stream-section-header {
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0.2rem;
+}
+
+.stream-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stream-mixer-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.stream-mixer-empty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  padding: 0.4rem 0;
+}
+
+/* チャンネルストリップ */
+.mixer-channel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+}
+
+.mixer-channel-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mixer-channel-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mixer-mute-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  color: #eee;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.mixer-mute-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.mixer-mute-btn.is-muted {
+  background: rgba(200, 80, 80, 0.4);
+  border-color: rgba(200, 80, 80, 0.5);
+}
+
+.mixer-volume-slider {
+  flex: 1;
+  height: 4px;
+  accent-color: #66cc88;
+  cursor: pointer;
+}
+
+.mixer-volume-value {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.55);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* VU メーターバー */
+.mixer-vu-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.mixer-vu-bar-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    #27ae60  0%,
+    #2ecc71 62%,
+    #f1c40f 70%,
+    #e67e22 87%,
+    #e74c3c 93%,
+    #c0392b 100%
+  );
+}
+
+/* マスク：右側を暗く覆って「非点灯」部分を表現 */
+.mixer-vu-bar-mask {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(8, 12, 18, 0.86);
+  transition: width 40ms linear;
+  width: 100%;
+}
+
+/* ピークホールドインジケーター */
+.mixer-vu-peak {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.75);
+  transition: left 60ms linear;
+  left: 0%;
+}
+
+/* ========== 設定ボタン（タブ行右端） ========== */
+.streaming-settings-open-btn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.streaming-settings-open-btn:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ========== 配信設定ダイアログ (ssd) ========== */
+.ssd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.ssd-overlay[hidden] {
+  display: none !important;
+}
+
+.ssd-dialog {
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  width: 680px;
+  max-width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.8);
+}
+
+/* ヘッダー */
+.ssd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  flex-shrink: 0;
+}
+
+.ssd-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ssd-close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.ssd-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ボディ（スクロール） */
+.ssd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* セクション */
+.ssd-section {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ssd-section:last-child {
+  border-bottom: none;
+}
+
+.ssd-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* フィールド */
+.ssd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.7rem;
+}
+
+.ssd-field:last-child {
+  margin-bottom: 0;
+}
+
+.ssd-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ssd-select,
+.ssd-input {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ssd-select option {
+  background: #1a2230;
+  color: #eee;
+}
+
+.ssd-input:focus,
+.ssd-select:focus {
+  border-color: rgba(150, 180, 255, 0.5);
+}
+
+.ssd-input--key {
+  flex: 1;
+}
+
+.ssd-key-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.ssd-key-toggle {
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ssd-key-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.ssd-input-suffix-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ssd-input--number {
+  width: 7rem;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.ssd-suffix {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ssd-field-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* 2カラムグリッド */
+.ssd-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.ssd-row2:last-child {
+  margin-bottom: 0;
+}
+
+/* ヘルプボックス */
+.ssd-help-box {
+  margin-top: 0.75rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 7px;
+  padding: 0.65rem 0.85rem;
+}
+
+.ssd-help-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(147, 197, 253, 0.9);
+}
+
+.ssd-help-list {
+  margin: 0 0 0.4rem;
+  padding-left: 1.2rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.7;
+}
+
+.ssd-help-note {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* 必要なものリスト */
+.ssd-section--requirements .ssd-section-title {
+  margin-bottom: 0.6rem;
+}
+
+.ssd-req-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ssd-req-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.8rem;
+}
+
+.ssd-req-icon {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  margin-top: 0.05rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ssd-req-item strong {
+  display: block;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.82rem;
+}
+
+.ssd-req-desc {
+  display: block;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.75rem;
+  margin-top: 0.1rem;
+  line-height: 1.4;
+}
+
+.ssd-req-desc code {
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0 0.3em;
+  border-radius: 3px;
+}
+
+/* フッター */
+.ssd-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  flex-shrink: 0;
+}
+
+.ssd-btn {
+  padding: 0.5rem 1.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s;
+}
+
+.ssd-btn--cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ssd-btn--cancel:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.ssd-btn--save {
+  background: linear-gradient(180deg, #3b6fd4 0%, #2c56b0 100%);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ssd-btn--save:hover {
+  background: linear-gradient(180deg, #4a80e4 0%, #3666c0 100%);
+}
