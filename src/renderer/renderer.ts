@@ -230,6 +230,12 @@ const statusEl = document.getElementById("video-status");
 
 let currentStream: MediaStream | null = null;
 
+// ===== ストリーム変化通知 =====
+const streamChangeCallbacks: Array<(stream: MediaStream | null) => void> = [];
+function notifyStreamChanged(stream: MediaStream | null): void {
+  streamChangeCallbacks.forEach((cb) => cb(stream));
+}
+
 /** 複数チーム（各チームは最大6匹） */
 let teams: Pokemon[][] = [];
 
@@ -1025,6 +1031,7 @@ function stopCurrentStream(): void {
   if (currentStream) {
     currentStream.getTracks().forEach((t) => t.stop());
     currentStream = null;
+    notifyStreamChanged(null);
   }
   if (videoEl) videoEl.srcObject = null;
 }
@@ -1141,6 +1148,7 @@ function startStream(): void {
 
   navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
     currentStream = stream;
+    notifyStreamChanged(stream);
     videoEl.srcObject = stream;
 
     videoEl.onloadedmetadata = () => {
@@ -2527,3 +2535,366 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadDevices();
 });
+
+// ========== 配信コントロールパネル ==========
+(function initStreamingPanel() {
+
+  // ---- タブ切り替え ----
+  const streamingTabBtns = document.querySelectorAll<HTMLButtonElement>(".streaming-tab-btn");
+  const streamingTabPanels = document.querySelectorAll<HTMLElement>(".streaming-tab-panel");
+  streamingTabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.streamingTab;
+      streamingTabBtns.forEach((b) => {
+        b.classList.toggle("is-active", b === btn);
+        b.setAttribute("aria-selected", b === btn ? "true" : "false");
+      });
+      streamingTabPanels.forEach((panel) => {
+        panel.hidden = panel.id !== `streaming-tab-${target}`;
+      });
+    });
+  });
+
+  // ---- 設定ダイアログ ----
+  const settingsDialog  = document.getElementById("stream-settings-dialog") as HTMLElement | null;
+  const settingsOpenBtn = document.getElementById("stream-settings-open-btn") as HTMLButtonElement | null;
+  const settingsCloseBtn= document.getElementById("ssd-close-btn")           as HTMLButtonElement | null;
+  const settingsCancelBtn = document.getElementById("ssd-cancel-btn")        as HTMLButtonElement | null;
+  const settingsSaveBtn = document.getElementById("ssd-save-btn")            as HTMLButtonElement | null;
+
+  function openSettingsDialog() {
+    if (settingsDialog) settingsDialog.hidden = false;
+  }
+  function closeSettingsDialog() {
+    if (settingsDialog) settingsDialog.hidden = true;
+  }
+
+  settingsOpenBtn?.addEventListener("click", openSettingsDialog);
+  settingsCloseBtn?.addEventListener("click", closeSettingsDialog);
+  settingsCancelBtn?.addEventListener("click", closeSettingsDialog);
+  settingsSaveBtn?.addEventListener("click", closeSettingsDialog);
+
+  // オーバーレイ背景クリックで閉じる
+  settingsDialog?.addEventListener("click", (e) => {
+    if (e.target === settingsDialog) closeSettingsDialog();
+  });
+
+  // サービス選択 → サーバー URL 自動入力 / ヘルプ切り替え
+  const SERVICE_RTMP: Record<string, string> = {
+    twitch:  "rtmp://live.twitch.tv/app",
+    youtube: "rtmp://a.rtmp.youtube.com/live2",
+    custom:  "",
+  };
+  const settingService   = document.getElementById("setting-service")   as HTMLSelectElement | null;
+  const settingServer    = document.getElementById("setting-server")     as HTMLInputElement  | null;
+  const settingStreamKey = document.getElementById("setting-stream-key") as HTMLInputElement  | null;
+  const settingKeyToggle = document.getElementById("setting-stream-key-toggle") as HTMLButtonElement | null;
+  const helpYoutube      = document.getElementById("ssd-help-youtube")   as HTMLElement | null;
+  const helpTwitch       = document.getElementById("ssd-help-twitch")    as HTMLElement | null;
+
+  function updateServerFromService() {
+    if (!settingService || !settingServer) return;
+    const svc = settingService.value;
+    settingServer.value    = SERVICE_RTMP[svc] ?? "";
+    settingServer.readOnly = svc !== "custom";
+    settingServer.placeholder = svc === "custom" ? "rtmp://..." : "";
+    if (helpYoutube) helpYoutube.hidden = svc !== "youtube";
+    if (helpTwitch)  helpTwitch.hidden  = svc !== "twitch";
+  }
+  settingService?.addEventListener("change", updateServerFromService);
+  updateServerFromService();
+
+  settingKeyToggle?.addEventListener("click", () => {
+    if (!settingStreamKey) return;
+    const hide = settingStreamKey.type === "password";
+    settingStreamKey.type = hide ? "text" : "password";
+    if (settingKeyToggle) settingKeyToggle.textContent = hide ? "非表示" : "表示";
+  });
+
+  // x264 専用フィールドをエンコーダー選択に応じて表示切替
+  const settingEncoder   = document.getElementById("setting-encoder")   as HTMLSelectElement | null;
+  const ssdPresetField   = document.getElementById("ssd-preset-field")  as HTMLElement | null;
+  const ssdProfileField  = document.getElementById("ssd-profile-field") as HTMLElement | null;
+  function updateEncoderFields() {
+    const isX264 = settingEncoder?.value === "x264";
+    if (ssdPresetField)  ssdPresetField.hidden  = !isX264;
+    if (ssdProfileField) ssdProfileField.hidden = !isX264;
+  }
+  settingEncoder?.addEventListener("change", updateEncoderFields);
+  updateEncoderFields();
+
+  // ---- 音量ミキサー & VU メーター ----
+  const mixerChannelsEl = document.getElementById("stream-mixer-channels") as HTMLElement | null;
+  const mixerEmptyEl    = document.getElementById("stream-mixer-empty")    as HTMLElement | null;
+
+  let audioCtx:    AudioContext  | null = null;
+  let analyserNode: AnalyserNode | null = null;
+  let animFrameId: number | null = null;
+  let analyserBuf: Float32Array<ArrayBuffer> | null = null;
+
+  interface MixerChannelState {
+    muted:     boolean;
+    volume:    number;   // 0.0 – 2.0
+    peakLevel: number;   // 0 – 100
+    peakHoldUntil: number; // performance.now() timestamp
+    maskEl: HTMLElement;
+    peakEl: HTMLElement;
+  }
+  const channelStates: MixerChannelState[] = [];
+
+  const PEAK_HOLD_MS   = 1500;
+  const PEAK_DROP_RATE = 0.5; // % per frame
+
+  function createMixerChannel(trackLabel: string): MixerChannelState {
+    const wrap = document.createElement("div");
+    wrap.className = "mixer-channel";
+
+    // チャンネル名
+    const nameEl = document.createElement("div");
+    nameEl.className = "mixer-channel-name";
+    nameEl.textContent = trackLabel;
+
+    // コントロール行
+    const rowEl = document.createElement("div");
+    rowEl.className = "mixer-channel-row";
+
+    const muteBtn = document.createElement("button");
+    muteBtn.type = "button";
+    muteBtn.className = "mixer-mute-btn";
+    muteBtn.title = "ミュート";
+    muteBtn.textContent = "🔊";
+
+    const slider = document.createElement("input");
+    slider.type  = "range";
+    slider.className = "mixer-volume-slider";
+    slider.min = "0"; slider.max = "200"; slider.value = "100";
+
+    const valueLabel = document.createElement("span");
+    valueLabel.className = "mixer-volume-value";
+    valueLabel.textContent = "100%";
+
+    rowEl.append(muteBtn, slider, valueLabel);
+
+    // VU バー
+    const vuBar  = document.createElement("div");  vuBar.className  = "mixer-vu-bar";
+    const vuGrad = document.createElement("div");  vuGrad.className = "mixer-vu-bar-gradient";
+    const vuMask = document.createElement("div");  vuMask.className = "mixer-vu-bar-mask"; vuMask.style.width = "100%";
+    const vuPeak = document.createElement("div");  vuPeak.className = "mixer-vu-peak";     vuPeak.style.left  = "0%";
+    vuBar.append(vuGrad, vuMask, vuPeak);
+
+    wrap.append(nameEl, rowEl, vuBar);
+    mixerChannelsEl?.appendChild(wrap);
+
+    const state: MixerChannelState = {
+      muted: false, volume: 1.0,
+      peakLevel: 0, peakHoldUntil: 0,
+      maskEl: vuMask, peakEl: vuPeak,
+    };
+
+    muteBtn.addEventListener("click", () => {
+      state.muted = !state.muted;
+      muteBtn.textContent = state.muted ? "🔇" : "🔊";
+      muteBtn.classList.toggle("is-muted", state.muted);
+      if (videoEl) videoEl.muted = state.muted;
+    });
+    slider.addEventListener("input", () => {
+      const v = Number(slider.value);
+      state.volume = v / 100;
+      valueLabel.textContent = `${v}%`;
+      if (videoEl && !state.muted) videoEl.volume = Math.min(1, state.volume);
+    });
+
+    return state;
+  }
+
+  function setupMixer(stream: MediaStream) {
+    teardownMixer();
+
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      if (mixerEmptyEl) mixerEmptyEl.hidden = false;
+      return;
+    }
+    if (mixerEmptyEl) mixerEmptyEl.hidden = true;
+
+    // AudioContext & AnalyserNode（音量分析専用・再生はvideoEl経由のまま）
+    audioCtx = audioCtx ?? new AudioContext();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    analyserNode = audioCtx.createAnalyser();
+    analyserNode.fftSize = 1024;
+    analyserNode.smoothingTimeConstant = 0.25;
+    audioCtx.createMediaStreamSource(stream).connect(analyserNode);
+
+    audioTracks.forEach((t) => channelStates.push(createMixerChannel(t.label || "音声入力")));
+
+    animateMeter();
+  }
+
+  function teardownMixer() {
+    if (animFrameId !== null) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+    analyserNode = null;
+    analyserBuf  = null;
+    channelStates.length = 0;
+    // DOM クリア（empty メッセージだけ残す）
+    if (mixerChannelsEl && mixerEmptyEl) {
+      while (mixerChannelsEl.firstChild) mixerChannelsEl.removeChild(mixerChannelsEl.firstChild);
+      mixerEmptyEl.hidden = false;
+      mixerChannelsEl.appendChild(mixerEmptyEl);
+    }
+  }
+
+  function animateMeter() {
+    animFrameId = requestAnimationFrame(animateMeter);
+    if (!analyserNode || channelStates.length === 0) return;
+
+    const size = analyserNode.fftSize;
+    if (!analyserBuf || analyserBuf.length !== size) analyserBuf = new Float32Array(size) as Float32Array<ArrayBuffer>;
+    analyserNode.getFloatTimeDomainData(analyserBuf);
+
+    // RMS → dB → 0–100%
+    let sumSq = 0;
+    for (let i = 0; i < size; i++) sumSq += analyserBuf[i] * analyserBuf[i];
+    const rms   = Math.sqrt(sumSq / size);
+    const db    = 20 * Math.log10(Math.max(rms, 1e-5));
+    const level = Math.max(0, Math.min(100, (db + 60) / 60 * 100));
+
+    const now = performance.now();
+    for (const s of channelStates) {
+      // ピーク
+      if (level >= s.peakLevel) {
+        s.peakLevel     = level;
+        s.peakHoldUntil = now + PEAK_HOLD_MS;
+      } else if (now > s.peakHoldUntil) {
+        s.peakLevel = Math.max(0, s.peakLevel - PEAK_DROP_RATE);
+      }
+      // VU バー: マスクを右から動かして点灯量を表現
+      s.maskEl.style.width = `${100 - level}%`;
+      s.peakEl.style.left  = `${s.peakLevel}%`;
+    }
+  }
+
+  // ストリーム開始/終了を購読
+  streamChangeCallbacks.push((stream) => {
+    if (stream) setupMixer(stream);
+    else        teardownMixer();
+  });
+  // 既にストリームが存在する場合は即セットアップ
+  if (currentStream) setupMixer(currentStream);
+
+  // ---- 配信開始/停止ボタン ----
+  const toggleBtn  = document.getElementById("stream-toggle-btn")   as HTMLButtonElement | null;
+  const statusRoot = document.getElementById("stream-status")        as HTMLElement       | null;
+  const statusText = document.getElementById("stream-status-text")   as HTMLElement       | null;
+
+  type StreamState = "idle" | "connecting" | "live" | "error";
+  let currentState: StreamState = "idle";
+
+  function applyStreamState(state: StreamState, message?: string) {
+    currentState = state;
+    if (statusRoot) statusRoot.dataset.state = state;
+    if (statusText) {
+      statusText.textContent = {
+        idle:       "停止中",
+        connecting: "接続中…",
+        live:       "配信中",
+        error:      message ?? "エラー",
+      }[state];
+    }
+    if (toggleBtn) {
+      const isActive = state === "live" || state === "connecting";
+      toggleBtn.textContent = isActive ? "配信停止" : "配信開始";
+      toggleBtn.classList.toggle("streaming-btn--stop",  isActive);
+      toggleBtn.classList.toggle("streaming-btn--start", !isActive);
+      toggleBtn.disabled = state === "connecting";
+    }
+  }
+
+  function getSettingVal(id: string, fallback: string | number): string {
+    const el = document.getElementById(id) as (HTMLInputElement | HTMLSelectElement) | null;
+    return el?.value ?? String(fallback);
+  }
+
+  let mediaRecorder: MediaRecorder | null = null;
+
+  function stopMediaRecorder() {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    mediaRecorder = null;
+  }
+
+  toggleBtn?.addEventListener("click", async () => {
+    if (currentState === "live" || currentState === "connecting") {
+      stopMediaRecorder();
+      await (window as any).electronAPI?.stopStream?.();
+      return;
+    }
+
+    // 映像ソース未選択チェック
+    if (!currentStream) {
+      applyStreamState("error", "左上のデバイス選択で映像ソースを選択してください");
+      return;
+    }
+
+    const rtmpUrl   = settingServer?.value.trim()    ?? "";
+    const streamKey = settingStreamKey?.value.trim() ?? "";
+    if (!rtmpUrl || !streamKey) {
+      applyStreamState("error", "設定でサーバーとストリームキーを入力してください");
+      return;
+    }
+
+    applyStreamState("connecting");
+
+    // ① MediaRecorder を先に起動してヘッダーチャンクをバッファさせる
+    const stream = currentStream;
+    const mimeType = ["video/webm;codecs=vp8,opus", "video/webm;codecs=vp9,opus", "video/webm"]
+      .find((t) => MediaRecorder.isTypeSupported(t)) ?? "video/webm";
+
+    try {
+      mediaRecorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          e.data.arrayBuffer().then((buf) => {
+            (window as any).electronAPI?.sendStreamChunk?.(buf);
+          });
+        }
+      };
+      mediaRecorder.onerror = () => {
+        applyStreamState("error", "エンコードエラーが発生しました");
+        stopMediaRecorder();
+      };
+      mediaRecorder.start(200); // 200ms ごとにチャンクを送信
+    } catch (err) {
+      applyStreamState("error", `MediaRecorder 起動失敗: ${String(err)}`);
+      return;
+    }
+
+    // ② WebM ヘッダーチャンクが生成されるまで少し待つ
+    await new Promise<void>((resolve) => setTimeout(resolve, 400));
+
+    // ③ FFmpeg 起動（バッファ済みヘッダーチャンクが即座に流れる）
+    const result = await (window as any).electronAPI?.startStream?.({
+      rtmpUrl,
+      streamKey,
+      videoBitrate: Number(getSettingVal("setting-video-bitrate", 6000)),
+      audioBitrate: Number(getSettingVal("setting-audio-bitrate", 160)),
+      encoder:      getSettingVal("setting-encoder",      "x264"),
+      rateControl:  getSettingVal("setting-rate-control", "CBR"),
+      preset:       getSettingVal("setting-preset",       "veryfast"),
+      profile:      getSettingVal("setting-profile",      "high"),
+      keyframe:     Number(getSettingVal("setting-keyframe", 2)),
+      resolution:   getSettingVal("setting-resolution",   "1920x1080"),
+      fps:          Number(getSettingVal("setting-fps",   30)),
+    });
+
+    if (result && !result.success) {
+      stopMediaRecorder();
+      applyStreamState("error", result.error);
+    }
+  });
+
+  // メインプロセスからのステータス通知
+  (window as any).electronAPI?.onStreamStatus?.(
+    (status: { state: StreamState; message?: string }) => applyStreamState(status.state, status.message)
+  );
+})();
