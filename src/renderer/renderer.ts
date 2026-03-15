@@ -269,6 +269,18 @@ let tab1SelectTypeFilter: string | null = null;
 /** タブ1: 単体選択モーダルの名前検索テキスト */
 let tab1NameSearchText = "";
 
+/** タブ1: 単体選択モーダルの表示ソース（all=全ポケモン, box=BOXのみ） */
+let tab1SourceMode: "all" | "box" = "all";
+
+/** タブ1: 単体選択モーダルのソートキー */
+let tab1SortKey: "number" | "name" = "number";
+
+/** タブ2: ピッカーの表示ソース（all=全ポケモン, box=BOXのみ） */
+let pickerSourceMode: "all" | "box" = "all";
+
+/** タブ2: ピッカーのソートキー */
+let pickerSortKey: "number" | "name" = "number";
+
 /** タブ1: 選択中ワザ4つ */
 let selectedMoves: number[] = [];
 
@@ -560,15 +572,86 @@ function renderBoxGrid(): void {
   filtered.forEach((entry, idx) => {
     const card = document.createElement("div");
     card.className = "box-pokemon-card";
-    card.dataset.boxIndex = String(box.indexOf(entry));
-    const imgWrap = document.createElement("div");
-    imgWrap.className = "box-card-img-wrap";
+    const realIndex = box.indexOf(entry);
+    card.dataset.boxIndex = String(realIndex);
+
+    // 左側: 画像 + ポケモン名
+    const leftEl = document.createElement("div");
+    leftEl.className = "box-card-left";
     const pokImg = document.createElement("img");
     pokImg.className = "box-card-img";
     pokImg.alt = entry.pokemon.name;
     pokImg.src = entry.pokemon.id ? `img/pokemon3/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
     pokImg.onerror = () => { pokImg.src = BALL_MONSTER_IMAGE; };
-    imgWrap.appendChild(pokImg);
+    leftEl.appendChild(pokImg);
+    const nameEl = document.createElement("span");
+    nameEl.className = "box-card-name";
+    nameEl.textContent = entry.pokemon.name;
+    leftEl.appendChild(nameEl);
+    card.appendChild(leftEl);
+
+    // 右側: 性格 + ステータステーブル + 持ち物
+    const rightEl = document.createElement("div");
+    rightEl.className = "box-card-right";
+
+    const nat = NATURES.find((n) => n.name === entry.natureName);
+    const natLabel = nat ? getNatureLabel(nat) : entry.natureName;
+    const natureEl = document.createElement("span");
+    natureEl.className = "box-card-nature";
+    natureEl.textContent = natLabel;
+    rightEl.appendChild(natureEl);
+
+    // ステータステーブル
+    const bs = entry.pokemon.baseStats;
+    const statDefs: { label: string; base: number | undefined; ev: number; nature: number }[] = [
+      { label: "HP",    base: bs?.hp,         ev: entry.ev.hp,    nature: 1.0 },
+      { label: "こうげき", base: bs?.attack,     ev: entry.ev.atk,   nature: nat?.atk  ?? 1.0 },
+      { label: "ぼうぎょ", base: bs?.defense,    ev: entry.ev.def,   nature: nat?.def  ?? 1.0 },
+      { label: "とくこう", base: bs?.spAttack,   ev: entry.ev.spAtk, nature: nat?.spAtk ?? 1.0 },
+      { label: "とくぼう", base: bs?.spDefense,  ev: entry.ev.spDef, nature: nat?.spDef ?? 1.0 },
+      { label: "すばやさ", base: bs?.speed,      ev: entry.ev.spd,   nature: nat?.spd  ?? 1.0 },
+    ];
+    const tbl = document.createElement("div");
+    tbl.className = "box-card-stat-table";
+    // ヘッダ行
+    ["", "種族値", "努力値", "実数値"].forEach((h) => {
+      const hd = document.createElement("span");
+      hd.className = "box-card-stat-hd";
+      hd.textContent = h;
+      tbl.appendChild(hd);
+    });
+    statDefs.forEach(({ label, base, ev, nature }) => {
+      const labelEl = document.createElement("span");
+      labelEl.className = "box-card-stat-label";
+      labelEl.textContent = label;
+      tbl.appendChild(labelEl);
+
+      const baseVal = base ?? "—";
+      const baseEl = document.createElement("span");
+      baseEl.className = "box-card-stat-val";
+      baseEl.textContent = String(baseVal);
+      tbl.appendChild(baseEl);
+
+      const evEl = document.createElement("span");
+      evEl.className = `box-card-stat-val${ev > 0 ? " box-card-stat-ev-nz" : ""}`;
+      evEl.textContent = String(ev);
+      tbl.appendChild(evEl);
+
+      let real: number | string = "—";
+      if (base !== undefined) {
+        if (label === "HP") {
+          real = Math.floor((2 * base + Math.floor(ev / 4)) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
+        } else {
+          real = calcStatWithEV(base, ev, nature);
+        }
+      }
+      const realEl = document.createElement("span");
+      realEl.className = "box-card-stat-val box-card-stat-real";
+      realEl.textContent = String(real);
+      tbl.appendChild(realEl);
+    });
+    rightEl.appendChild(tbl);
+
     if (entry.heldItem) {
       const itemBadge = document.createElement("div");
       itemBadge.className = "box-card-item-badge";
@@ -578,15 +661,11 @@ function renderBoxGrid(): void {
       itemImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${entry.heldItem}.png`;
       itemImg.onerror = () => { itemBadge.hidden = true; };
       itemBadge.appendChild(itemImg);
-      imgWrap.appendChild(itemBadge);
+      rightEl.appendChild(itemBadge);
     }
-    card.appendChild(imgWrap);
-    const nameEl = document.createElement("span");
-    nameEl.className = "box-card-name";
-    nameEl.textContent = entry.pokemon.name;
-    card.appendChild(nameEl);
+
+    card.appendChild(rightEl);
     grid.appendChild(card);
-    const realIndex = box.indexOf(entry);
     card.addEventListener("click", () => openBoxDetailView(realIndex));
     void idx;
   });
@@ -658,6 +737,14 @@ function saveBoxEntry(): void {
   } else {
     box.push(entry);
   }
+  saveBoxToStorage();
+  closeBoxDetailModal();
+  renderTab3();
+}
+
+function deleteBoxEntry(): void {
+  if (boxViewingIndex === null) return;
+  box.splice(boxViewingIndex, 1);
   saveBoxToStorage();
   closeBoxDetailModal();
   renderTab3();
@@ -758,6 +845,44 @@ function renderBoxDetailView(entry: BoxEntry): void {
   `;
 }
 
+/** BOX編集フォームの実数値を再計算して表示を更新 */
+function updateBoxEditRealStats(pokemon: Pokemon): void {
+  const natSel = document.getElementById("box-detail-nature") as HTMLSelectElement | null;
+  const nat = NATURES.find((n) => n.name === (natSel?.value ?? ""));
+  const bs = pokemon.baseStats;
+  const statMap: { id: string; base: number | undefined; natureKey: keyof Omit<typeof NATURES[0], "name"> | "hp" }[] = [
+    { id: "box-ev-hp",    base: bs?.hp,        natureKey: "hp" },
+    { id: "box-ev-atk",   base: bs?.attack,    natureKey: "atk" },
+    { id: "box-ev-def",   base: bs?.defense,   natureKey: "def" },
+    { id: "box-ev-spatk", base: bs?.spAttack,  natureKey: "spAtk" },
+    { id: "box-ev-spdef", base: bs?.spDefense, natureKey: "spDef" },
+    { id: "box-ev-spd",   base: bs?.speed,     natureKey: "spd" },
+  ];
+  statMap.forEach(({ id, base, natureKey }) => {
+    const inp = document.getElementById(id) as HTMLInputElement | null;
+    const realEl = document.getElementById(`${id}-real`);
+    const labelEl = document.getElementById(`${id}-label`);
+    if (!inp || !realEl || base === undefined) return;
+    const ev = clampEv(Number(inp.value) || 0);
+    let natMul = 1.0;
+    let real: number;
+    if (natureKey === "hp") {
+      real = Math.floor((2 * base + Math.floor(ev / 4)) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
+    } else {
+      natMul = nat ? (nat[natureKey as keyof typeof nat] as number) : 1.0;
+      real = calcStatWithEV(base, ev, natMul);
+    }
+    realEl.textContent = String(real);
+    // 性格補正色
+    for (const el of [realEl, labelEl]) {
+      if (!el) continue;
+      el.classList.remove("box-stat-nature-up", "box-stat-nature-down");
+      if (natMul > 1) el.classList.add("box-stat-nature-up");
+      else if (natMul < 1) el.classList.add("box-stat-nature-down");
+    }
+  });
+}
+
 /** 編集フォームを初期化（新規 or 既存エントリで事前充填） */
 function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
   // 性格select
@@ -771,31 +896,58 @@ function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
       natSel.appendChild(opt);
     });
     natSel.value = existing?.natureName ?? "がんばりや";
+    natSel.addEventListener("change", () => updateBoxEditRealStats(pokemon));
   }
-  // 努力値グリッド生成
+  // ステータスグリッド生成（種族値 / 努力値 / 実数値）
   const evGrid = document.getElementById("box-ev-grid");
   if (evGrid) {
     evGrid.innerHTML = "";
+    // ヘッダ行
+    ["", "種族値", "努力値", "実数値"].forEach((h) => {
+      const hd = document.createElement("span");
+      hd.className = "box-stat-hd";
+      hd.textContent = h;
+      evGrid.appendChild(hd);
+    });
+    const bs = pokemon.baseStats;
+    const baseStatMap: Record<string, number | undefined> = {
+      "box-ev-hp": bs?.hp, "box-ev-atk": bs?.attack, "box-ev-def": bs?.defense,
+      "box-ev-spatk": bs?.spAttack, "box-ev-spdef": bs?.spDefense, "box-ev-spd": bs?.speed,
+    };
     BOX_EV_LABELS.forEach(({ label, id, key }) => {
-      const row = document.createElement("div");
-      row.className = "box-ev-row";
+      const base = baseStatMap[id];
+      // 列1: ラベル
       const lbl = document.createElement("span");
-      lbl.className = "box-ev-label";
+      lbl.className = "box-stat-label";
+      lbl.id = `${id}-label`;
       lbl.textContent = label;
+      // 列2: 種族値
+      const baseEl = document.createElement("span");
+      baseEl.className = "box-stat-base";
+      baseEl.textContent = base !== undefined ? String(base) : "—";
+      // 列3: 努力値 controls
+      const ctrlWrap = document.createElement("div");
+      ctrlWrap.className = "box-stat-ctrl";
       const btn0 = document.createElement("button");
       btn0.type = "button"; btn0.className = "damage-ev-btn damage-ev-btn-0"; btn0.dataset.evInput = id; btn0.textContent = "0";
       const inp = document.createElement("input");
       inp.type = "number"; inp.id = id; inp.className = "damage-ev-input"; inp.min = "0"; inp.max = "255";
       inp.value = String(existing?.ev[key] ?? 0);
+      inp.addEventListener("input", () => updateBoxEditRealStats(pokemon));
       const btn252 = document.createElement("button");
       btn252.type = "button"; btn252.className = "damage-ev-btn damage-ev-btn-252"; btn252.dataset.evInput = id; btn252.textContent = "252";
       const btnDn = document.createElement("button");
       btnDn.type = "button"; btnDn.className = "damage-ev-step-btn damage-ev-step-down"; btnDn.dataset.evInput = id; btnDn.textContent = "−";
       const btnUp = document.createElement("button");
       btnUp.type = "button"; btnUp.className = "damage-ev-step-btn damage-ev-step-up"; btnUp.dataset.evInput = id; btnUp.textContent = "＋";
-      row.append(lbl, btn0, inp, btn252, btnDn, btnUp);
-      evGrid.appendChild(row);
+      ctrlWrap.append(btn0, inp, btn252, btnDn, btnUp);
+      // 列4: 実数値
+      const realEl = document.createElement("span");
+      realEl.className = "box-stat-real";
+      realEl.id = `${id}-real`;
+      evGrid.append(lbl, baseEl, ctrlWrap, realEl);
     });
+    updateBoxEditRealStats(pokemon);
   }
   // 持ち物
   boxSelectedItem = existing ? (COMPETITIVE_ITEMS.find((it) => it.id === existing.heldItem) ?? null) : null;
@@ -1332,8 +1484,26 @@ function updatePickerListButtons(): void {
 
 /** タイプ絞り込み後のポケモン一覧を返す */
 function getFilteredPokemonList(): Pokemon[] {
-  if (!pickerTypeFilter || pickerTypeFilter === "すべて") return demoPokemon;
-  return demoPokemon.filter((p) => p.types.includes(pickerTypeFilter!));
+  let list: Pokemon[] = pickerSourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
+  if (pickerTypeFilter && pickerTypeFilter !== "すべて") {
+    list = list.filter((p) => p.types.includes(pickerTypeFilter!));
+  }
+  if (pickerSortKey === "name") {
+    list = [...list].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  }
+  return list;
+}
+
+/** ピッカーのソース切替・ソートUIの表示状態を更新 */
+function updatePickerSourceSortUI(): void {
+  const toggle = document.getElementById("picker-source-toggle");
+  if (toggle) {
+    toggle.querySelectorAll<HTMLButtonElement>(".picker-source-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.source === pickerSourceMode);
+    });
+  }
+  const sortSel = document.getElementById("picker-sort-select") as HTMLSelectElement | null;
+  if (sortSel) sortSel.value = pickerSortKey;
 }
 
 /** 全ポケモンからユニークなタイプ一覧を取得（ソート済み） */
@@ -1422,8 +1592,11 @@ function openPokemonPicker(): void {
   const listEl = document.getElementById("pokemon-picker-list");
   if (!modal || !listEl) return;
   pickerTypeFilter = null;
+  pickerSourceMode = "all";
+  pickerSortKey = "number";
   listEl.innerHTML = "";
   renderPickerTeamPreview();
+  updatePickerSourceSortUI();
   renderPickerTypeButtons();
   if (demoPokemon.length === 0) {
     const li = document.createElement("li");
@@ -1594,6 +1767,16 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
 }
 
 // ---------- タブ1: ダメージ計算 ----------
+
+function swapAttackerDefender(): void {
+  [attackPokemon, defendPokemon] = [defendPokemon, attackPokemon];
+  [tab1AttackerItem, tab1DefenderItem] = [tab1DefenderItem, tab1AttackerItem];
+  // EVs・性格・ランクはスロットごとに保持（リセットしない）
+  selectedMoves = attackPokemon ? getDefaultMoves(attackPokemon) : [];
+  editingMoveSlotIndex = null;
+  syncStatsInputsFromState();
+  renderTab1DamageDisplay();
+}
 
 function renderTab1DamageDisplay(): void {
   const defenderImg = document.getElementById("damage-defender-img") as HTMLImageElement | null;
@@ -1822,14 +2005,29 @@ function applyStatsFromInputsAndRecalc(): void {
 }
 
 function getTab1FilteredPokemonList(): Pokemon[] {
-  let list = demoPokemon;
+  let list: Pokemon[] = tab1SourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
   if (tab1SelectTypeFilter && tab1SelectTypeFilter !== "すべて") {
     list = list.filter((p) => p.types.includes(tab1SelectTypeFilter!));
   }
   if (tab1NameSearchText.trim()) {
     list = list.filter((p) => p.name.includes(tab1NameSearchText.trim()));
   }
+  if (tab1SortKey === "name") {
+    list = [...list].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  }
   return list;
+}
+
+/** タブ1ピッカーのソース切替・ソートUIの表示状態を更新 */
+function updateTab1SourceSortUI(): void {
+  const toggle = document.getElementById("tab1-source-toggle");
+  if (toggle) {
+    toggle.querySelectorAll<HTMLButtonElement>(".picker-source-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.source === tab1SourceMode);
+    });
+  }
+  const sortSel = document.getElementById("tab1-sort-select") as HTMLSelectElement | null;
+  if (sortSel) sortSel.value = tab1SortKey;
 }
 
 function getTab1UniqueTypes(): string[] {
@@ -1900,6 +2098,8 @@ function openTab1PokemonSelect(target: "attack" | "defend" | "box"): void {
   tab1SelectTarget = target;
   tab1SelectTypeFilter = null;
   tab1NameSearchText = "";
+  tab1SourceMode = "all";
+  tab1SortKey = "number";
   const nameSearch = document.getElementById("tab1-pokemon-name-search") as HTMLInputElement | null;
   if (nameSearch) nameSearch.value = "";
   const modal = document.getElementById("tab1-pokemon-select-modal");
@@ -1909,6 +2109,7 @@ function openTab1PokemonSelect(target: "attack" | "defend" | "box"): void {
     else if (target === "defend") titleEl.textContent = "防御側のポケモンを選択";
     else titleEl.textContent = "BOXに追加するポケモンを選択";
   }
+  updateTab1SourceSortUI();
   renderTab1SelectTypeButtons();
   if (demoPokemon.length === 0) {
     const listEl = document.getElementById("tab1-pokemon-select-list");
@@ -1930,23 +2131,45 @@ function closeTab1PokemonSelect(): void {
 function onTab1PokemonSelected(pokemon: Pokemon): void {
   if (tab1SelectTarget === "attack") {
     attackPokemon = pokemon;
-    selectedMoves = getDefaultMoves(pokemon);
     editingMoveSlotIndex = null;
-    attackerAtkEV = 0;
-    attackerAtkNature = 1.0;
-    attackerSpAtkEV = 0;
-    attackerSpAtkNature = 1.0;
     attackerAtkRank = 0;
     attackerSpAtkRank = 0;
+    const boxEntry = tab1SourceMode === "box" ? box.find((e) => e.pokemon.id === pokemon.id) : null;
+    if (boxEntry) {
+      selectedMoves = [...boxEntry.moves, 0, 0, 0, 0].slice(0, 4);
+      attackerAtkEV = boxEntry.ev.atk;
+      attackerSpAtkEV = boxEntry.ev.spAtk;
+      const nat = NATURES.find((n) => n.name === boxEntry.natureName);
+      attackerAtkNature = nat?.atk ?? 1.0;
+      attackerSpAtkNature = nat?.spAtk ?? 1.0;
+      tab1AttackerItem = boxEntry.heldItem;
+    } else {
+      selectedMoves = getDefaultMoves(pokemon);
+      attackerAtkEV = 0;
+      attackerAtkNature = 1.0;
+      attackerSpAtkEV = 0;
+      attackerSpAtkNature = 1.0;
+    }
   } else if (tab1SelectTarget === "defend") {
     defendPokemon = pokemon;
-    defenderHpEV = 0;
-    defenderDefEV = 0;
-    defenderDefNature = 1.0;
-    defenderSpDefEV = 0;
-    defenderSpDefNature = 1.0;
     defenderDefRank = 0;
     defenderSpDefRank = 0;
+    const boxEntry = tab1SourceMode === "box" ? box.find((e) => e.pokemon.id === pokemon.id) : null;
+    if (boxEntry) {
+      defenderHpEV = boxEntry.ev.hp;
+      defenderDefEV = boxEntry.ev.def;
+      defenderSpDefEV = boxEntry.ev.spDef;
+      const nat = NATURES.find((n) => n.name === boxEntry.natureName);
+      defenderDefNature = nat?.def ?? 1.0;
+      defenderSpDefNature = nat?.spDef ?? 1.0;
+      tab1DefenderItem = boxEntry.heldItem;
+    } else {
+      defenderHpEV = 0;
+      defenderDefEV = 0;
+      defenderDefNature = 1.0;
+      defenderSpDefEV = 0;
+      defenderSpDefNature = 1.0;
+    }
   } else if (tab1SelectTarget === "box") {
     closeTab1PokemonSelect();
     openBoxDetailModal(pokemon);
@@ -2318,6 +2541,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("damage-defender-select")?.addEventListener("click", () => openTab1PokemonSelect("defend"));
   document.getElementById("damage-attacker-select")?.addEventListener("click", () => openTab1PokemonSelect("attack"));
+  document.getElementById("damage-swap-btn")?.addEventListener("click", swapAttackerDefender);
   // インラインステータス: EVボタン・ステップボタンの委譲処理
   const damagePanel = document.querySelector(".damage-panel");
   damagePanel?.addEventListener("click", (e) => {
@@ -2413,6 +2637,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 詳細確認モード: 編集ボタン・閉じるボタン
   document.getElementById("box-detail-edit-btn")?.addEventListener("click", switchToBoxEditMode);
   document.getElementById("box-detail-view-close")?.addEventListener("click", closeBoxDetailModal);
+  document.getElementById("box-detail-delete-btn")?.addEventListener("click", deleteBoxEntry);
   // 技検索（タブ③）
   document.getElementById("box-moves-search")?.addEventListener("input", (e) => {
     boxMoveSearchText = (e.target as HTMLInputElement).value;
@@ -2451,6 +2676,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (target.classList.contains("damage-ev-btn-252")) input.value = "252";
     else if (target.classList.contains("damage-ev-step-up")) input.value = String(getNextEvStep(val));
     else if (target.classList.contains("damage-ev-step-down")) input.value = String(getPrevEvStep(val));
+    if (boxEditingPokemon) updateBoxEditRealStats(boxEditingPokemon);
   });
   document.getElementById("tab1-pokemon-select-list")?.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest(".pokemon-picker-btn");
@@ -2461,6 +2687,37 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("tab1-pokemon-select-cancel")?.addEventListener("click", closeTab1PokemonSelect);
   document.getElementById("tab1-pokemon-select-modal")?.querySelector(".pokemon-modal-backdrop")?.addEventListener("click", closeTab1PokemonSelect);
+
+  // タブ1: ソース切替ボタン
+  document.getElementById("tab1-source-toggle")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-source-btn");
+    if (!btn?.dataset.source) return;
+    tab1SourceMode = btn.dataset.source as "all" | "box";
+    tab1SelectTypeFilter = null;
+    updateTab1SourceSortUI();
+    renderTab1SelectTypeButtons();
+    renderTab1SelectList();
+  });
+  // タブ1: ソート選択
+  document.getElementById("tab1-sort-select")?.addEventListener("change", (e) => {
+    tab1SortKey = (e.target as HTMLSelectElement).value as "number" | "name";
+    renderTab1SelectList();
+  });
+  // タブ2: ソース切替ボタン
+  document.getElementById("picker-source-toggle")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-source-btn");
+    if (!btn?.dataset.source) return;
+    pickerSourceMode = btn.dataset.source as "all" | "box";
+    pickerTypeFilter = null;
+    updatePickerSourceSortUI();
+    renderPickerTypeButtons();
+    renderPickerList();
+  });
+  // タブ2: ソート選択
+  document.getElementById("picker-sort-select")?.addEventListener("change", (e) => {
+    pickerSortKey = (e.target as HTMLSelectElement).value as "number" | "name";
+    renderPickerList();
+  });
 
   Promise.all(
     POKEMON_REGION_FILES.map((file) =>

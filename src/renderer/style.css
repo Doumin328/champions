@@ -125,32 +125,50 @@ body {
 
 .tab-buttons {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: stretch;
+  gap: 0.5rem;
+  padding: 0.6rem 0.6rem 0.5rem;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  border-bottom: 3px solid #0a0a18;
 }
 
 .tab-btn {
-  padding: 0.45rem 1rem;
-  font-size: 0.9rem;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid transparent;
-  border-radius: 6px;
+  flex: 1;
+  padding: 0.55rem 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(180deg, #5b8df5 0%, #2f5dd4 55%, #1e45b8 100%);
+  border: none;
+  border-bottom: 5px solid #0f2a7a;
+  border-radius: 8px;
   cursor: pointer;
+  transition: transform 0.08s ease, border-bottom-width 0.08s ease, box-shadow 0.08s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  position: relative;
+  top: 0;
 }
 
-.tab-btn:hover {
-  color: #eee;
-  background: rgba(255, 255, 255, 0.08);
+.tab-btn:hover:not(.is-active) {
+  background: linear-gradient(180deg, #7aaaf8 0%, #4a76e8 55%, #3058cc 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.tab-btn:active:not(.is-active) {
+  transform: translateY(4px);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .tab-btn.is-active {
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, #ffd04a 0%, #f5900a 55%, #d97000 100%);
+  border-bottom: 1px solid #8a4200;
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 3px rgba(100, 40, 0, 0.8);
+  transform: translateY(4px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .tab-panels {
@@ -412,6 +430,39 @@ body {
 .damage-slot-select-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ===== 入れ替えボタン ===== */
+.damage-swap-row {
+  display: flex;
+  justify-content: center;
+  margin: -0.1rem 0;
+  z-index: 1;
+  position: relative;
+}
+
+.damage-swap-btn {
+  padding: 0.25rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: linear-gradient(180deg, #4a6fa8 0%, #2d4d80 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 3px solid #1a2f55;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.08s, border-bottom-width 0.08s;
+}
+
+.damage-swap-btn:hover {
+  background: linear-gradient(180deg, #5a7fb8 0%, #3a5d90 100%);
+}
+
+.damage-swap-btn:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
 }
 
 /* ===== インラインステータス調整 ===== */
@@ -1149,6 +1200,68 @@ body {
   opacity: 0.5;
 }
 
+.picker-source-sort-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.picker-source-toggle {
+  display: flex;
+  flex: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.picker-source-btn {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.picker-source-btn + .picker-source-btn {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.picker-source-btn:hover:not(.is-active) {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.picker-source-btn.is-active {
+  background: linear-gradient(180deg, #5dade2 0%, #1a6fa8 100%);
+  color: #fff;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 20, 60, 0.5);
+}
+
+.picker-sort-select {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  appearance: auto;
+}
+
+.picker-sort-select:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
 .pokemon-picker-type-wrap {
   flex-shrink: 0;
   padding: 0.5rem 1.25rem;
@@ -1292,6 +1405,15 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
+.pokemon-modal-delete {
+  background: #7c2a2a;
+  color: #fff;
+}
+
+.pokemon-modal-delete:hover {
+  background: #9c3a3a;
+}
+
 /* 削除確認モーダル */
 .confirm-modal-content {
   max-width: 320px;
@@ -1394,8 +1516,8 @@ body {
 
 .box-pokemon-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.6rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
   flex: 1 1 auto;
   overflow-y: auto;
   align-content: start;
@@ -1411,14 +1533,16 @@ body {
 
 .box-pokemon-card {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  padding: 0.5rem 0.3rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.4rem;
   cursor: pointer;
+  position: relative;
+  overflow: visible;
 }
 
 .box-pokemon-card:hover {
@@ -1426,45 +1550,113 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.box-card-img-wrap {
-  position: relative;
-  width: 64px;
-  height: 64px;
+/* 左側: 画像 + 名前 */
+.box-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 58px;
+  gap: 0.15rem;
 }
 
 .box-card-img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
-
-.box-card-item-badge {
-  position: absolute;
-  bottom: -5px;
-  right: -5px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(22, 32, 42, 0.88);
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.box-card-item-img {
-  width: 24px;
-  height: 24px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
 }
 
 .box-card-name {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   text-align: center;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.2;
   word-break: break-all;
+  width: 100%;
+}
+
+/* 右側: 性格 + 努力値 + 持ち物 */
+.box-card-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-left: 0.35rem;
+  min-width: 0;
+  position: relative;
+}
+
+.box-card-nature {
+  font-size: 0.65rem;
+  color: rgba(255, 220, 120, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== BOXカード: ステータステーブル ===== */
+.box-card-stat-table {
+  display: grid;
+  grid-template-columns: 3.2rem 2rem 2rem 2rem;
+  gap: 0 0.2rem;
+  margin-top: 0.1rem;
+  flex: 1;
+  align-content: start;
+}
+
+.box-card-stat-hd {
+  font-size: 0.52rem;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: right;
+  padding-bottom: 0.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.box-card-stat-hd:first-child { text-align: left; }
+
+.box-card-stat-label {
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.05rem 0;
+}
+
+.box-card-stat-val {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: right;
+  padding: 0.05rem 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.box-card-stat-ev-nz {
+  color: rgba(100, 200, 255, 0.9);
+  font-weight: 600;
+}
+
+.box-card-stat-real {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.box-card-item-badge {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(22, 32, 42, 0.92);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.box-card-item-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .box-type-filter-wrap {
@@ -1673,22 +1865,58 @@ body {
 
 .box-ev-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.4rem 1rem;
-}
-
-.box-ev-row {
-  display: flex;
+  grid-template-columns: 3rem 2.5rem auto 2.8rem;
+  gap: 0.25rem 0.4rem;
   align-items: center;
-  gap: 0.3rem;
-  flex-wrap: wrap;
+  width: fit-content;
 }
 
-.box-ev-label {
+/* ヘッダ行 */
+.box-stat-hd {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: right;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.box-stat-hd:first-child { text-align: left; }
+
+/* 各行 */
+.box-stat-label {
   font-size: 0.72rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
-  min-width: 4rem;
+}
+
+.box-stat-base {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.box-stat-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.box-stat-real {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.box-stat-label.box-stat-nature-up,
+.box-stat-real.box-stat-nature-up {
+  color: rgba(255, 120, 100, 0.95);
+}
+
+.box-stat-label.box-stat-nature-down,
+.box-stat-real.box-stat-nature-down {
+  color: rgba(100, 160, 255, 0.95);
 }
 
 .box-detail-item-row {
@@ -1830,7 +2058,7 @@ body {
 .box-moves-slots {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.3rem;
+  gap: 0.55rem;
 }
 
 .box-moves-list-wrap {
@@ -1855,33 +2083,39 @@ body {
 .streaming-panel {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   background: #0d111a;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.streaming-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 56px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .streaming-tab-buttons {
   display: flex;
+  flex-direction: column;
   gap: 0;
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 1;
 }
 
 .streaming-tab-btn {
-  flex: 1;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.82rem;
+  width: 100%;
+  padding: 0.6rem 0.25rem;
+  font-size: 0.72rem;
   font-weight: 500;
   background: transparent;
   color: rgba(255, 255, 255, 0.55);
   border: none;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
-}
-
-.streaming-tab-btn:last-child {
-  border-right: none;
+  text-align: center;
 }
 
 .streaming-tab-btn:hover {
@@ -1892,11 +2126,12 @@ body {
 .streaming-tab-btn.is-active {
   color: #fff;
   background: rgba(255, 255, 255, 0.1);
-  border-bottom: 2px solid #e05252;
+  border-left: 3px solid #e05252;
 }
 
 .streaming-tab-panels {
   flex: 1;
+  min-width: 0;
 }
 
 .streaming-tab-panel {
@@ -2255,18 +2490,20 @@ body {
   left: 0%;
 }
 
-/* ========== 設定ボタン（タブ行右端） ========== */
+/* ========== 設定ボタン（サイドバー下端） ========== */
 .streaming-settings-open-btn {
-  flex-shrink: 0;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.82rem;
+  width: 100%;
+  padding: 0.6rem 0.25rem;
+  font-size: 0.72rem;
   font-weight: 500;
   background: transparent;
   color: rgba(255, 255, 255, 0.55);
   border: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
+  text-align: center;
+  margin-top: auto;
 }
 
 .streaming-settings-open-btn:hover {
