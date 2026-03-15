@@ -31,9 +31,11 @@
 
         <!-- 配信コントロールパネル -->
         <section class="streaming-panel" aria-label="配信コントロール">
-          <div class="streaming-tab-buttons" role="tablist">
-            <button type="button" class="streaming-tab-btn is-active" data-streaming-tab="stream" role="tab" aria-selected="true">配信</button>
-            <button type="button" class="streaming-tab-btn" data-streaming-tab="record" role="tab" aria-selected="false">録画</button>
+          <div class="streaming-sidebar">
+            <div class="streaming-tab-buttons" role="tablist">
+              <button type="button" class="streaming-tab-btn is-active" data-streaming-tab="stream" role="tab" aria-selected="true">配信</button>
+              <button type="button" class="streaming-tab-btn" data-streaming-tab="record" role="tab" aria-selected="false">録画</button>
+            </div>
             <button type="button" class="streaming-settings-open-btn" id="stream-settings-open-btn">設定</button>
           </div>
 
@@ -71,9 +73,9 @@
       <!-- 右: タブ -->
       <aside class="tabs-section">
         <div class="tab-buttons">
-          <button type="button" class="tab-btn is-active" data-tab="tab1">タブ1</button>
-          <button type="button" class="tab-btn" data-tab="tab2">タブ2</button>
-          <button type="button" class="tab-btn" data-tab="tab3">タブ3</button>
+          <button type="button" class="tab-btn is-active" data-tab="tab1">⚔️ ダメージ</button>
+          <button type="button" class="tab-btn" data-tab="tab2">🛡️ チーム</button>
+          <button type="button" class="tab-btn" data-tab="tab3">📦 BOX</button>
         </div>
         <div class="tab-panels">
           <div id="tab1" class="tab-panel tab-damage is-active" role="tabpanel">
@@ -160,6 +162,10 @@
                   <button type="button" class="damage-slot-select-btn" id="damage-defender-select">選択</button>
                 </div>
               </section>
+              <!-- 入れ替えボタン -->
+              <div class="damage-swap-row">
+                <button type="button" class="damage-swap-btn" id="damage-swap-btn" aria-label="攻撃側と防御側を入れ替え">⇅ 入れ替え</button>
+              </div>
               <!-- ① 攻撃側 -->
               <section class="damage-slot damage-slot-attacker" aria-labelledby="damage-attacker-label">
                 <h2 id="damage-attacker-label" class="damage-slot-label">攻撃側</h2>
@@ -312,6 +318,16 @@
         <div class="pokemon-modal-content pokemon-picker-content">
           <h2 id="tab1-pokemon-select-title" class="pokemon-modal-title">ポケモンを選択</h2>
           <input type="text" id="tab1-pokemon-name-search" class="move-search-input" placeholder="名前で検索…" />
+          <div class="picker-source-sort-row">
+            <div class="picker-source-toggle" id="tab1-source-toggle" role="group" aria-label="表示切替">
+              <button type="button" class="picker-source-btn is-active" data-source="all">全ポケモン</button>
+              <button type="button" class="picker-source-btn" data-source="box">BOXのみ</button>
+            </div>
+            <select id="tab1-sort-select" class="picker-sort-select" aria-label="ソート">
+              <option value="number">図鑑番号順</option>
+              <option value="name">名前順</option>
+            </select>
+          </div>
           <div class="pokemon-picker-type-wrap">
             <p class="pokemon-picker-type-label">タイプで絞り込み</p>
             <div class="pokemon-picker-type-buttons" id="tab1-pokemon-select-type-buttons" role="group"></div>
@@ -332,6 +348,16 @@
           <div class="pokemon-picker-team-wrap">
             <p class="pokemon-picker-team-label">選んだチーム（クリックで解除）</p>
             <div class="pokemon-picker-team-preview" id="pokemon-picker-team-preview"></div>
+          </div>
+          <div class="picker-source-sort-row">
+            <div class="picker-source-toggle" id="picker-source-toggle" role="group" aria-label="表示切替">
+              <button type="button" class="picker-source-btn is-active" data-source="all">全ポケモン</button>
+              <button type="button" class="picker-source-btn" data-source="box">BOXのみ</button>
+            </div>
+            <select id="picker-sort-select" class="picker-sort-select" aria-label="ソート">
+              <option value="number">図鑑番号順</option>
+              <option value="name">名前順</option>
+            </select>
           </div>
           <div class="pokemon-picker-type-wrap">
             <p class="pokemon-picker-type-label">タイプで絞り込み</p>
@@ -363,6 +389,7 @@
             <div id="box-view-content" class="box-view-content"></div>
             <div class="pokemon-modal-actions">
               <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="box-detail-view-close">閉じる</button>
+              <button type="button" class="pokemon-modal-btn pokemon-modal-delete" id="box-detail-delete-btn">削除</button>
               <button type="button" class="pokemon-modal-btn pokemon-modal-confirm" id="box-detail-edit-btn">編集</button>
             </div>
           </div>
@@ -374,9 +401,9 @@
               <label class="box-detail-label" for="box-detail-nature">性格</label>
               <select id="box-detail-nature" class="box-detail-nature-select"></select>
             </div>
-            <!-- 努力値 -->
+            <!-- ステータス -->
             <div class="box-detail-section">
-              <span class="box-detail-label">努力値</span>
+              <span class="box-detail-label">ステータス</span>
               <div class="box-ev-grid" id="box-ev-grid">
                 <!-- JS で動的生成 -->
               </div>
