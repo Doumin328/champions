@@ -588,6 +588,11 @@ function renderBoxGrid(): void {
     nameEl.className = "box-card-name";
     nameEl.textContent = entry.pokemon.name;
     leftEl.appendChild(nameEl);
+    // タイプバッジ
+    const typesEl = document.createElement("div");
+    typesEl.className = "box-card-types";
+    typesEl.innerHTML = typeBadgesHtml(entry.pokemon.types);
+    leftEl.appendChild(typesEl);
     card.appendChild(leftEl);
 
     // 右側: 性格 + ステータステーブル + 持ち物

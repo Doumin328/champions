@@ -1594,6 +1594,16 @@ body {
   text-overflow: ellipsis;
 }
 
+/* BOXカード: タイプバッジ */
+.box-card-types {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.box-card-types .type-img {
+  height: 14px;
+}
+
 /* ===== BOXカード: ステータステーブル ===== */
 .box-card-stat-table {
   display: grid;
