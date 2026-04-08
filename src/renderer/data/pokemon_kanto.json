@@ -120,7 +120,8 @@
       760,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0002",
@@ -235,7 +236,8 @@
       760,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0003",
@@ -364,7 +366,8 @@
       762,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0003Mega",
@@ -493,7 +496,8 @@
       762,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0004",
@@ -634,7 +638,8 @@
       741,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0005",
@@ -764,7 +769,8 @@
       741,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0006",
@@ -923,7 +929,8 @@
       808,
       870,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0006MegaX",
@@ -1082,7 +1089,8 @@
       808,
       870,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0006MegaY",
@@ -1241,7 +1249,8 @@
       808,
       870,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0007",
@@ -1379,7 +1388,8 @@
       808,
       818,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0008",
@@ -1501,7 +1511,8 @@
       808,
       818,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0009",
@@ -1644,7 +1655,8 @@
       808,
       818,
       843
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0009Mega",
@@ -1787,7 +1799,8 @@
       808,
       818,
       843
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0010",
@@ -1810,7 +1823,8 @@
       142,
       176,
       545
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0011",
@@ -1832,7 +1846,8 @@
       176,
       370,
       545
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0012",
@@ -1944,7 +1959,8 @@
       626,
       655,
       771
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0013",
@@ -1967,7 +1983,8 @@
       118,
       176,
       545
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0014",
@@ -1990,7 +2007,8 @@
       176,
       370,
       545
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0015",
@@ -2100,7 +2118,8 @@
       652,
       654,
       671
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0015Mega",
@@ -2210,7 +2229,8 @@
       652,
       654,
       671
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0016",
@@ -2298,7 +2318,8 @@
       516,
       544,
       605
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0017",
@@ -2383,7 +2404,8 @@
       516,
       544,
       605
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0018",
@@ -2469,7 +2491,8 @@
       544,
       605,
       652
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0018Mega",
@@ -2555,7 +2578,8 @@
       544,
       605,
       652
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0019",
@@ -2660,7 +2684,8 @@
       544,
       546,
       605
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0019Alola",
@@ -2766,7 +2791,8 @@
       544,
       546,
       605
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0020",
@@ -2873,7 +2899,8 @@
       546,
       605,
       654
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0020Alola",
@@ -2981,7 +3008,8 @@
       546,
       605,
       654
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0021",
@@ -3076,7 +3104,8 @@
       517,
       544,
       605
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0022",
@@ -3169,7 +3198,8 @@
       605,
       652,
       654
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0023",
@@ -3288,7 +3318,8 @@
       765,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0024",
@@ -3412,7 +3443,8 @@
       765,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0025",
@@ -3562,7 +3594,8 @@
       842,
       871,
       875
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0026",
@@ -3700,7 +3733,8 @@
       842,
       871,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0026Alola",
@@ -3839,7 +3873,8 @@
       842,
       871,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0026MegaX",
@@ -3977,7 +4012,8 @@
       842,
       871,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0026MegaY",
@@ -4115,7 +4151,8 @@
       842,
       871,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0027",
@@ -4238,7 +4275,8 @@
       755,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0027Alola",
@@ -4362,7 +4400,8 @@
       755,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0028",
@@ -4487,7 +4526,8 @@
       755,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0028Alola",
@@ -4613,7 +4653,8 @@
       755,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0029",
@@ -4718,7 +4759,8 @@
       518,
       605,
       614
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0030",
@@ -4822,7 +4864,8 @@
       517,
       605,
       614
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0031",
@@ -4982,7 +5025,8 @@
       654,
       733,
       772
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0032",
@@ -5088,7 +5132,8 @@
       605,
       614,
       662
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0033",
@@ -5190,7 +5235,8 @@
       605,
       614,
       662
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0034",
@@ -5350,7 +5396,8 @@
       662,
       733,
       772
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0035",
@@ -5535,7 +5582,8 @@
       808,
       843,
       871
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0036",
@@ -5721,7 +5769,8 @@
       808,
       843,
       871
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0036Mega",
@@ -5908,7 +5957,8 @@
       808,
       843,
       871
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0037",
@@ -6026,7 +6076,8 @@
       623,
       764,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0037Alola",
@@ -6144,7 +6195,8 @@
       623,
       764,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0038",
@@ -6265,7 +6317,8 @@
       764,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0038Alola",
@@ -6387,7 +6440,8 @@
       764,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0039",
@@ -6565,7 +6619,8 @@
       843,
       871,
       874
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0040",
@@ -6747,7 +6802,8 @@
       843,
       871,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0041",
@@ -6855,7 +6911,8 @@
       605,
       614,
       771
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0042",
@@ -6963,7 +7020,8 @@
       605,
       614,
       771
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0043",
@@ -7065,7 +7123,8 @@
       760,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0044",
@@ -7166,7 +7225,8 @@
       760,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0045",
@@ -7275,7 +7335,8 @@
       767,
       808,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0046",
@@ -7389,7 +7450,8 @@
       580,
       595,
       605
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0047",
@@ -7496,7 +7558,8 @@
       542,
       605,
       654
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0048",
@@ -7595,7 +7658,8 @@
       808,
       841,
       874
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0049",
@@ -7712,7 +7776,8 @@
       808,
       841,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0050",
@@ -7818,7 +7883,8 @@
       654,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0050Alola",
@@ -7925,7 +7991,8 @@
       654,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0051",
@@ -8034,7 +8101,8 @@
       654,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0051Alola",
@@ -8144,7 +8212,8 @@
       654,
       772,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0052",
@@ -8283,7 +8352,8 @@
       808,
       842,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0052Alola",
@@ -8422,7 +8492,8 @@
       808,
       842,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0052galar",
@@ -8561,7 +8632,8 @@
       808,
       842,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0053",
@@ -8699,7 +8771,8 @@
       808,
       842,
       843
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0053Alola",
@@ -8837,7 +8910,8 @@
       808,
       842,
       843
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0054",
@@ -8984,7 +9058,8 @@
       842,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0055",
@@ -9133,7 +9208,8 @@
       842,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0056",
@@ -9276,7 +9352,8 @@
       659,
       765,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0057",
@@ -9416,7 +9493,8 @@
       765,
       808,
       846
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0058",
@@ -9522,7 +9600,8 @@
       790,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0058hisui",
@@ -9629,7 +9708,8 @@
       790,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0059",
@@ -9743,7 +9823,8 @@
       772,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0059hisui",
@@ -9858,7 +9939,8 @@
       772,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0060",
@@ -9960,7 +10042,8 @@
       687,
       808,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0061",
@@ -10072,7 +10155,8 @@
       687,
       808,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0062",
@@ -10214,7 +10298,8 @@
       808,
       843,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0063",
@@ -10336,7 +10421,8 @@
       620,
       657,
       661
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0064",
@@ -10464,7 +10550,8 @@
       657,
       661,
       754
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0065",
@@ -10600,7 +10687,8 @@
       657,
       661,
       754
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0065Mega",
@@ -10736,7 +10824,8 @@
       657,
       661,
       754
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0066",
@@ -10859,7 +10948,8 @@
       605,
       627,
       768
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0067",
@@ -10976,7 +11066,8 @@
       605,
       627,
       768
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0068",
@@ -11104,7 +11195,8 @@
       646,
       654,
       768
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0069",
@@ -11211,7 +11303,8 @@
       808,
       841,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0070",
@@ -11316,7 +11409,8 @@
       808,
       841,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0071",
@@ -11427,7 +11521,8 @@
       808,
       841,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0072",
@@ -11543,7 +11638,8 @@
       808,
       841,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0073",
@@ -11661,7 +11757,8 @@
       808,
       841,
       843
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0074",
@@ -11770,7 +11867,8 @@
       627,
       646,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0074Alola",
@@ -11879,7 +11977,8 @@
       627,
       646,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0075",
@@ -11989,7 +12088,8 @@
       733,
       808,
       869
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0075Alola",
@@ -12099,7 +12199,8 @@
       733,
       808,
       869
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0076",
@@ -12215,7 +12316,8 @@
       733,
       808,
       869
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0076Alola",
@@ -12331,7 +12433,8 @@
       733,
       808,
       869
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0077",
@@ -12424,7 +12527,8 @@
       610,
       646,
       648
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0077galar",
@@ -12517,7 +12621,8 @@
       610,
       646,
       648
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0078",
@@ -12618,7 +12723,8 @@
       654,
       662,
       772
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0078galar",
@@ -12720,7 +12826,8 @@
       654,
       662,
       772
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0079",
@@ -12861,7 +12968,8 @@
       808,
       840,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0079galar",
@@ -13001,7 +13109,8 @@
       808,
       840,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0080",
@@ -13162,7 +13271,8 @@
       840,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0080galar",
@@ -13323,7 +13433,8 @@
       840,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0080Mega",
@@ -13484,7 +13595,8 @@
       840,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0081",
@@ -13582,7 +13694,8 @@
       753,
       761,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0082",
@@ -13684,7 +13797,8 @@
       753,
       761,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0083",
@@ -13808,7 +13922,8 @@
       654,
       671,
       771
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0083galar",
@@ -13931,7 +14046,8 @@
       654,
       671,
       771
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0084",
@@ -14033,7 +14149,8 @@
       605,
       654,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0085",
@@ -14141,7 +14258,8 @@
       808,
       841,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0086",
@@ -14251,7 +14369,8 @@
       818,
       840,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0087",
@@ -14360,7 +14479,8 @@
       840,
       843,
       871
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0088",
@@ -14474,7 +14594,8 @@
       626,
       627,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0088Alola",
@@ -14589,7 +14710,8 @@
       626,
       627,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0089",
@@ -14713,7 +14835,8 @@
       627,
       765,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0089Alola",
@@ -14838,7 +14961,8 @@
       627,
       765,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0090",
@@ -14938,7 +15062,8 @@
       818,
       840,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0091",
@@ -15051,7 +15176,8 @@
       818,
       840,
       843
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0092",
@@ -15173,7 +15299,8 @@
       766,
       767,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0093",
@@ -15297,7 +15424,8 @@
       766,
       767,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0094",
@@ -15447,7 +15575,8 @@
       767,
       808,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0094Mega",
@@ -15597,7 +15726,8 @@
       767,
       808,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0095",
@@ -15710,7 +15840,8 @@
       741,
       757,
       772
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0096",
@@ -15852,7 +15983,8 @@
       808,
       842,
       874
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0097",
@@ -15995,7 +16127,8 @@
       808,
       842,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0098",
@@ -16099,7 +16232,8 @@
       550,
       605,
       687
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0099",
@@ -16205,7 +16339,8 @@
       646,
       671,
       687
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0100",
@@ -16296,7 +16431,8 @@
       613,
       619,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0100hisui",
@@ -16388,7 +16524,8 @@
       613,
       619,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0101",
@@ -16484,7 +16621,8 @@
       619,
       808,
       873
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0101hisui",
@@ -16581,7 +16719,8 @@
       619,
       808,
       873
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0102",
@@ -16697,7 +16836,8 @@
       760,
       808,
       874
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0103",
@@ -16829,7 +16969,8 @@
       762,
       808,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0103Alola",
@@ -16961,7 +17102,8 @@
       762,
       808,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0104",
@@ -17080,7 +17222,8 @@
       627,
       671,
       772
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0105",
@@ -17201,7 +17344,8 @@
       654,
       671,
       772
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0105Alola",
@@ -17323,7 +17467,8 @@
       654,
       671,
       772
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0106",
@@ -17449,7 +17594,8 @@
       808,
       810,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0107",
@@ -17574,7 +17720,8 @@
       808,
       842,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0108",
@@ -17720,7 +17867,8 @@
       733,
       755,
       762
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0109",
@@ -17822,7 +17970,8 @@
       626,
       767,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0110",
@@ -17923,7 +18072,8 @@
       626,
       767,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0110galar",
@@ -18025,7 +18175,8 @@
       626,
       767,
       808
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0111",
@@ -18155,7 +18306,8 @@
       772,
       808,
       873
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0112",
@@ -18312,7 +18464,8 @@
       772,
       808,
       873
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0113",
@@ -18484,7 +18637,8 @@
       840,
       842,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0114",
@@ -18588,7 +18742,8 @@
       605,
       626,
       760
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0115",
@@ -18735,7 +18890,8 @@
       605,
       627,
       762
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0115Mega",
@@ -18882,7 +19038,8 @@
       605,
       627,
       762
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0116",
@@ -18977,7 +19134,8 @@
       769,
       808,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0117",
@@ -19070,7 +19228,8 @@
       808,
       840,
       843
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0118",
@@ -19168,7 +19327,8 @@
       662,
       756,
       769
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0119",
@@ -19265,7 +19425,8 @@
       662,
       756,
       769
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0120",
@@ -19364,7 +19525,8 @@
       605,
       620,
       769
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0121",
@@ -19481,7 +19643,8 @@
       754,
       757,
       769
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0122",
@@ -19636,7 +19799,8 @@
       627,
       657,
       754
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0122galar",
@@ -19675,7 +19839,8 @@
       145,
       149,
       163
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0123",
@@ -19793,7 +19958,8 @@
       808,
       841,
       842
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0124",
@@ -19941,7 +20107,8 @@
       672,
       754,
       770
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0125",
@@ -20062,7 +20229,8 @@
       808,
       842,
       873
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0126",
@@ -20183,7 +20351,8 @@
       772,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0127",
@@ -20294,7 +20463,8 @@
       646,
       654,
       671
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0127Mega",
@@ -20406,7 +20576,8 @@
       646,
       654,
       671
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0128",
@@ -20523,7 +20694,8 @@
       808,
       830,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0128paldea",
@@ -20640,7 +20812,8 @@
       808,
       830,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0128paldeaFire",
@@ -20758,7 +20931,8 @@
       808,
       830,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0128paldeaWater",
@@ -20876,7 +21050,8 @@
       808,
       830,
       842
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0129",
@@ -20903,7 +21078,8 @@
       376,
       618,
       621
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0130",
@@ -21032,7 +21208,8 @@
       843,
       870,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0130Mega",
@@ -21161,7 +21338,8 @@
       843,
       870,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0131",
@@ -21301,7 +21479,8 @@
       870,
       871,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0132",
@@ -21319,7 +21498,8 @@
     },
     "learnset": [
       218
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0133",
@@ -21422,7 +21602,8 @@
       808,
       842,
       871
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0134",
@@ -21546,7 +21727,8 @@
       842,
       843,
       871
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0135",
@@ -21672,7 +21854,8 @@
       808,
       842,
       871
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0136",
@@ -21794,7 +21977,8 @@
       842,
       871,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0137",
@@ -21905,7 +22089,8 @@
       613,
       661,
       808
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0138",
@@ -22008,7 +22193,8 @@
       533,
       605,
       757
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0139",
@@ -22117,7 +22303,8 @@
       605,
       687,
       757
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0140",
@@ -22221,7 +22408,8 @@
       605,
       687,
       757
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0141",
@@ -22345,7 +22533,8 @@
       687,
       757,
       769
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0142",
@@ -22468,7 +22657,8 @@
       684,
       757,
       771
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0142Mega",
@@ -22591,7 +22781,8 @@
       684,
       757,
       771
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0143",
@@ -22757,7 +22948,8 @@
       843,
       869,
       873
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0144",
@@ -22870,7 +23062,8 @@
       808,
       818,
       840
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0144galar",
@@ -22983,7 +23176,8 @@
       808,
       818,
       840
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0145",
@@ -23096,7 +23290,8 @@
       771,
       808,
       873
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0145galar",
@@ -23209,7 +23404,8 @@
       771,
       808,
       873
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0146",
@@ -23316,7 +23512,8 @@
       772,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0146galar",
@@ -23423,7 +23620,8 @@
       772,
       808,
       872
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0147",
@@ -23532,7 +23730,8 @@
       808,
       843,
       870
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0148",
@@ -23639,7 +23838,8 @@
       808,
       843,
       870
-    ]
+    ],
+    "isFinalEvolution": false
   },
   {
     "id": "0149",
@@ -23804,7 +24004,8 @@
       840,
       843,
       870
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0150",
@@ -24002,7 +24203,8 @@
       842,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0150MegaX",
@@ -24201,7 +24403,8 @@
       842,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0150MegaY",
@@ -24399,7 +24602,8 @@
       842,
       843,
       874
-    ]
+    ],
+    "isFinalEvolution": true
   },
   {
     "id": "0151",
@@ -24846,6 +25050,7 @@
       873,
       874,
       875
-    ]
+    ],
+    "isFinalEvolution": true
   }
 ]

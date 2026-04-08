@@ -173,6 +173,8 @@ interface Pokemon {
   };
   /** 覚える技の ID 一覧（moves.json の id を参照） */
   learnset?: number[];
+  /** 最終進化かどうか（進化先がないポケモンは true） */
+  isFinalEvolution?: boolean;
 }
 
 /** 地方別ポケモンデータファイル（図鑑番号順に結合して使用） */
@@ -216,9 +218,9 @@ function typeBadgesHtml(types: string[]): string {
   return types.map(t => `<img class="type-img" src="img/type/${t}.png" alt="${t}" />`).join("");
 }
 
-/** ポケモン画像のパス（img/pokemon3/ 配下の {id}.png に統一。id がなければ DUMMY） */
+/** ポケモン画像のパス（img/pokemon/ 配下の {id}.png に統一。id がなければ DUMMY） */
 function getPokemonImageSrc(pokemon: Pokemon): string {
-  return pokemon.id ? `img/pokemon3/${pokemon.id}.png` : DUMMY_POKEMON_IMAGE;
+  return pokemon.id ? `img/pokemon/${pokemon.id}.png` : DUMMY_POKEMON_IMAGE;
 }
 
 const videoEl = document.getElementById("video") as HTMLVideoElement;
@@ -275,11 +277,17 @@ let tab1SourceMode: "all" | "box" = "all";
 /** タブ1: 単体選択モーダルのソートキー */
 let tab1SortKey: "number" | "name" = "number";
 
+/** タブ1: 最終進化のみ表示するか */
+let tab1ShowOnlyFinalEvolution = true;
+
 /** タブ2: ピッカーの表示ソース（all=全ポケモン, box=BOXのみ） */
 let pickerSourceMode: "all" | "box" = "all";
 
 /** タブ2: ピッカーのソートキー */
 let pickerSortKey: "number" | "name" = "number";
+
+/** タブ2: 最終進化のみ表示するか */
+let pickerShowOnlyFinalEvolution = true;
 
 /** タブ1: 選択中ワザ4つ */
 let selectedMoves: number[] = [];
@@ -581,7 +589,7 @@ function renderBoxGrid(): void {
     const pokImg = document.createElement("img");
     pokImg.className = "box-card-img";
     pokImg.alt = entry.pokemon.name;
-    pokImg.src = entry.pokemon.id ? `img/pokemon3/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    pokImg.src = entry.pokemon.id ? `img/pokemon/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
     pokImg.onerror = () => { pokImg.src = BALL_MONSTER_IMAGE; };
     leftEl.appendChild(pokImg);
     const nameEl = document.createElement("span");
@@ -695,7 +703,7 @@ function openBoxDetailModal(pokemon: Pokemon): void {
   const typesEl = document.getElementById("box-detail-types");
   if (title) title.textContent = pokemon.name;
   if (img) {
-    img.src = pokemon.id ? `img/pokemon3/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    img.src = pokemon.id ? `img/pokemon/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
     img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
   }
   if (typesEl) typesEl.innerHTML = typeBadgesHtml(pokemon.types);
@@ -770,7 +778,7 @@ function openBoxDetailView(index: number): void {
   const typesEl = document.getElementById("box-detail-types");
   if (title) title.textContent = entry.pokemon.name;
   if (img) {
-    img.src = entry.pokemon.id ? `img/pokemon3/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    img.src = entry.pokemon.id ? `img/pokemon/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
     img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
   }
   if (typesEl) typesEl.innerHTML = typeBadgesHtml(entry.pokemon.types);
@@ -1485,6 +1493,9 @@ function updatePickerListButtons(): void {
 /** タイプ絞り込み後のポケモン一覧を返す */
 function getFilteredPokemonList(): Pokemon[] {
   let list: Pokemon[] = pickerSourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
+  if (pickerShowOnlyFinalEvolution) {
+    list = list.filter((p) => p.isFinalEvolution !== false);
+  }
   if (pickerTypeFilter && pickerTypeFilter !== "すべて") {
     list = list.filter((p) => p.types.includes(pickerTypeFilter!));
   }
@@ -1504,6 +1515,12 @@ function updatePickerSourceSortUI(): void {
   }
   const sortSel = document.getElementById("picker-sort-select") as HTMLSelectElement | null;
   if (sortSel) sortSel.value = pickerSortKey;
+  const evoToggle = document.getElementById("picker-evo-toggle");
+  if (evoToggle) {
+    evoToggle.querySelectorAll<HTMLButtonElement>(".picker-evo-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.evo === (pickerShowOnlyFinalEvolution ? "final" : "all"));
+    });
+  }
 }
 
 /** 全ポケモンからユニークなタイプ一覧を取得（ソート済み） */
@@ -1546,7 +1563,7 @@ function renderPickerTypeButtons(): void {
 
 /** ピッカー一覧用の画像パス（id に統一。id がなければ ball_monster、読み込み失敗時は onerror で差し替え） */
 function getPickerPokemonImageSrc(pokemon: Pokemon): string {
-  return pokemon.id ? `img/pokemon3/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
+  return pokemon.id ? `img/pokemon/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
 }
 
 /** ダイアログ内のポケモン一覧のみ再描画（タイプ絞り込み反映） */
@@ -1594,6 +1611,7 @@ function openPokemonPicker(): void {
   pickerTypeFilter = null;
   pickerSourceMode = "all";
   pickerSortKey = "number";
+  pickerShowOnlyFinalEvolution = true;
   listEl.innerHTML = "";
   renderPickerTeamPreview();
   updatePickerSourceSortUI();
@@ -2006,6 +2024,9 @@ function applyStatsFromInputsAndRecalc(): void {
 
 function getTab1FilteredPokemonList(): Pokemon[] {
   let list: Pokemon[] = tab1SourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
+  if (tab1ShowOnlyFinalEvolution) {
+    list = list.filter((p) => p.isFinalEvolution !== false);
+  }
   if (tab1SelectTypeFilter && tab1SelectTypeFilter !== "すべて") {
     list = list.filter((p) => p.types.includes(tab1SelectTypeFilter!));
   }
@@ -2028,6 +2049,12 @@ function updateTab1SourceSortUI(): void {
   }
   const sortSel = document.getElementById("tab1-sort-select") as HTMLSelectElement | null;
   if (sortSel) sortSel.value = tab1SortKey;
+  const evoToggle = document.getElementById("tab1-evo-toggle");
+  if (evoToggle) {
+    evoToggle.querySelectorAll<HTMLButtonElement>(".picker-evo-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.evo === (tab1ShowOnlyFinalEvolution ? "final" : "all"));
+    });
+  }
 }
 
 function getTab1UniqueTypes(): string[] {
@@ -2100,6 +2127,7 @@ function openTab1PokemonSelect(target: "attack" | "defend" | "box"): void {
   tab1NameSearchText = "";
   tab1SourceMode = "all";
   tab1SortKey = "number";
+  tab1ShowOnlyFinalEvolution = true;
   const nameSearch = document.getElementById("tab1-pokemon-name-search") as HTMLInputElement | null;
   if (nameSearch) nameSearch.value = "";
   const modal = document.getElementById("tab1-pokemon-select-modal");
@@ -2703,6 +2731,14 @@ document.addEventListener("DOMContentLoaded", () => {
     tab1SortKey = (e.target as HTMLSelectElement).value as "number" | "name";
     renderTab1SelectList();
   });
+  // タブ1: 最終進化トグル
+  document.getElementById("tab1-evo-toggle")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-evo-btn");
+    if (!btn?.dataset.evo) return;
+    tab1ShowOnlyFinalEvolution = btn.dataset.evo === "final";
+    updateTab1SourceSortUI();
+    renderTab1SelectList();
+  });
   // タブ2: ソース切替ボタン
   document.getElementById("picker-source-toggle")?.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-source-btn");
@@ -2711,6 +2747,14 @@ document.addEventListener("DOMContentLoaded", () => {
     pickerTypeFilter = null;
     updatePickerSourceSortUI();
     renderPickerTypeButtons();
+    renderPickerList();
+  });
+  // タブ2: 最終進化トグル
+  document.getElementById("picker-evo-toggle")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-evo-btn");
+    if (!btn?.dataset.evo) return;
+    pickerShowOnlyFinalEvolution = btn.dataset.evo === "final";
+    updatePickerSourceSortUI();
     renderPickerList();
   });
   // タブ2: ソート選択
