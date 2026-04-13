@@ -252,6 +252,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+}
+.damage-slot-img-wrap:hover {
+  opacity: 0.8;
 }
 
 .damage-slot-img {
@@ -307,9 +311,8 @@ body {
   cursor: pointer;
   color: inherit;
   text-align: left;
-  min-width: 110px;
-  max-width: 160px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   transition: background 0.15s;
 }
 .damage-item-display:hover {
@@ -367,35 +370,50 @@ body {
 }
 
 .damage-item-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin-top: 5px;
-  max-height: 160px;
+  max-height: 200px;
   overflow-y: auto;
 }
 
 .damage-item-picker-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 3px;
+  gap: 6px;
+  padding: 4px 6px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.6rem;
-  aspect-ratio: 1;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.75rem;
+  text-align: left;
+  width: 100%;
   transition: background 0.12s;
 }
 .damage-item-picker-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
 }
 .damage-item-picker-btn img {
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
   image-rendering: pixelated;
+}
+.damage-item-picker-btn-name {
+  min-width: 7em;
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #fff;
+}
+.damage-item-picker-btn-effect {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ===== タイプ画像 ===== */
@@ -406,7 +424,7 @@ body {
 .type-img + .type-img { margin-left: 3px; }
 
 .type-btn-img {
-  height: 20px;
+  height: 30px;
   vertical-align: middle;
   display: block;
 }
@@ -1266,6 +1284,17 @@ body {
   flex-shrink: 0;
   padding: 0.5rem 1.25rem;
   background: rgba(0, 0, 0, 0.1);
+}
+
+.picker-name-search {
+  flex-shrink: 0;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -1277,12 +1306,13 @@ body {
 
 .pokemon-picker-type-buttons {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.35rem;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 0.4rem;
 }
 
 .pokemon-picker-type-buttons .picker-type-btn {
-  padding: 0.25rem 0.4rem;
+  padding: 0.1rem 0.2rem;
+  color: #fff;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
@@ -1299,6 +1329,15 @@ body {
 .pokemon-picker-type-buttons .picker-type-btn.is-active {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.2);
+  border-color: #fffb12;
+}
+
+.pokemon-modal-note-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-right: 1.25rem;
 }
 
 .pokemon-modal-note {
@@ -1317,7 +1356,7 @@ body {
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
+  gap: 0.6rem;
   align-content: start;
 }
 
@@ -1330,7 +1369,7 @@ body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 0.5rem 0.35rem;
+  padding: 0.6rem 0.35rem 0.5rem;
   font-size: 0.85rem;
   text-align: center;
   background: rgba(255, 255, 255, 0.08);
@@ -1351,8 +1390,8 @@ body {
 }
 
 .pokemon-picker-btn-img {
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
   border-radius: 4px;
   margin-bottom: 0.35rem;

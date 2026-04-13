@@ -116,7 +116,8 @@
       754,
       772
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0495",
@@ -212,7 +213,8 @@
       808,
       842
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0496",
@@ -299,7 +301,8 @@
       808,
       842
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0497",
@@ -400,7 +403,8 @@
       808,
       842
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0498",
@@ -490,7 +494,8 @@
       842,
       872
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0499",
@@ -597,7 +602,8 @@
       842,
       872
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0500",
@@ -716,7 +722,128 @@
       869,
       872
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
+  },
+  {
+    "id": "0500Mega",
+    "name": "メガエンブオー",
+    "types": [
+      "ほのお",
+      "かくとう"
+    ],
+    "baseStats": {
+      "hp": 110,
+      "attack": 148,
+      "defense": 75,
+      "spAttack": 110,
+      "spDefense": 110,
+      "speed": 75
+    },
+    "learnset": [
+      7,
+      9,
+      33,
+      34,
+      36,
+      38,
+      39,
+      52,
+      53,
+      63,
+      68,
+      70,
+      71,
+      72,
+      73,
+      75,
+      79,
+      87,
+      89,
+      104,
+      108,
+      109,
+      111,
+      112,
+      113,
+      133,
+      137,
+      141,
+      142,
+      148,
+      150,
+      153,
+      158,
+      159,
+      170,
+      186,
+      190,
+      199,
+      246,
+      250,
+      262,
+      264,
+      265,
+      271,
+      273,
+      275,
+      284,
+      287,
+      299,
+      303,
+      305,
+      306,
+      311,
+      312,
+      318,
+      322,
+      324,
+      325,
+      332,
+      334,
+      348,
+      356,
+      357,
+      371,
+      375,
+      392,
+      393,
+      403,
+      405,
+      407,
+      425,
+      436,
+      438,
+      443,
+      453,
+      466,
+      470,
+      479,
+      501,
+      505,
+      508,
+      510,
+      516,
+      517,
+      523,
+      530,
+      539,
+      544,
+      546,
+      551,
+      605,
+      625,
+      627,
+      646,
+      733,
+      768,
+      808,
+      842,
+      869,
+      872
+    ],
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0501",
@@ -811,7 +938,8 @@
       843,
       852
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0502",
@@ -899,7 +1027,8 @@
       840,
       843
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0503",
@@ -1003,7 +1132,8 @@
       843,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0503hisui",
@@ -1108,7 +1238,27 @@
       843,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
+  },
+  {
+    "id": "0503A",
+    "name": "ヒスイダイケンキ",
+    "types": [
+      "みず",
+      "あく"
+    ],
+    "baseStats": {
+      "hp": 90,
+      "attack": 108,
+      "defense": 80,
+      "spAttack": 100,
+      "spDefense": 65,
+      "speed": 85
+    },
+    "learnset": [],
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0504",
@@ -1189,7 +1339,8 @@
       652,
       692
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0505",
@@ -1284,7 +1435,8 @@
       627,
       652
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0506",
@@ -1362,7 +1514,8 @@
       623,
       684
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0507",
@@ -1436,7 +1589,8 @@
       623,
       684
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0508",
@@ -1515,7 +1669,8 @@
       623,
       684
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0509",
@@ -1607,7 +1762,8 @@
       605,
       765
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0510",
@@ -1702,7 +1858,8 @@
       764,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0511",
@@ -1792,7 +1949,8 @@
       605,
       611
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0512",
@@ -1874,7 +2032,8 @@
       627,
       654
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0513",
@@ -1964,7 +2123,8 @@
       604,
       605
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0514",
@@ -2048,7 +2208,8 @@
       627,
       654
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0515",
@@ -2140,7 +2301,8 @@
       604,
       605
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0516",
@@ -2225,7 +2387,8 @@
       627,
       654
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0517",
@@ -2318,7 +2481,8 @@
       620,
       754
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0518",
@@ -2407,7 +2571,8 @@
       754,
       759
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0519",
@@ -2478,7 +2643,8 @@
       605,
       771
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0520",
@@ -2543,7 +2709,8 @@
       605,
       771
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0521",
@@ -2613,7 +2780,8 @@
       605,
       771
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0522",
@@ -2696,7 +2864,8 @@
       842,
       873
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0523",
@@ -2784,7 +2953,8 @@
       842,
       873
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0524",
@@ -2853,7 +3023,8 @@
       733,
       757
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0525",
@@ -2919,7 +3090,8 @@
       733,
       757
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0526",
@@ -2993,7 +3165,8 @@
       733,
       757
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0527",
@@ -3101,7 +3274,8 @@
       754,
       771
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0528",
@@ -3209,7 +3383,8 @@
       754,
       771
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0529",
@@ -3290,7 +3465,8 @@
       772,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0530",
@@ -3383,7 +3559,102 @@
       772,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
+  },
+  {
+    "id": "0530Mega",
+    "name": "メガドリュウズ",
+    "types": [
+      "じめん",
+      "はがね"
+    ],
+    "baseStats": {
+      "hp": 110,
+      "attack": 165,
+      "defense": 100,
+      "spAttack": 65,
+      "spDefense": 65,
+      "speed": 103
+    },
+    "learnset": [
+      10,
+      14,
+      15,
+      32,
+      34,
+      36,
+      38,
+      63,
+      67,
+      68,
+      70,
+      71,
+      72,
+      87,
+      89,
+      104,
+      105,
+      108,
+      109,
+      112,
+      113,
+      114,
+      116,
+      126,
+      133,
+      141,
+      142,
+      148,
+      153,
+      157,
+      158,
+      159,
+      186,
+      228,
+      235,
+      250,
+      262,
+      265,
+      271,
+      273,
+      275,
+      283,
+      285,
+      287,
+      305,
+      312,
+      322,
+      332,
+      342,
+      347,
+      358,
+      366,
+      370,
+      377,
+      383,
+      407,
+      424,
+      438,
+      441,
+      443,
+      447,
+      466,
+      469,
+      490,
+      516,
+      578,
+      605,
+      646,
+      654,
+      662,
+      671,
+      753,
+      772,
+      808
+    ],
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0531",
@@ -3509,7 +3780,8 @@
       654,
       748
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0531Mega",
@@ -3636,7 +3908,8 @@
       654,
       748
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0532",
@@ -3734,7 +4007,8 @@
       768,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0533",
@@ -3825,7 +4099,8 @@
       768,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0534",
@@ -3924,7 +4199,8 @@
       869,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0535",
@@ -3993,7 +4269,8 @@
       614,
       626
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0536",
@@ -4064,7 +4341,8 @@
       614,
       626
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0537",
@@ -4159,7 +4437,8 @@
       627,
       687
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0538",
@@ -4247,7 +4526,8 @@
       652,
       768
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0539",
@@ -4333,7 +4613,8 @@
       654,
       768
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0540",
@@ -4418,7 +4699,8 @@
       841,
       842
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0541",
@@ -4495,7 +4777,8 @@
       841,
       842
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0542",
@@ -4597,7 +4880,8 @@
       841,
       842
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0543",
@@ -4668,7 +4952,8 @@
       755,
       763
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0544",
@@ -4736,7 +5021,8 @@
       755,
       763
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0545",
@@ -4826,7 +5112,8 @@
       755,
       763
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0546",
@@ -4906,7 +5193,8 @@
       760,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0547",
@@ -4994,7 +5282,8 @@
       760,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0548",
@@ -5070,7 +5359,8 @@
       808,
       842
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0549",
@@ -5155,7 +5445,8 @@
       842,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0549hisui",
@@ -5241,7 +5532,8 @@
       842,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0550",
@@ -5333,7 +5625,8 @@
       840,
       843
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0550Blue",
@@ -5425,7 +5718,8 @@
       840,
       843
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0550white",
@@ -5517,7 +5811,8 @@
       840,
       843
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0551",
@@ -5616,7 +5911,8 @@
       772,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0552",
@@ -5727,7 +6023,8 @@
       772,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0553",
@@ -5854,7 +6151,8 @@
       772,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0554",
@@ -5940,7 +6238,8 @@
       605,
       627
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0554galar",
@@ -6026,7 +6325,8 @@
       605,
       627
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0555",
@@ -6133,7 +6433,8 @@
       764,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0555Dar",
@@ -6241,7 +6542,8 @@
       764,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0555galar",
@@ -6348,7 +6650,8 @@
       764,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0555galarDar",
@@ -6456,7 +6759,8 @@
       764,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0556",
@@ -6539,7 +6843,8 @@
       654,
       760
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0557",
@@ -6618,7 +6923,8 @@
       605,
       763
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0558",
@@ -6701,7 +7007,8 @@
       757,
       763
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0559",
@@ -6821,7 +7128,8 @@
       842,
       875
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0560",
@@ -6944,7 +7252,8 @@
       842,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0561",
@@ -7046,7 +7355,8 @@
       754,
       771
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0562",
@@ -7134,7 +7444,8 @@
       626,
       766
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0562galar",
@@ -7223,7 +7534,8 @@
       626,
       766
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0563",
@@ -7318,7 +7630,8 @@
       733,
       766
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0564",
@@ -7406,7 +7719,8 @@
       687,
       757
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0565",
@@ -7498,7 +7812,8 @@
       687,
       757
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0566",
@@ -7592,7 +7907,8 @@
       765,
       771
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0567",
@@ -7691,7 +8007,8 @@
       765,
       771
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0568",
@@ -7766,7 +8083,8 @@
       626,
       767
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0569",
@@ -7850,7 +8168,8 @@
       733,
       767
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0570",
@@ -7952,7 +8271,8 @@
       765,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0570hisui",
@@ -8055,7 +8375,8 @@
       765,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0571",
@@ -8167,7 +8488,8 @@
       765,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0571hisui",
@@ -8280,7 +8602,27 @@
       765,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
+  },
+  {
+    "id": "0571A",
+    "name": "ヒスイゾロアーク",
+    "types": [
+      "ノーマル",
+      "ゴースト"
+    ],
+    "baseStats": {
+      "hp": 55,
+      "attack": 100,
+      "defense": 60,
+      "spAttack": 125,
+      "spDefense": 60,
+      "speed": 110
+    },
+    "learnset": [],
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0572",
@@ -8371,7 +8713,8 @@
       843,
       871
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0573",
@@ -8464,7 +8807,8 @@
       843,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0574",
@@ -8571,7 +8915,8 @@
       808,
       874
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0575",
@@ -8674,7 +9019,8 @@
       808,
       874
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0576",
@@ -8785,7 +9131,8 @@
       808,
       874
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0577",
@@ -8882,7 +9229,8 @@
       755,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0578",
@@ -8977,7 +9325,8 @@
       755,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0579",
@@ -9093,7 +9442,8 @@
       808,
       874
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0580",
@@ -9172,7 +9522,8 @@
       842,
       843
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0581",
@@ -9253,7 +9604,8 @@
       843,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0582",
@@ -9323,7 +9675,8 @@
       605,
       672
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0583",
@@ -9388,7 +9741,8 @@
       522,
       605
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0584",
@@ -9458,7 +9812,8 @@
       588,
       605
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0585",
@@ -9548,7 +9903,8 @@
       808,
       842
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0586",
@@ -9647,7 +10003,8 @@
       808,
       842
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0587",
@@ -9733,7 +10090,8 @@
       761,
       771
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0588",
@@ -9804,7 +10162,8 @@
       605,
       626
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0589",
@@ -9890,7 +10249,8 @@
       671,
       753
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0590",
@@ -9965,7 +10325,8 @@
       655,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0591",
@@ -10042,7 +10403,8 @@
       655,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0592",
@@ -10132,7 +10494,8 @@
       647,
       766
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0593",
@@ -10221,7 +10584,8 @@
       620,
       766
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0594",
@@ -10313,7 +10677,8 @@
       843,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0595",
@@ -10401,7 +10766,8 @@
       808,
       841
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0596",
@@ -10490,7 +10856,8 @@
       808,
       841
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0597",
@@ -10569,7 +10936,8 @@
       753,
       755
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0598",
@@ -10662,7 +11030,8 @@
       753,
       755
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0599",
@@ -10732,7 +11101,8 @@
       755,
       761
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0600",
@@ -10803,7 +11173,8 @@
       755,
       761
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0601",
@@ -10880,7 +11251,8 @@
       755,
       761
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0602",
@@ -10906,7 +11278,8 @@
       473,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0603",
@@ -10985,7 +11358,8 @@
       654,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0604",
@@ -11100,7 +11474,8 @@
       808,
       873
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0605",
@@ -11200,7 +11575,8 @@
       754,
       757
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0606",
@@ -11302,7 +11678,8 @@
       754,
       757
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0607",
@@ -11393,7 +11770,8 @@
       808,
       872
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0608",
@@ -11480,7 +11858,8 @@
       808,
       872
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0609",
@@ -11571,7 +11950,27 @@
       842,
       872
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
+  },
+  {
+    "id": "0609Mega",
+    "name": "メガシャンデラ",
+    "types": [
+      "ゴースト",
+      "ほのお"
+    ],
+    "baseStats": {
+      "hp": 60,
+      "attack": 75,
+      "defense": 110,
+      "spAttack": 175,
+      "spDefense": 110,
+      "speed": 90
+    },
+    "learnset": [],
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0610",
@@ -11669,7 +12068,8 @@
       842,
       870
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0611",
@@ -11763,7 +12163,8 @@
       842,
       870
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0612",
@@ -11867,7 +12268,8 @@
       842,
       870
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0613",
@@ -11968,7 +12370,8 @@
       842,
       843
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0614",
@@ -12086,7 +12489,8 @@
       843,
       869
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0615",
@@ -12170,7 +12574,8 @@
       840,
       843
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0616",
@@ -12240,7 +12645,8 @@
       626,
       763
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0617",
@@ -12320,7 +12726,8 @@
       652,
       763
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0618",
@@ -12413,7 +12820,8 @@
       626,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0618galar",
@@ -12506,7 +12914,27 @@
       626,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
+  },
+  {
+    "id": "0618A",
+    "name": "ガラルマッギョ",
+    "types": [
+      "じめん",
+      "はがね"
+    ],
+    "baseStats": {
+      "hp": 109,
+      "attack": 81,
+      "defense": 99,
+      "spAttack": 66,
+      "spDefense": 84,
+      "speed": 32
+    },
+    "learnset": [],
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0619",
@@ -12607,7 +13035,8 @@
       842,
       875
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0620",
@@ -12715,7 +13144,8 @@
       842,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0621",
@@ -12824,7 +13254,8 @@
       765,
       771
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0622",
@@ -12932,7 +13363,8 @@
       772,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0623",
@@ -13056,7 +13488,27 @@
       808,
       869
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
+  },
+  {
+    "id": "0623Mega",
+    "name": "メガゴルーグ",
+    "types": [
+      "じめん",
+      "ゴースト"
+    ],
+    "baseStats": {
+      "hp": 89,
+      "attack": 159,
+      "defense": 105,
+      "spAttack": 70,
+      "spDefense": 105,
+      "speed": 55
+    },
+    "learnset": [],
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0624",
@@ -13159,7 +13611,8 @@
       765,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0625",
@@ -13263,7 +13716,8 @@
       765,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0626",
@@ -13354,7 +13808,8 @@
       662,
       765
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0627",
@@ -13439,7 +13894,8 @@
       771,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0628",
@@ -13531,7 +13987,8 @@
       771,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0628hisui",
@@ -13623,7 +14080,8 @@
       771,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0629",
@@ -13715,7 +14173,8 @@
       771,
       808
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0630",
@@ -13813,7 +14272,8 @@
       771,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0631",
@@ -13911,7 +14371,8 @@
       764,
       772
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0632",
@@ -13994,7 +14455,8 @@
       753,
       763
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0633",
@@ -14080,7 +14542,8 @@
       808,
       870
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0634",
@@ -14167,7 +14630,8 @@
       808,
       870
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0635",
@@ -14290,7 +14754,8 @@
       808,
       870
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0636",
@@ -14370,7 +14835,8 @@
       841,
       842
     ],
-    "isFinalEvolution": false
+    "isFinalEvolution": false,
+    "regulation": ""
   },
   {
     "id": "0637",
@@ -14467,7 +14933,8 @@
       841,
       842
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": "M-A"
   },
   {
     "id": "0638",
@@ -14568,7 +15035,8 @@
       808,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0639",
@@ -14662,7 +15130,8 @@
       808,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0640",
@@ -14762,7 +15231,8 @@
       842,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0641",
@@ -14862,7 +15332,8 @@
       840,
       843
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0641A",
@@ -14962,7 +15433,8 @@
       840,
       843
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0642",
@@ -15071,7 +15543,8 @@
       808,
       873
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0642A",
@@ -15180,7 +15653,8 @@
       808,
       873
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0643",
@@ -15291,7 +15765,8 @@
       808,
       870
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0644",
@@ -15408,7 +15883,8 @@
       870,
       873
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0645",
@@ -15506,7 +15982,8 @@
       805,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0645A",
@@ -15604,7 +16081,8 @@
       805,
       808
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0646",
@@ -15709,7 +16187,8 @@
       840,
       870
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0647",
@@ -15809,7 +16288,8 @@
       843,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0647A",
@@ -15909,7 +16389,8 @@
       843,
       875
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0648",
@@ -16034,7 +16515,8 @@
       808,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0648B",
@@ -16159,7 +16641,8 @@
       808,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0648step",
@@ -16284,7 +16767,8 @@
       808,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0648W",
@@ -16409,7 +16893,8 @@
       808,
       871
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   },
   {
     "id": "0649",
@@ -16510,6 +16995,7 @@
       626,
       753
     ],
-    "isFinalEvolution": true
+    "isFinalEvolution": true,
+    "regulation": ""
   }
 ]

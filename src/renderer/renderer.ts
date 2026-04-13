@@ -30,14 +30,19 @@ function getTypeEff(moveType: string, defenderTypes: string[]): number {
   for (const t of defenderTypes) mult *= row[t] ?? 1;
   return mult;
 }
-function calcStat(base: number, isHP: boolean): number {
-  if (isHP) return Math.floor((2 * base * DMG_LEVEL) / 100) + DMG_LEVEL + 10;
-  return Math.floor(Math.floor((2 * base * DMG_LEVEL) / 100) + 5);
+/** カタカナをひらがなに変換（検索の表記ゆれ吸収用） */
+function toHiragana(s: string): string {
+  return s.replace(/[\u30A1-\u30F6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
 }
 
-/** Lv50・努力値・性格補正込みの実数値（非HP）。IV=0 で EV=0, nature=1 のとき calcStat と一致 */
+function calcStat(base: number, isHP: boolean): number {
+  if (isHP) return Math.floor((2 * base + 31) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
+  return Math.floor(Math.floor((2 * base + 31) * DMG_LEVEL / 100) + 5);
+}
+
+/** Lv50・能力ポイント・性格補正込みの実数値（非HP）。IV=31固定、cp=能力ポイント(0〜32) */
 function calcStatWithEV(base: number, ev: number, nature: number): number {
-  const raw = Math.floor((Math.floor((2 * base + Math.floor(ev / 4)) * DMG_LEVEL / 100) + 5) * nature);
+  const raw = Math.floor((Math.floor((2 * base + 31 + ev * 2) * DMG_LEVEL / 100) + 5) * nature);
   return Math.max(1, raw);
 }
 interface DamageResult {
@@ -53,18 +58,21 @@ interface DamageResult {
 }
 /** タイプ強化アイテム → 対応タイプ */
 const TYPE_BOOSTER_ITEM_MAP: Record<string, string> = {
-  "charcoal": "ほのお", "mystic-water": "みず", "miracle-seed": "くさ",
-  "magnet": "でんき", "never-melt-ice": "こおり", "black-belt": "かくとう",
-  "poison-barb": "どく", "soft-sand": "じめん", "hard-stone": "いわ",
-  "silver-powder": "むし", "spell-tag": "ゴースト", "twisted-spoon": "エスパー",
-  "dragon-fang": "ドラゴン", "black-glasses": "あく", "metal-coat": "はがね",
-  "sharp-beak": "ひこう", "fairy-feather": "フェアリー",
+  "もくたん": "ほのお", "しんぴのしずく": "みず", "きせきのタネ": "くさ",
+  "じしゃく": "でんき", "とけないこおり": "こおり", "くろおび": "かくとう",
+  "どくバリ": "どく", "やわらかいすな": "じめん", "かたいいし": "いわ",
+  "ぎんのこな": "むし", "のろいのおふだ": "ゴースト", "まがったスプーン": "エスパー",
+  "りゅうのキバ": "ドラゴン", "くろいメガネ": "あく", "メタルコート": "はがね",
+  "ようせいのハネ": "フェアリー", "シルクのスカーフ": "ノーマル",
 };
 
 /** タイプ半減きのみ → 対応タイプ */
 const TYPE_BERRY_MAP: Record<string, string> = {
-  "yache-berry": "こおり", "occa-berry": "ほのお", "wacan-berry": "でんき",
-  "rindo-berry": "くさ", "passho-berry": "みず",
+  "ヤチェ": "こおり", "オッカ": "ほのお", "ウタン": "でんき",
+  "リリバ": "くさ",   "リンド": "みず",   "シュカ": "じめん",
+  "ソクノ": "ひこう", "タンガ": "むし",   "チーゴ": "いわ",
+  "ナナシ": "ゴースト", "ナモ": "かくとう", "ハバン": "ドラゴン",
+  "ホズ": "あく",     "ヨプ": "どく",     "ロゼル": "フェアリー",
 };
 
 function calculateDamage(input: {
@@ -175,6 +183,8 @@ interface Pokemon {
   learnset?: number[];
   /** 最終進化かどうか（進化先がないポケモンは true） */
   isFinalEvolution?: boolean;
+  /** レギュレーション（例: "M-A"）。未設定は "" */
+  regulation?: string;
 }
 
 /** 地方別ポケモンデータファイル（図鑑番号順に結合して使用） */
@@ -220,7 +230,7 @@ function typeBadgesHtml(types: string[]): string {
 
 /** ポケモン画像のパス（img/pokemon/ 配下の {id}.png に統一。id がなければ DUMMY） */
 function getPokemonImageSrc(pokemon: Pokemon): string {
-  return pokemon.id ? `img/pokemon/${pokemon.id}.png` : DUMMY_POKEMON_IMAGE;
+  return pokemon.id ? `img/pokemon_cs/${pokemon.id}.png` : DUMMY_POKEMON_IMAGE;
 }
 
 const videoEl = document.getElementById("video") as HTMLVideoElement;
@@ -280,6 +290,9 @@ let tab1SortKey: "number" | "name" = "number";
 /** タブ1: 最終進化のみ表示するか */
 let tab1ShowOnlyFinalEvolution = true;
 
+/** タブ1: レギュレーションフィルター（"M-A" | "all"） */
+let tab1RegulationFilter: "M-A" | "all" = "M-A";
+
 /** タブ2: ピッカーの表示ソース（all=全ポケモン, box=BOXのみ） */
 let pickerSourceMode: "all" | "box" = "all";
 
@@ -288,6 +301,9 @@ let pickerSortKey: "number" | "name" = "number";
 
 /** タブ2: 最終進化のみ表示するか */
 let pickerShowOnlyFinalEvolution = true;
+
+/** タブ2: レギュレーションフィルター（"M-A" | "all"） */
+let pickerRegulationFilter: "M-A" | "all" = "M-A";
 
 /** タブ1: 選択中ワザ4つ */
 let selectedMoves: number[] = [];
@@ -395,21 +411,21 @@ function getNatureLabel(n: typeof NATURES[number]): string {
 }
 
 /** 競技で使われる持ち物一覧 */
-interface CompetitiveItem { id: string; nameJa: string; effect: string }
+interface CompetitiveItem { id: string; nameJa: string; effect: string; regulation?: string }
 const COMPETITIVE_ITEMS: CompetitiveItem[] = [
   // こだわり系
-  { id: "choice-scarf",       nameJa: "こだわりスカーフ",   effect: "すばやさ×1.5、最初に使った技しか選べない。" },
-  { id: "choice-specs",       nameJa: "こだわりメガネ",     effect: "とくこう×1.5、最初に使った技しか選べない。" },
-  { id: "choice-band",        nameJa: "こだわりハチマキ",   effect: "こうげき×1.5、最初に使った技しか選べない。" },
+  { id: "choice-scarf",       nameJa: "こだわりスカーフ",   effect: "すばやさ×1.5、同じ技しか選べない。" },
+  { id: "choice-specs",       nameJa: "こだわりメガネ",     effect: "とくこう×1.5、同じ技しか選べない。" },
+  { id: "choice-band",        nameJa: "こだわりハチマキ",   effect: "こうげき×1.5、同じ技しか選べない。" },
   // 汎用
-  { id: "life-orb",           nameJa: "いのちのたま",       effect: "技ダメージ×1.3、使うたびHP−1/10。" },
-  { id: "leftovers",          nameJa: "たべのこし",         effect: "毎ターン最大HP×1/16回復。" },
+  { id: "life-orb",           nameJa: "いのちのたま",       effect: "技ダメージ×1.3、使うたびHPが1/10減る。" },
+  { id: "leftovers",          nameJa: "たべのこし",         effect: "毎ターン最大HP×1/16回復する。" },
   { id: "focus-sash",         nameJa: "きあいのタスキ",     effect: "HP満タン時、一撃耐える（一回限り）。" },
-  { id: "assault-vest",       nameJa: "とつげきチョッキ",   effect: "とくぼう×1.5、変化技使用不可。" },
+  { id: "assault-vest",       nameJa: "とつげきチョッキ",   effect: "とくぼう×1.5、変化技を使用できない。" },
   { id: "eviolite",           nameJa: "しんかのきせき",     effect: "進化前限定、ぼうぎょ・とくぼう×1.5。" },
   { id: "rocky-helmet",       nameJa: "ゴツゴツメット",     effect: "接触技を受けると相手HP−1/6。" },
   { id: "heavy-duty-boots",   nameJa: "とつげきブーツ",     effect: "場に出たときのまきびし等無効。" },
-  { id: "shed-shell",         nameJa: "ぬけのから",         effect: "どんな状況でも交代できる。" },
+  { id: "shed-shell",         nameJa: "ぬけがら",         effect: "どんな状況でも交代できる。" },
   // SV新アイテム
   { id: "booster-energy",     nameJa: "ブーストエナジー",   effect: "最も高い種族値の能力+1段階（一回限り）。" },
   { id: "covert-cloak",       nameJa: "おんみつマント",     effect: "技の追加効果を受けない。" },
@@ -475,6 +491,9 @@ const COMPETITIVE_ITEMS: CompetitiveItem[] = [
   { id: "fairy-feather",      nameJa: "フェアリーはね",     effect: "フェアリー技威力×1.2。" },
 ];
 
+/** item.json から読み込んだM-A使用可能アイテム一覧（タブ①で使用） */
+let maItems: CompetitiveItem[] = [];
+
 /** 攻撃する側のダメージに補正がかかるアイテム */
 const ATTACKER_ITEM_IDS = new Set([
   "choice-band", "choice-specs",
@@ -522,6 +541,15 @@ let tab1MoveSearchText = "";
 
 // BOXのタイプ一覧（18タイプ）
 const ALL_TYPES = ["ノーマル","かくとう","ひこう","どく","じめん","いわ","むし","ゴースト","はがね","ほのお","みず","くさ","でんき","エスパー","こおり","ドラゴン","あく","フェアリー"];
+
+/** 日本語タイプ名 → SV画像ファイル名（src/img/type/sv/） */
+const TYPE_SV_IMG: Record<string, string> = {
+  "ノーマル": "Normal", "かくとう": "Fighting", "ひこう": "Flying", "どく": "Poison",
+  "じめん": "Ground", "いわ": "Rock", "むし": "Bug", "ゴースト": "Ghost",
+  "はがね": "Steel", "ほのお": "Fire", "みず": "Water", "くさ": "Grass",
+  "でんき": "Electric", "エスパー": "Psychic", "こおり": "Ice", "ドラゴン": "Dragon",
+  "あく": "Dark", "フェアリー": "Fairy",
+};
 
 function saveBoxToStorage(): void {
   try { localStorage.setItem(STORAGE_KEY_BOX, JSON.stringify(box)); } catch { /* ignore */ }
@@ -648,7 +676,7 @@ function renderBoxGrid(): void {
       let real: number | string = "—";
       if (base !== undefined) {
         if (label === "HP") {
-          real = Math.floor((2 * base + Math.floor(ev / 4)) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
+          real = Math.floor((2 * base + 31 + ev * 2) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
         } else {
           real = calcStatWithEV(base, ev, nature);
         }
@@ -666,7 +694,7 @@ function renderBoxGrid(): void {
       const itemImg = document.createElement("img");
       itemImg.className = "box-card-item-img";
       itemImg.alt = entry.heldItem;
-      itemImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${entry.heldItem}.png`;
+      itemImg.src = `img/item/${entry.heldItem}.png`;
       itemImg.onerror = () => { itemBadge.hidden = true; };
       itemBadge.appendChild(itemImg);
       rightEl.appendChild(itemBadge);
@@ -808,7 +836,7 @@ function renderBoxDetailView(entry: BoxEntry): void {
 
   const item = COMPETITIVE_ITEMS.find((it) => it.id === entry.heldItem);
   const itemHtml = item
-    ? `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${escapeHtml(item.id)}.png"
+    ? `<img src="img/item/${escapeHtml(item.id)}.png"
          class="box-view-item-img" onerror="this.style.display='none'" />
        <span class="box-view-item-name">${escapeHtml(item.nameJa)}</span>
        <span class="box-view-item-effect">${escapeHtml(item.effect)}</span>`
@@ -875,7 +903,7 @@ function updateBoxEditRealStats(pokemon: Pokemon): void {
     let natMul = 1.0;
     let real: number;
     if (natureKey === "hp") {
-      real = Math.floor((2 * base + Math.floor(ev / 4)) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
+      real = Math.floor((2 * base + 31 + ev * 2) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
     } else {
       natMul = nat ? (nat[natureKey as keyof typeof nat] as number) : 1.0;
       real = calcStatWithEV(base, ev, natMul);
@@ -943,7 +971,7 @@ function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
       inp.value = String(existing?.ev[key] ?? 0);
       inp.addEventListener("input", () => updateBoxEditRealStats(pokemon));
       const btn252 = document.createElement("button");
-      btn252.type = "button"; btn252.className = "damage-ev-btn damage-ev-btn-252"; btn252.dataset.evInput = id; btn252.textContent = "252";
+      btn252.type = "button"; btn252.className = "damage-ev-btn damage-ev-btn-252"; btn252.dataset.evInput = id; btn252.textContent = "32";
       const btnDn = document.createElement("button");
       btnDn.type = "button"; btnDn.className = "damage-ev-step-btn damage-ev-step-down"; btnDn.dataset.evInput = id; btnDn.textContent = "−";
       const btnUp = document.createElement("button");
@@ -991,7 +1019,7 @@ function renderBoxItemSelected(): void {
   const clearBtn = document.getElementById("box-detail-item-clear-btn") as HTMLButtonElement | null;
   if (img) {
     if (boxSelectedItem) {
-      img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${boxSelectedItem.id}.png`;
+      img.src = `img/item/${boxSelectedItem.id}.png`;
       img.hidden = false;
       img.onerror = () => { img.hidden = true; };
     } else {
@@ -1015,7 +1043,7 @@ function renderBoxItemPicker(): void {
     btn.type = "button";
     btn.className = "box-item-card" + (boxSelectedItem?.id === item.id ? " is-selected" : "");
     const img = document.createElement("img");
-    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png`;
+    img.src = `img/item/${item.id}.png`;
     img.alt = item.nameJa;
     img.className = "box-item-card-img";
     img.onerror = () => { img.style.display = "none"; };
@@ -1087,7 +1115,7 @@ function renderBoxMoveListTypeButtons(): void {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "damage-move-type-btn" + (boxMoveTypeFilter === typeName ? " is-active" : "");
-    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/sv/${TYPE_SV_IMG[typeName] ?? typeName}.png" alt="${typeName}" />`;
     btn.addEventListener("click", () => {
       boxMoveTypeFilter = boxMoveTypeFilter === typeName ? null : typeName;
       renderBoxMoveListTypeButtons();
@@ -1493,6 +1521,9 @@ function updatePickerListButtons(): void {
 /** タイプ絞り込み後のポケモン一覧を返す */
 function getFilteredPokemonList(): Pokemon[] {
   let list: Pokemon[] = pickerSourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
+  if (pickerRegulationFilter === "M-A") {
+    list = list.filter((p) => p.regulation === "M-A");
+  }
   if (pickerShowOnlyFinalEvolution) {
     list = list.filter((p) => p.isFinalEvolution !== false);
   }
@@ -1519,6 +1550,12 @@ function updatePickerSourceSortUI(): void {
   if (evoToggle) {
     evoToggle.querySelectorAll<HTMLButtonElement>(".picker-evo-btn").forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.evo === (pickerShowOnlyFinalEvolution ? "final" : "all"));
+    });
+  }
+  const regulationToggle = document.getElementById("picker-regulation-toggle");
+  if (regulationToggle) {
+    regulationToggle.querySelectorAll<HTMLButtonElement>(".picker-regulation-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.regulation === pickerRegulationFilter);
     });
   }
 }
@@ -1550,7 +1587,7 @@ function renderPickerTypeButtons(): void {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "picker-type-btn" + (pickerTypeFilter === typeName ? " is-active" : "");
-    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/sv/${TYPE_SV_IMG[typeName] ?? typeName}.png" alt="${typeName}" />`;
     btn.dataset.typeFilter = typeName;
     btn.addEventListener("click", () => {
       pickerTypeFilter = typeName;
@@ -1563,7 +1600,7 @@ function renderPickerTypeButtons(): void {
 
 /** ピッカー一覧用の画像パス（id に統一。id がなければ ball_monster、読み込み失敗時は onerror で差し替え） */
 function getPickerPokemonImageSrc(pokemon: Pokemon): string {
-  return pokemon.id ? `img/pokemon/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
+  return pokemon.id ? `img/pokemon_cs/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
 }
 
 /** ダイアログ内のポケモン一覧のみ再描画（タイプ絞り込み反映） */
@@ -1612,6 +1649,7 @@ function openPokemonPicker(): void {
   pickerSourceMode = "all";
   pickerSortKey = "number";
   pickerShowOnlyFinalEvolution = true;
+  pickerRegulationFilter = "M-A";
   listEl.innerHTML = "";
   renderPickerTeamPreview();
   updatePickerSourceSortUI();
@@ -1692,13 +1730,14 @@ function addPokemonToTeam(pokemon: Pokemon): void {
 // ---------- タブ1: アイテムピッカー ----------
 
 function renderTab1ItemDisplay(slot: "attacker" | "defender"): void {
-  const isMegaAttacker = slot === "attacker" && !!attackPokemon?.id.includes("Mega");
+  const isMega = (slot === "attacker" && !!attackPokemon?.id.includes("Mega"))
+    || (slot === "defender" && !!defendPokemon?.id.includes("Mega"));
   const item = slot === "attacker" ? tab1AttackerItem : tab1DefenderItem;
-  const found = (!isMegaAttacker && item) ? COMPETITIVE_ITEMS.find((it) => it.id === item) : null;
+  const found = (!isMega && item) ? maItems.find((it) => it.id === item) : null;
   const iconEl = document.getElementById(`damage-${slot}-item-icon`) as HTMLImageElement | null;
   const nameEl = document.getElementById(`damage-${slot}-item-name`);
   const effectEl = document.getElementById(`damage-${slot}-item-effect`);
-  if (isMegaAttacker) {
+  if (isMega) {
     if (iconEl) { iconEl.src = ""; iconEl.hidden = true; }
     if (nameEl) nameEl.textContent = "メガストーン";
     if (effectEl) effectEl.textContent = "";
@@ -1706,7 +1745,7 @@ function renderTab1ItemDisplay(slot: "attacker" | "defender"): void {
   }
   if (iconEl) {
     if (found) {
-      iconEl.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${found.id}.png`;
+      iconEl.src = `img/item/${found.id}.png`;
       iconEl.hidden = false;
     } else {
       iconEl.src = "";
@@ -1741,19 +1780,18 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
   if (!gridEl) return;
   gridEl.innerHTML = "";
   const searchText = slot === "attacker" ? tab1AttackerItemSearch : tab1DefenderItemSearch;
-  const slotItems = COMPETITIVE_ITEMS.filter((it) =>
-    slot === "attacker" ? ATTACKER_ITEM_IDS.has(it.id) : DEFENDER_ITEM_IDS.has(it.id)
-  );
   const filtered = searchText.trim()
-    ? slotItems.filter((it) => it.nameJa.includes(searchText.trim()))
-    : slotItems;
+    ? maItems.filter((it) => toHiragana(it.nameJa).includes(toHiragana(searchText.trim())))
+    : maItems;
 
   // 「なし」ボタン
   const noneBtn = document.createElement("button");
   noneBtn.type = "button";
   noneBtn.className = "damage-item-picker-btn";
-  noneBtn.title = "持ち物なし";
-  noneBtn.textContent = "なし";
+  const noneNameEl = document.createElement("span");
+  noneNameEl.className = "damage-item-picker-btn-name";
+  noneNameEl.textContent = "なし";
+  noneBtn.appendChild(noneNameEl);
   noneBtn.addEventListener("click", () => {
     if (slot === "attacker") tab1AttackerItem = "";
     else tab1DefenderItem = "";
@@ -1767,12 +1805,17 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "damage-item-picker-btn";
-    btn.title = `${item.nameJa}\n${item.effect}`;
     const img = document.createElement("img");
-    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png`;
+    img.src = `img/item/${item.id}.png`;
     img.alt = item.nameJa;
-    img.onerror = () => { img.style.display = "none"; btn.textContent = item.nameJa.slice(0, 3); };
-    btn.appendChild(img);
+    img.onerror = () => { img.style.display = "none"; };
+    const nameEl = document.createElement("span");
+    nameEl.className = "damage-item-picker-btn-name";
+    nameEl.textContent = item.nameJa;
+    const effectEl = document.createElement("span");
+    effectEl.className = "damage-item-picker-btn-effect";
+    effectEl.textContent = item.effect;
+    btn.append(img, nameEl, effectEl);
     btn.addEventListener("click", () => {
       if (slot === "attacker") tab1AttackerItem = item.id;
       else tab1DefenderItem = item.id;
@@ -1816,7 +1859,8 @@ function renderTab1DamageDisplay(): void {
       const defDisplayBtn = document.getElementById("damage-defender-item-display") as HTMLButtonElement | null;
       if (defDisplayBtn) {
         const isMega = defendPokemon.id.includes("Mega");
-        defDisplayBtn.hidden = isMega;
+        defDisplayBtn.disabled = isMega;
+        defDisplayBtn.hidden = false;
         if (isMega) { tab1DefenderItem = ""; closeTab1ItemPicker("defender"); }
       }
       renderTab1ItemDisplay("defender");
@@ -1913,7 +1957,7 @@ function updateStatsRealValues(): void {
   if (defendPokemon && hpReal) {
     const base = getBaseStats(defendPokemon);
     const ev = clampEv(Number(hpEv?.value) || 0);
-    hpReal.textContent = String(Math.floor((2 * base.hp + Math.floor(ev / 4)) * 50 / 100) + 60);
+    hpReal.textContent = String(Math.floor((2 * base.hp + 31 + ev * 2) * 50 / 100) + 60);
   } else if (hpReal) hpReal.textContent = "—";
 
   if (defendPokemon && defReal && defEv && defNat) {
@@ -1963,10 +2007,10 @@ function readStatsInputsToState(): void {
 }
 
 /** 努力値のステップ値（4,12,20,...244,252 および 0） */
-const EV_STEPS = [0, 4, 12, 20, 28, 36, 44, 52, 60, 68, 76, 84, 92, 100, 108, 116, 124, 132, 140, 148, 156, 164, 172, 180, 188, 196, 204, 212, 220, 228, 236, 244, 252];
+const EV_STEPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
 
 function clampEv(v: number): number {
-  return Math.max(0, Math.min(255, Math.floor(v)));
+  return Math.max(0, Math.min(32, Math.floor(v)));
 }
 
 function getClosestEvStep(v: number): number {
@@ -2024,6 +2068,9 @@ function applyStatsFromInputsAndRecalc(): void {
 
 function getTab1FilteredPokemonList(): Pokemon[] {
   let list: Pokemon[] = tab1SourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
+  if (tab1RegulationFilter === "M-A") {
+    list = list.filter((p) => p.regulation === "M-A");
+  }
   if (tab1ShowOnlyFinalEvolution) {
     list = list.filter((p) => p.isFinalEvolution !== false);
   }
@@ -2031,7 +2078,7 @@ function getTab1FilteredPokemonList(): Pokemon[] {
     list = list.filter((p) => p.types.includes(tab1SelectTypeFilter!));
   }
   if (tab1NameSearchText.trim()) {
-    list = list.filter((p) => p.name.includes(tab1NameSearchText.trim()));
+    list = list.filter((p) => toHiragana(p.name).includes(toHiragana(tab1NameSearchText.trim())));
   }
   if (tab1SortKey === "name") {
     list = [...list].sort((a, b) => a.name.localeCompare(b.name, "ja"));
@@ -2053,6 +2100,12 @@ function updateTab1SourceSortUI(): void {
   if (evoToggle) {
     evoToggle.querySelectorAll<HTMLButtonElement>(".picker-evo-btn").forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.evo === (tab1ShowOnlyFinalEvolution ? "final" : "all"));
+    });
+  }
+  const regulationToggle = document.getElementById("tab1-regulation-toggle");
+  if (regulationToggle) {
+    regulationToggle.querySelectorAll<HTMLButtonElement>(".picker-regulation-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.regulation === tab1RegulationFilter);
     });
   }
 }
@@ -2082,7 +2135,7 @@ function renderTab1SelectTypeButtons(): void {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "picker-type-btn" + (tab1SelectTypeFilter === typeName ? " is-active" : "");
-    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/sv/${TYPE_SV_IMG[typeName] ?? typeName}.png" alt="${typeName}" />`;
     btn.dataset.typeFilter = typeName;
     btn.addEventListener("click", () => {
       tab1SelectTypeFilter = typeName;
@@ -2128,6 +2181,7 @@ function openTab1PokemonSelect(target: "attack" | "defend" | "box"): void {
   tab1SourceMode = "all";
   tab1SortKey = "number";
   tab1ShowOnlyFinalEvolution = true;
+  tab1RegulationFilter = "M-A";
   const nameSearch = document.getElementById("tab1-pokemon-name-search") as HTMLInputElement | null;
   if (nameSearch) nameSearch.value = "";
   const modal = document.getElementById("tab1-pokemon-select-modal");
@@ -2160,6 +2214,7 @@ function onTab1PokemonSelected(pokemon: Pokemon): void {
   if (tab1SelectTarget === "attack") {
     attackPokemon = pokemon;
     editingMoveSlotIndex = null;
+    damageMovesTypeFilter = null;
     attackerAtkRank = 0;
     attackerSpAtkRank = 0;
     const boxEntry = tab1SourceMode === "box" ? box.find((e) => e.pokemon.id === pokemon.id) : null;
@@ -2301,7 +2356,7 @@ function renderTab1MovesSlots(): void {
       if (defendPokemon && defenderStats) {
         const atkOverride = { attack: calcStatWithEV(attackerStats.attack, attackerAtkEV, attackerAtkNature), spAttack: calcStatWithEV(attackerStats.spAttack, attackerSpAtkEV, attackerSpAtkNature) };
         const defOverride = { defense: calcStatWithEV(defenderStats.defense, defenderDefEV, defenderDefNature), spDefense: calcStatWithEV(defenderStats.spDefense, defenderSpDefEV, defenderSpDefNature) };
-        const defenderHpWithEV = Math.floor((2 * defenderStats.hp + Math.floor(defenderHpEV / 4)) * 50 / 100) + 60;
+        const defenderHpWithEV = Math.floor((2 * defenderStats.hp + 31 + defenderHpEV * 2) * 50 / 100) + 60;
         damageResult = calculateDamage({
           movePower: move.power,
           moveType: move.type,
@@ -2386,7 +2441,7 @@ function renderTab1MovesListTypeButtons(): void {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "damage-move-type-btn" + (damageMovesTypeFilter === typeName ? " is-active" : "");
-    btn.innerHTML = `<img class="type-btn-img" src="img/type/${typeName}.png" alt="${typeName}" />`;
+    btn.innerHTML = `<img class="type-btn-img" src="img/type/sv/${TYPE_SV_IMG[typeName] ?? typeName}.png" alt="${typeName}" />`;
     btn.dataset.typeFilter = typeName;
     btn.addEventListener("click", () => {
       damageMovesTypeFilter = damageMovesTypeFilter === typeName ? null : typeName;
@@ -2567,8 +2622,17 @@ document.addEventListener("DOMContentLoaded", () => {
       renderTab1DamageDisplay();
     });
 
+  fetch("data/item.json")
+    .then((res) => (res.ok ? res.json() : []))
+    .then((data: CompetitiveItem[]) => {
+      maItems = Array.isArray(data) ? data : [];
+    })
+    .catch(() => { maItems = []; });
+
   document.getElementById("damage-defender-select")?.addEventListener("click", () => openTab1PokemonSelect("defend"));
   document.getElementById("damage-attacker-select")?.addEventListener("click", () => openTab1PokemonSelect("attack"));
+  document.querySelector(".damage-slot-defender .damage-slot-img-wrap")?.addEventListener("click", () => openTab1PokemonSelect("defend"));
+  document.querySelector(".damage-slot-attacker .damage-slot-img-wrap")?.addEventListener("click", () => openTab1PokemonSelect("attack"));
   document.getElementById("damage-swap-btn")?.addEventListener("click", swapAttackerDefender);
   // インラインステータス: EVボタン・ステップボタンの委譲処理
   const damagePanel = document.querySelector(".damage-panel");
@@ -2583,7 +2647,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (target.classList.contains("damage-ev-btn-0")) {
         input.value = "0";
       } else if (target.classList.contains("damage-ev-btn-252")) {
-        input.value = "252";
+        input.value = "32";
       } else if (target.classList.contains("damage-ev-step-up")) {
         input.value = String(getNextEvStep(val));
       } else if (target.classList.contains("damage-ev-step-down")) {
@@ -2701,7 +2765,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!input) return;
     const val = clampEv(Number(input.value) || 0);
     if (target.classList.contains("damage-ev-btn-0")) input.value = "0";
-    else if (target.classList.contains("damage-ev-btn-252")) input.value = "252";
+    else if (target.classList.contains("damage-ev-btn-252")) input.value = "32";
     else if (target.classList.contains("damage-ev-step-up")) input.value = String(getNextEvStep(val));
     else if (target.classList.contains("damage-ev-step-down")) input.value = String(getPrevEvStep(val));
     if (boxEditingPokemon) updateBoxEditRealStats(boxEditingPokemon);
@@ -2739,6 +2803,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateTab1SourceSortUI();
     renderTab1SelectList();
   });
+  // タブ1: レギュレーショントグル
+  document.getElementById("tab1-regulation-toggle")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-regulation-btn");
+    if (!btn?.dataset.regulation) return;
+    tab1RegulationFilter = btn.dataset.regulation as "M-A" | "all";
+    updateTab1SourceSortUI();
+    renderTab1SelectList();
+  });
   // タブ2: ソース切替ボタン
   document.getElementById("picker-source-toggle")?.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-source-btn");
@@ -2754,6 +2826,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-evo-btn");
     if (!btn?.dataset.evo) return;
     pickerShowOnlyFinalEvolution = btn.dataset.evo === "final";
+    updatePickerSourceSortUI();
+    renderPickerList();
+  });
+  // タブ2: レギュレーショントグル
+  document.getElementById("picker-regulation-toggle")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".picker-regulation-btn");
+    if (!btn?.dataset.regulation) return;
+    pickerRegulationFilter = btn.dataset.regulation as "M-A" | "all";
     updatePickerSourceSortUI();
     renderPickerList();
   });
