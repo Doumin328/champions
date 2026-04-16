@@ -483,6 +483,74 @@ body {
   border-bottom-width: 1px;
 }
 
+/* ===== 特性行 ===== */
+.damage-slot-ability-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+
+.ability-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 28px;
+  flex-shrink: 0;
+}
+
+.ability-select {
+  flex: 0 1 auto;
+  max-width: 110px;
+  padding: 0.1rem 0.25rem;
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  color: #000;
+}
+
+.ability-select option {
+  color: #000;
+}
+
+.ability-text {
+  flex: 0 1 auto;
+  max-width: 110px;
+  font-size: 0.72rem;
+  color: #000;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 0.1rem 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ability-toggle-btn {
+  flex-shrink: 0;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 3px;
+  border: 1px solid;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.ability-toggle-btn.is-on {
+  background: #4caf50;
+  border-color: #388e3c;
+  color: #fff;
+}
+
+.ability-toggle-btn.is-off {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.5);
+}
+
 /* ===== インラインステータス調整 ===== */
 .damage-slot-stats {
   display: flex;
@@ -730,9 +798,27 @@ body {
 }
 
 .damage-move-damage-text {
-  display: block;
+  display: inline;
   margin-bottom: 0.2rem;
   color: rgba(255, 255, 255, 0.95);
+}
+.damage-ko-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.68rem;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(220, 60, 60, 0.85);
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.damage-ko-badge--orange {
+  background: rgba(220, 130, 30, 0.85);
+}
+.damage-ko-badge--yellow {
+  color: #333;
+  background: rgba(210, 190, 20, 0.85);
 }
 
 .damage-move-gauge-wrap {

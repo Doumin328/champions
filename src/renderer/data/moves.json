@@ -6,7 +6,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 35
+    "pp": 35,
+    "contact": true
   },
   {
     "id": 2,
@@ -33,7 +34,9 @@
     "category": "物理",
     "power": 18,
     "accuracy": 85,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 5,
@@ -42,7 +45,9 @@
     "category": "物理",
     "power": 80,
     "accuracy": 85,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 6,
@@ -60,7 +65,9 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 8,
@@ -69,7 +76,9 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 9,
@@ -78,7 +87,9 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 10,
@@ -87,7 +98,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 35
+    "pp": 35,
+    "contact": true
   },
   {
     "id": 11,
@@ -96,7 +108,8 @@
     "category": "物理",
     "power": 55,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 12,
@@ -105,7 +118,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 30,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 13,
@@ -132,7 +146,9 @@
     "category": "物理",
     "power": 50,
     "accuracy": 95,
-    "pp": 30
+    "pp": 30,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 16,
@@ -150,7 +166,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 35
+    "pp": 35,
+    "contact": true
   },
   {
     "id": 18,
@@ -168,7 +185,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 95,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 20,
@@ -177,7 +195,8 @@
     "category": "物理",
     "power": 15,
     "accuracy": 90,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 21,
@@ -186,7 +205,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 75,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 22,
@@ -195,7 +215,8 @@
     "category": "物理",
     "power": 45,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 23,
@@ -204,7 +225,8 @@
     "category": "物理",
     "power": 65,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 24,
@@ -222,7 +244,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 75,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 26,
@@ -231,7 +254,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 95,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 27,
@@ -240,7 +264,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 85,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 28,
@@ -258,7 +283,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 30,
@@ -267,7 +293,8 @@
     "category": "物理",
     "power": 65,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 31,
@@ -276,7 +303,8 @@
     "category": "物理",
     "power": 15,
     "accuracy": 85,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 32,
@@ -285,7 +313,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 30,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 33,
@@ -294,7 +323,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 35
+    "pp": 35,
+    "contact": true
   },
   {
     "id": 34,
@@ -303,7 +333,8 @@
     "category": "物理",
     "power": 85,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 35,
@@ -312,7 +343,8 @@
     "category": "物理",
     "power": 15,
     "accuracy": 90,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 36,
@@ -321,7 +353,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 85,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 37,
@@ -330,7 +363,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 38,
@@ -339,7 +373,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 39,
@@ -393,7 +428,9 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 45,
@@ -573,7 +610,8 @@
     "category": "物理",
     "power": 35,
     "accuracy": 100,
-    "pp": 35
+    "pp": 35,
+    "contact": true
   },
   {
     "id": 65,
@@ -582,7 +620,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 66,
@@ -600,7 +639,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 95,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 68,
@@ -627,7 +667,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 71,
@@ -663,7 +704,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 75,
@@ -690,7 +732,8 @@
     "category": "物理",
     "power": 55,
     "accuracy": 95,
-    "pp": 25
+    "pp": 25,
+    "slicing": true
   },
   {
     "id": 78,
@@ -933,7 +976,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 105,
@@ -960,7 +1004,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 108,
@@ -978,7 +1023,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 110,
@@ -1041,7 +1087,9 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 117,
@@ -1050,7 +1098,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 118,
@@ -1059,7 +1108,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 119,
@@ -1122,7 +1172,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 30
+    "pp": 30,
+    "contact": true
   },
   {
     "id": 126,
@@ -1131,7 +1182,9 @@
     "category": "物理",
     "power": 60,
     "accuracy": null,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 127,
@@ -1140,7 +1193,8 @@
     "category": "特殊",
     "power": 75,
     "accuracy": 95,
-    "pp": 15
+    "pp": 15,
+    "slicing": true
   },
   {
     "id": 128,
@@ -1176,7 +1230,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 132,
@@ -1194,7 +1249,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 134,
@@ -1212,7 +1268,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 85,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 136,
@@ -1221,7 +1278,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 90,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 137,
@@ -1230,7 +1288,8 @@
     "category": "変化",
     "power": null,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 138,
@@ -1428,7 +1487,8 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 160,
@@ -1482,7 +1542,9 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 166,
@@ -1491,7 +1553,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 167,
@@ -1500,7 +1563,8 @@
     "category": "物理",
     "power": 15,
     "accuracy": 85,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 168,
@@ -1509,7 +1573,8 @@
     "category": "物理",
     "power": 30,
     "accuracy": 100,
-    "pp": 30
+    "pp": 30,
+    "contact": true
   },
   {
     "id": 169,
@@ -1518,7 +1583,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 80,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 170,
@@ -1527,7 +1593,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 171,
@@ -1536,7 +1603,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 172,
@@ -1545,7 +1613,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 173,
@@ -1572,7 +1641,8 @@
     "category": "特殊",
     "power": 120,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 176,
@@ -1635,7 +1705,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 30
+    "pp": 30,
+    "contact": true
   },
   {
     "id": 183,
@@ -1644,7 +1715,8 @@
     "category": "物理",
     "power": 20,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 184,
@@ -1743,7 +1815,8 @@
     "category": "物理",
     "power": null,
     "accuracy": null,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 195,
@@ -1779,7 +1852,8 @@
     "category": "物理",
     "power": 30,
     "accuracy": 100,
-    "pp": 30
+    "pp": 30,
+    "contact": true
   },
   {
     "id": 199,
@@ -1815,7 +1889,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 203,
@@ -1824,7 +1899,8 @@
     "category": "物理",
     "power": 35,
     "accuracy": 85,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 204,
@@ -1842,7 +1918,8 @@
     "category": "物理",
     "power": 130,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 206,
@@ -1860,7 +1937,8 @@
     "category": "物理",
     "power": 10,
     "accuracy": 100,
-    "pp": 35
+    "pp": 35,
+    "contact": true
   },
   {
     "id": 208,
@@ -1896,7 +1974,8 @@
     "category": "物理",
     "power": 130,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 212,
@@ -1932,7 +2011,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 216,
@@ -1977,7 +2057,9 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 221,
@@ -2031,7 +2113,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 227,
@@ -2049,7 +2132,8 @@
     "category": "物理",
     "power": 18,
     "accuracy": 80,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 229,
@@ -2067,7 +2151,9 @@
     "category": "物理",
     "power": 80,
     "accuracy": 90,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 231,
@@ -2103,7 +2189,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 235,
@@ -2112,7 +2199,9 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 236,
@@ -2121,7 +2210,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": null,
-    "pp": 1
+    "pp": 1,
+    "contact": true
   },
   {
     "id": 237,
@@ -2139,7 +2229,8 @@
     "category": "物理",
     "power": 10,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 239,
@@ -2148,7 +2239,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 240,
@@ -2175,7 +2267,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 243,
@@ -2211,7 +2304,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 247,
@@ -2238,7 +2332,9 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 30
+    "pp": 30,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 250,
@@ -2256,7 +2352,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": null,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 252,
@@ -2373,7 +2470,8 @@
     "category": "物理",
     "power": 30,
     "accuracy": 90,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 265,
@@ -2400,7 +2498,8 @@
     "category": "物理",
     "power": 65,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 268,
@@ -2409,7 +2508,9 @@
     "category": "物理",
     "power": 40,
     "accuracy": 95,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 269,
@@ -2418,7 +2519,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 90,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 270,
@@ -2454,7 +2556,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 274,
@@ -2472,7 +2575,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 276,
@@ -2517,7 +2621,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 85,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 281,
@@ -2535,7 +2640,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 283,
@@ -2544,7 +2650,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 40
+    "pp": 40,
+    "contact": true
   },
   {
     "id": 284,
@@ -2553,7 +2660,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 75,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 285,
@@ -2562,7 +2670,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 95,
-    "pp": 35
+    "pp": 35,
+    "contact": true
   },
   {
     "id": 286,
@@ -2571,7 +2680,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": null,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 287,
@@ -2589,7 +2699,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 80,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 289,
@@ -2607,7 +2718,9 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 291,
@@ -2625,7 +2738,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 293,
@@ -2670,7 +2784,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 298,
@@ -2742,7 +2857,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 306,
@@ -2751,7 +2867,9 @@
     "category": "物理",
     "power": 150,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 307,
@@ -2760,7 +2878,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 308,
@@ -2859,7 +2978,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 319,
@@ -2886,7 +3006,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 322,
@@ -2895,7 +3016,8 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 323,
@@ -2913,7 +3035,8 @@
     "category": "物理",
     "power": 65,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 325,
@@ -2922,7 +3045,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 326,
@@ -2994,7 +3118,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 334,
@@ -3003,7 +3128,8 @@
     "category": "物理",
     "power": 15,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 335,
@@ -3066,7 +3192,8 @@
     "category": "物理",
     "power": 85,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 342,
@@ -3084,7 +3211,8 @@
     "category": "物理",
     "power": 30,
     "accuracy": 90,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 344,
@@ -3093,7 +3221,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 345,
@@ -3111,7 +3240,9 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 347,
@@ -3120,7 +3251,8 @@
     "category": "物理",
     "power": 75,
     "accuracy": 95,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 348,
@@ -3147,7 +3279,9 @@
     "category": "物理",
     "power": 90,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 351,
@@ -3156,7 +3290,8 @@
     "category": "物理",
     "power": 30,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 352,
@@ -3192,7 +3327,8 @@
     "category": "特殊",
     "power": 60,
     "accuracy": 95,
-    "pp": 25
+    "pp": 25,
+    "slicing": true
   },
   {
     "id": 356,
@@ -3264,7 +3400,9 @@
     "category": "物理",
     "power": 60,
     "accuracy": null,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 364,
@@ -3282,7 +3420,9 @@
     "category": "物理",
     "power": 85,
     "accuracy": 90,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 366,
@@ -3354,7 +3494,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 374,
@@ -3381,7 +3522,8 @@
     "category": "物理",
     "power": 85,
     "accuracy": 85,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 377,
@@ -3399,7 +3541,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 379,
@@ -3408,7 +3551,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 380,
@@ -3435,7 +3579,9 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 383,
@@ -3462,7 +3608,8 @@
     "category": "特殊",
     "power": 60,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "pulse": true
   },
   {
     "id": 386,
@@ -3516,7 +3663,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 392,
@@ -3525,7 +3673,9 @@
     "category": "物理",
     "power": 100,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 393,
@@ -3534,7 +3684,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 394,
@@ -3579,7 +3730,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 399,
@@ -3615,7 +3767,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 403,
@@ -3624,7 +3777,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 404,
@@ -3633,7 +3787,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 405,
@@ -3642,7 +3797,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 406,
@@ -3678,7 +3834,8 @@
     "category": "特殊",
     "power": null,
     "accuracy": null,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 410,
@@ -3696,7 +3853,8 @@
     "category": "特殊",
     "power": null,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 412,
@@ -3768,7 +3926,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 420,
@@ -3777,7 +3936,8 @@
     "category": "物理",
     "power": 140,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 421,
@@ -3822,7 +3982,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 426,
@@ -3831,7 +3992,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 427,
@@ -3840,7 +4002,8 @@
     "category": "特殊",
     "power": 80,
     "accuracy": null,
-    "pp": 20
+    "pp": 20,
+    "pulse": true
   },
   {
     "id": 428,
@@ -3858,7 +4021,8 @@
     "category": "特殊",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "pulse": true
   },
   {
     "id": 430,
@@ -3867,7 +4031,9 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 431,
@@ -3876,7 +4042,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 432,
@@ -3894,7 +4061,8 @@
     "category": "特殊",
     "power": 85,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "pulse": true
   },
   {
     "id": 434,
@@ -3903,7 +4071,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 75,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 435,
@@ -3921,7 +4090,9 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 437,
@@ -3957,7 +4128,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 441,
@@ -3984,7 +4156,8 @@
     "category": "物理",
     "power": 150,
     "accuracy": 90,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 444,
@@ -4002,7 +4175,9 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 30
+    "pp": 30,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 446,
@@ -4011,7 +4186,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 447,
@@ -4020,7 +4196,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 448,
@@ -4029,7 +4206,9 @@
     "category": "物理",
     "power": 65,
     "accuracy": 95,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 449,
@@ -4038,7 +4217,9 @@
     "category": "物理",
     "power": 65,
     "accuracy": 95,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 450,
@@ -4047,7 +4228,9 @@
     "category": "物理",
     "power": 65,
     "accuracy": 95,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 451,
@@ -4065,7 +4248,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "slicing": true
   },
   {
     "id": 453,
@@ -4074,7 +4258,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 90,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 454,
@@ -4101,7 +4286,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 85,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 457,
@@ -4155,7 +4341,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 85,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 463,
@@ -4173,7 +4360,9 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 465,
@@ -4191,7 +4380,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 467,
@@ -4227,7 +4417,8 @@
     "category": "特殊",
     "power": null,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 471,
@@ -4263,7 +4454,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 475,
@@ -4272,7 +4464,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 476,
@@ -4308,7 +4501,8 @@
     "category": "物理",
     "power": 150,
     "accuracy": 80,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 480,
@@ -4317,7 +4511,8 @@
     "category": "物理",
     "power": 35,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 481,
@@ -4353,7 +4548,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 485,
@@ -4398,7 +4594,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 490,
@@ -4515,7 +4712,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 503,
@@ -4542,7 +4740,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 506,
@@ -4569,7 +4768,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 509,
@@ -4587,7 +4787,8 @@
     "category": "物理",
     "power": 65,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 511,
@@ -4605,7 +4806,8 @@
     "category": "物理",
     "power": 95,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 513,
@@ -4659,7 +4861,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 519,
@@ -4722,7 +4925,8 @@
     "category": "変化",
     "power": null,
     "accuracy": null,
-    "pp": 10
+    "pp": 10,
+    "pulse": true
   },
   {
     "id": 526,
@@ -4740,7 +4944,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 528,
@@ -4758,7 +4963,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 530,
@@ -4785,7 +4991,8 @@
     "category": "物理",
     "power": 55,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 533,
@@ -4803,7 +5010,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 535,
@@ -4884,7 +5092,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 544,
@@ -4911,7 +5120,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 547,
@@ -4920,7 +5130,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 548,
@@ -4929,7 +5140,8 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 549,
@@ -4938,7 +5150,9 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 550,
@@ -4947,7 +5161,9 @@
     "category": "物理",
     "power": 75,
     "accuracy": 95,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 551,
@@ -4956,7 +5172,8 @@
     "category": "物理",
     "power": null,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 552,
@@ -4974,7 +5191,8 @@
     "category": "物理",
     "power": 65,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 554,
@@ -5010,7 +5228,8 @@
     "category": "物理",
     "power": 25,
     "accuracy": 85,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 558,
@@ -5019,7 +5238,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 559,
@@ -5028,7 +5248,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 85,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 560,
@@ -5064,7 +5285,8 @@
     "category": "特殊",
     "power": 85,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "slicing": true
   },
   {
     "id": 564,
@@ -5082,7 +5304,8 @@
     "category": "物理",
     "power": 130,
     "accuracy": 85,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 566,
@@ -5145,7 +5368,8 @@
     "category": "物理",
     "power": 180,
     "accuracy": 95,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 573,
@@ -5172,7 +5396,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 95,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 576,
@@ -5217,7 +5442,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 25
+    "pp": 25,
+    "contact": true
   },
   {
     "id": 581,
@@ -5226,7 +5452,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 582,
@@ -5325,7 +5552,8 @@
     "category": "特殊",
     "power": 50,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 593,
@@ -5379,7 +5607,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 599,
@@ -5613,7 +5842,8 @@
     "category": "物理",
     "power": 20,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 625,
@@ -5622,7 +5852,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 40
+    "pp": 40,
+    "contact": true
   },
   {
     "id": 626,
@@ -5631,7 +5862,8 @@
     "category": "特殊",
     "power": 20,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 627,
@@ -5640,7 +5872,9 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 628,
@@ -5694,7 +5928,8 @@
     "category": "特殊",
     "power": 110,
     "accuracy": 85,
-    "pp": 10
+    "pp": 10,
+    "pulse": true
   },
   {
     "id": 634,
@@ -5712,7 +5947,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 636,
@@ -5730,7 +5966,8 @@
     "category": "物理",
     "power": 210,
     "accuracy": null,
-    "pp": 1
+    "pp": 1,
+    "contact": true
   },
   {
     "id": 638,
@@ -5748,7 +5985,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 640,
@@ -5775,7 +6013,8 @@
     "category": "物理",
     "power": 85,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 643,
@@ -5793,7 +6032,9 @@
     "category": "物理",
     "power": 100,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 645,
@@ -5811,7 +6052,8 @@
     "category": "物理",
     "power": 95,
     "accuracy": 95,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 647,
@@ -5829,7 +6071,9 @@
     "category": "物理",
     "power": 125,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 649,
@@ -5883,7 +6127,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 655,
@@ -5901,7 +6146,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 657,
@@ -5919,7 +6165,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 659,
@@ -5928,7 +6175,8 @@
     "category": "物理",
     "power": 20,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 660,
@@ -5955,7 +6203,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": null,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 663,
@@ -5991,7 +6240,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 667,
@@ -6027,7 +6277,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 671,
@@ -6036,7 +6287,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 672,
@@ -6063,7 +6315,8 @@
     "category": "物理",
     "power": 180,
     "accuracy": null,
-    "pp": 1
+    "pp": 1,
+    "contact": true
   },
   {
     "id": 675,
@@ -6090,7 +6343,8 @@
     "category": "物理",
     "power": 195,
     "accuracy": null,
-    "pp": 1
+    "pp": 1,
+    "contact": true
   },
   {
     "id": 678,
@@ -6108,7 +6362,8 @@
     "category": "物理",
     "power": 210,
     "accuracy": null,
-    "pp": 1
+    "pp": 1,
+    "contact": true
   },
   {
     "id": 680,
@@ -6153,7 +6408,9 @@
     "category": "物理",
     "power": 85,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 685,
@@ -6171,7 +6428,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 687,
@@ -6180,7 +6438,8 @@
     "category": "物理",
     "power": 85,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 688,
@@ -6198,7 +6457,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 690,
@@ -6207,7 +6467,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 691,
@@ -6234,7 +6495,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 694,
@@ -6252,7 +6514,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 696,
@@ -6279,7 +6542,9 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 699,
@@ -6306,7 +6571,8 @@
     "category": "物理",
     "power": 200,
     "accuracy": null,
-    "pp": 1
+    "pp": 1,
+    "contact": true
   },
   {
     "id": 702,
@@ -6324,7 +6590,8 @@
     "category": "物理",
     "power": 190,
     "accuracy": null,
-    "pp": 1
+    "pp": 1,
+    "contact": true
   },
   {
     "id": 704,
@@ -6351,7 +6618,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 707,
@@ -6369,7 +6637,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 95,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 709,
@@ -6405,7 +6674,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 713,
@@ -6459,7 +6729,8 @@
     "category": "物理",
     "power": null,
     "accuracy": null,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 719,
@@ -6468,7 +6739,9 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 720,
@@ -6495,7 +6768,9 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 723,
@@ -6567,7 +6842,8 @@
     "category": "物理",
     "power": 85,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 731,
@@ -6576,7 +6852,9 @@
     "category": "物理",
     "power": 85,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "bite": true
   },
   {
     "id": 732,
@@ -6594,7 +6872,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 734,
@@ -6621,7 +6900,8 @@
     "category": "物理",
     "power": 35,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 737,
@@ -6639,7 +6919,9 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 739,
@@ -6648,7 +6930,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 740,
@@ -6666,7 +6949,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 742,
@@ -6675,7 +6959,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 100,
-    "pp": 40
+    "pp": 40,
+    "contact": true
   },
   {
     "id": 743,
@@ -6711,7 +6996,8 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 747,
@@ -6747,7 +7033,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": null,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 751,
@@ -6792,7 +7079,8 @@
     "category": "物理",
     "power": 130,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 756,
@@ -6837,7 +7125,8 @@
     "category": "物理",
     "power": 55,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 761,
@@ -6855,7 +7144,8 @@
     "category": "特殊",
     "power": 50,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "pulse": true
   },
   {
     "id": 763,
@@ -6864,7 +7154,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 764,
@@ -6882,7 +7173,8 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 766,
@@ -6918,7 +7210,8 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 770,
@@ -6927,7 +7220,8 @@
     "category": "物理",
     "power": 20,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 771,
@@ -6936,7 +7230,8 @@
     "category": "物理",
     "power": 40,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 772,
@@ -6963,7 +7258,9 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 775,
@@ -6972,7 +7269,9 @@
     "category": "物理",
     "power": 25,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 776,
@@ -7017,7 +7316,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 781,
@@ -7053,7 +7353,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 785,
@@ -7062,7 +7363,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 786,
@@ -7080,7 +7382,9 @@
     "category": "物理",
     "power": 65,
     "accuracy": 90,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 788,
@@ -7116,7 +7420,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 792,
@@ -7152,7 +7457,9 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 796,
@@ -7215,7 +7522,9 @@
     "category": "物理",
     "power": 65,
     "accuracy": 90,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 803,
@@ -7287,7 +7596,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 811,
@@ -7323,7 +7633,9 @@
     "category": "物理",
     "power": 60,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 815,
@@ -7341,7 +7653,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 817,
@@ -7350,7 +7663,9 @@
     "category": "物理",
     "power": 20,
     "accuracy": 90,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 818,
@@ -7359,7 +7674,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 819,
@@ -7368,7 +7684,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 820,
@@ -7395,7 +7712,8 @@
     "category": "物理",
     "power": 30,
     "accuracy": 95,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 823,
@@ -7404,7 +7722,8 @@
     "category": "物理",
     "power": 30,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 824,
@@ -7431,7 +7750,9 @@
     "category": "物理",
     "power": 85,
     "accuracy": null,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 827,
@@ -7458,7 +7779,8 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 830,
@@ -7467,7 +7789,8 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 831,
@@ -7485,7 +7808,9 @@
     "category": "物理",
     "power": 80,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 833,
@@ -7512,7 +7837,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 836,
@@ -7521,7 +7847,8 @@
     "category": "特殊",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 837,
@@ -7566,7 +7893,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 842,
@@ -7575,7 +7903,8 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "contact": true
   },
   {
     "id": 843,
@@ -7593,7 +7922,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 845,
@@ -7611,7 +7941,9 @@
     "category": "物理",
     "power": 50,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "punch": true
   },
   {
     "id": 847,
@@ -7629,7 +7961,9 @@
     "category": "物理",
     "power": 90,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 849,
@@ -7638,7 +7972,8 @@
     "category": "物理",
     "power": 120,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true
   },
   {
     "id": 850,
@@ -7656,7 +7991,8 @@
     "category": "物理",
     "power": 1,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 852,
@@ -7665,7 +8001,8 @@
     "category": "物理",
     "power": 70,
     "accuracy": 100,
-    "pp": 20
+    "pp": 20,
+    "slicing": true
   },
   {
     "id": 853,
@@ -7800,7 +8137,9 @@
     "category": "物理",
     "power": 95,
     "accuracy": 100,
-    "pp": 5
+    "pp": 5,
+    "contact": true,
+    "slicing": true
   },
   {
     "id": 868,
@@ -7809,7 +8148,8 @@
     "category": "特殊",
     "power": 50,
     "accuracy": 0,
-    "pp": 10
+    "pp": 10,
+    "slicing": true
   },
   {
     "id": 869,
@@ -7818,7 +8158,8 @@
     "category": "物理",
     "power": 0,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 870,
@@ -7845,7 +8186,8 @@
     "category": "物理",
     "power": 75,
     "accuracy": 100,
-    "pp": 10
+    "pp": 10,
+    "contact": true
   },
   {
     "id": 873,
@@ -7854,7 +8196,8 @@
     "category": "物理",
     "power": 100,
     "accuracy": 95,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 874,
@@ -7872,7 +8215,8 @@
     "category": "物理",
     "power": 65,
     "accuracy": 100,
-    "pp": 15
+    "pp": 15,
+    "contact": true
   },
   {
     "id": 876,

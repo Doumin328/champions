@@ -55,6 +55,7 @@ interface DamageResult {
   remainingHPMax: number;
   isStatusMove: boolean;
   isImmune: boolean;
+  koChance: number;
 }
 /** タイプ強化アイテム → 対応タイプ */
 const TYPE_BOOSTER_ITEM_MAP: Record<string, string> = {
@@ -94,17 +95,37 @@ function calculateDamage(input: {
   attackerItem?: string;
   defenderItem?: string;
   defenderHpOverride?: number;
+  attackerAbility?: string;
+  defenderAbility?: string;
+  attackerAbilityActive?: boolean;
+  defenderAbilityActive?: boolean;
+  moveFlags?: { contact?: boolean; pulse?: boolean; bite?: boolean; punch?: boolean; slicing?: boolean };
 }): DamageResult {
   const { movePower, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain, attackerItem, defenderItem } = input;
   const defenderHP = input.defenderHpOverride ?? calcStat(defenderBaseStats.hp, true);
   if (moveCategory === "変化" || movePower == null || movePower <= 0) {
-    return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: true, isImmune: false };
+    return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: true, isImmune: false, koChance: 0 };
   }
-  const typeEff = getTypeEff(moveType, defenderTypes);
+  // 特性データ取得（条件付き特性はアクティブフラグで制御）
+  // ※スキン系のタイプ変換が免疫チェックに影響するため、typeEff より前に取得
+  const atkAbActive = input.attackerAbilityActive !== false;
+  const defAbActive = input.defenderAbilityActive !== false;
+  const atkAb = atkAbActive && input.attackerAbility ? abilitiesData.find(a => a.name === input.attackerAbility) : undefined;
+  const defAb = defAbActive && input.defenderAbility ? abilitiesData.find(a => a.name === input.defenderAbility) : undefined;
+  const ignoreDefAb = atkAb?.ignoreDefenderAbility ?? false;
+
+  // スキン系：ノーマル技を別タイプに変換
+  const isNormalTypeMove = moveType === "ノーマル";
+  const effectiveMoveType = (atkAb?.normalTypeChange && isNormalTypeMove) ? atkAb.normalTypeChange : moveType;
+
+  const typeEff = getTypeEff(effectiveMoveType, defenderTypes);
   if (typeEff === 0) {
-    return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: false, isImmune: true };
+    return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: false, isImmune: true, koChance: 0 };
   }
-  const stab = attackerTypes.includes(moveType) ? 1.5 : 1;
+
+  // STAB（てきおうりょく で stabMult を上書き）
+  const stab = attackerTypes.includes(effectiveMoveType) ? (atkAb?.stabMult ?? 1.5) : 1;
+
   const atkBase = moveCategory === "物理"
     ? (attackerStatOverride?.attack ?? calcStat(attackerBaseStats.attack, false))
     : (attackerStatOverride?.spAttack ?? calcStat(attackerBaseStats.spAttack, false));
@@ -122,42 +143,91 @@ function calculateDamage(input: {
     ? (defenderItem === "eviolite" ? 1.5 : 1)
     : (defenderItem === "assault-vest" || defenderItem === "eviolite" ? 1.5 : 1);
 
-  const atkStat = Math.max(1, Math.floor(Math.floor(atkBase * rankMult(atkRank)) * atkItemMult));
-  const defStat = Math.max(1, Math.floor(Math.floor(defBase * rankMult(defRank)) * defItemMult));
-  const base = Math.floor((Math.floor((2 * DMG_LEVEL) / 5 + 2) * movePower * atkStat) / defStat / 50) + 2;
+  // 天候：ノーてんき / エアロック で無効化（weatherCondition チェックより前に計算）
+  const effectiveWeather = (atkAb?.ignoreWeather || defAb?.ignoreWeather) ? "" : (weather ?? "");
+
+  // 攻撃側特性：ステータス倍率（ちからもち / はりきり / メガソーラー等）
+  const atkAbStatCondMet = !atkAb?.weatherCondition || effectiveWeather === atkAb.weatherCondition;
+  const atkAbMult = (atkAb?.atkStatMult != null && atkAbStatCondMet && (!atkAb.moveCategory || atkAb.moveCategory === moveCategory)) ? atkAb.atkStatMult : 1;
+  // 防御側特性：ステータス倍率（ファーコート等）。かたやぶりで無効化
+  const defAbMult = !ignoreDefAb && defAb?.defStatMult != null && (!defAb.moveCategory || defAb.moveCategory === moveCategory) ? defAb.defStatMult : 1;
+
+  const atkStat = Math.max(1, Math.floor(Math.floor(atkBase * rankMult(atkRank)) * atkItemMult * atkAbMult));
+  const defStat = Math.max(1, Math.floor(Math.floor(defBase * rankMult(defRank)) * defItemMult * defAbMult));
+
+  // 威力倍率（テクニシャン / かたいツメ / すなのちから / アナライズ等の条件チェック）
+  const powerMultCondMet =
+    (!atkAb?.powerMultMaxPower || movePower <= atkAb.powerMultMaxPower) &&
+    (!atkAb?.powerMultTypes   || atkAb.powerMultTypes.includes(effectiveMoveType)) &&
+    (!atkAb?.weatherCondition || effectiveWeather === atkAb.weatherCondition) &&
+    (!atkAb?.requiresFlag     || input.moveFlags?.[atkAb.requiresFlag] === true) &&
+    (!atkAb?.normalTypeChange || isNormalTypeMove); // スキン系：元がノーマルのときのみ
+  const effectivePower = Math.floor(movePower * ((atkAb?.powerMult != null && powerMultCondMet) ? atkAb.powerMult : 1));
+
+  const step2 = Math.floor(Math.floor((2 * DMG_LEVEL) / 5 + 2) * effectivePower * atkStat / defStat);
+  const base  = Math.floor(step2 / 50) + 2;
   let weatherMult = 1;
-  if (weather === "はれ") {
-    if (moveType === "ほのお") weatherMult = 1.5;
-    else if (moveType === "みず") weatherMult = 0.5;
-  } else if (weather === "あめ") {
-    if (moveType === "みず") weatherMult = 1.5;
-    else if (moveType === "ほのお") weatherMult = 0.5;
+  if (effectiveWeather === "はれ") {
+    if (effectiveMoveType === "ほのお") weatherMult = 1.5;
+    else if (effectiveMoveType === "みず") weatherMult = 0.5;
+  } else if (effectiveWeather === "あめ") {
+    if (effectiveMoveType === "みず") weatherMult = 1.5;
+    else if (effectiveMoveType === "ほのお") weatherMult = 0.5;
   }
   let terrainMult = 1;
-  if (terrain === "エレキフィールド" && moveType === "でんき") terrainMult = 1.3;
-  else if (terrain === "グラスフィールド" && moveType === "くさ") terrainMult = 1.3;
-  else if (terrain === "サイコフィールド" && moveType === "エスパー") terrainMult = 1.3;
-  else if (terrain === "ミストフィールド" && moveType === "ドラゴン") terrainMult = 0.5;
+  if (terrain === "エレキフィールド" && effectiveMoveType === "でんき") terrainMult = 1.3;
+  else if (terrain === "グラスフィールド" && effectiveMoveType === "くさ") terrainMult = 1.3;
+  else if (terrain === "サイコフィールド" && effectiveMoveType === "エスパー") terrainMult = 1.3;
+  else if (terrain === "ミストフィールド" && effectiveMoveType === "ドラゴン") terrainMult = 0.5;
 
   // 攻撃側持ち物：ダメージ補正
   let attackerDamageMult = 1;
   if (attackerItem === "life-orb") attackerDamageMult = 1.3;
   else if (attackerItem === "expert-belt" && typeEff > 1) attackerDamageMult = 1.2;
-  else if (attackerItem && TYPE_BOOSTER_ITEM_MAP[attackerItem] === moveType) attackerDamageMult = 1.2;
+  else if (attackerItem && TYPE_BOOSTER_ITEM_MAP[attackerItem] === effectiveMoveType) attackerDamageMult = 1.2;
 
   // 防御側持ち物：ダメージ軽減
   let defenderDamageReduceMult = 1;
-  if (defenderItem && TYPE_BERRY_MAP[defenderItem] === moveType && typeEff > 1) defenderDamageReduceMult = 0.5;
+  if (defenderItem && TYPE_BERRY_MAP[defenderItem] === effectiveMoveType && typeEff > 1) defenderDamageReduceMult = 0.5;
 
-  const modifier = stab * typeEff * weatherMult * terrainMult * attackerDamageMult * defenderDamageReduceMult;
-  const damageMin = Math.floor(Math.max(1, Math.floor(base * modifier * 0.85)));
-  const damageMax = Math.floor(Math.max(1, Math.floor(base * modifier * 1.0)));
+  // 攻撃側特性：タイプダメージ倍率（もうか / トランジスタ等）
+  let attackerAbTypeMult = 1;
+  if (atkAb?.typeDamageMult?.type === effectiveMoveType) attackerAbTypeMult = atkAb.typeDamageMult.mult;
+
+  // 防御側特性：タイプ軽減（あついしぼう等）。かたやぶりで無効化
+  let defAbTypeMult = 1;
+  if (!ignoreDefAb && defAb?.typeResistMulti) {
+    const r = defAb.typeResistMulti.find(e => e.type === effectiveMoveType);
+    if (r) defAbTypeMult = r.mult;
+  }
+
+  // 防御側特性：効果抜群軽減（フィルター等）。かたやぶりで無効化
+  let superEffAbMult = 1;
+  if (!ignoreDefAb && defAb?.superEffMult != null && typeEff > 1) superEffAbMult = defAb.superEffMult;
+
+  // 防御側特性：全体ダメージ軽減（マルチスケイル等）。かたやぶりで無効化
+  let defDamageMult = 1;
+  if (!ignoreDefAb && defAb?.damageMult != null) defDamageMult = defAb.damageMult;
+
+  const otherMult = weatherMult * terrainMult * attackerDamageMult * defenderDamageReduceMult
+    * attackerAbTypeMult * defAbTypeMult * superEffAbMult * defDamageMult;
+  const applyRoll = (r: number): number => {
+    let d = Math.floor(base * r / 100);   // ×乱数 → 切り捨て
+    d = Math.round(d * stab);             // ×タイプ一致補正 → 五捨五超入
+    d = Math.floor(d * typeEff);          // ×相性補正 → 切り捨て
+    return Math.max(1, Math.floor(d * otherMult));
+  };
+  const rolls = Array.from({ length: 16 }, (_, i) => applyRoll(85 + i));
+  const damageMin = rolls[0];
+  const damageMax = rolls[15];
+  const koCount = rolls.filter(d => d >= defenderHP).length;
+  const koChance = (koCount / 16) * 100;
   return {
     damageMin, damageMax,
     percentMin: (damageMin / defenderHP) * 100, percentMax: (damageMax / defenderHP) * 100,
     defenderHP,
     remainingHPMin: Math.max(0, defenderHP - damageMax), remainingHPMax: Math.max(0, defenderHP - damageMin),
-    isStatusMove: false, isImmune: false,
+    isStatusMove: false, isImmune: false, koChance,
   };
 }
 // ========== ダメージ計算ここまで ==========
@@ -181,6 +251,8 @@ interface Pokemon {
   };
   /** 覚える技の ID 一覧（moves.json の id を参照） */
   learnset?: number[];
+  /** 特性の日本語名一覧（通常特性→隠れ特性の順） */
+  abilities?: string[];
   /** 最終進化かどうか（進化先がないポケモンは true） */
   isFinalEvolution?: boolean;
   /** レギュレーション（例: "M-A"）。未設定は "" */
@@ -200,6 +272,31 @@ const POKEMON_REGION_FILES = [
   "data/pokemon_paldea.json",
   "data/pokemon_forms.json",
 ];
+
+/** 特性効果定義 */
+interface AbilityDef {
+  name: string;
+  desc: string;
+  side: "attacker" | "defender" | "both";
+  atkStatMult?: number;
+  moveCategory?: "物理" | "特殊";
+  stabMult?: number;
+  powerMult?: number;
+  typeDamageMult?: { type: string; mult: number };
+  ignoreDefenderAbility?: boolean;
+  ignoreWeather?: boolean;
+  defStatMult?: number;
+  superEffMult?: number;
+  damageMult?: number;
+  typeResistMulti?: { type: string; mult: number }[];
+  conditional?: boolean;
+  weatherCondition?: string;
+  powerMultTypes?: string[];
+  powerMultMaxPower?: number;
+  requiresFlag?: "contact" | "pulse" | "bite" | "punch" | "slicing";
+  normalTypeChange?: string;
+}
+let abilitiesData: AbilityDef[] = [];
 
 /** デモポケモン一覧（起動時に地方別 JSON を読み込んで結合） */
 let demoPokemon: Pokemon[] = [];
@@ -340,6 +437,15 @@ let defenderSpDefRank = 0;
 let currentWeather = "";
 let currentTerrain = "";
 
+/** タブ1: 攻撃側の選択特性 */
+let attackerAbility = "";
+/** タブ1: 防御側の選択特性 */
+let defenderAbility = "";
+/** タブ1: 攻撃側の条件付き特性が有効かどうか */
+let attackerAbilityActive = true;
+/** タブ1: 防御側の条件付き特性が有効かどうか */
+let defenderAbilityActive = true;
+
 /** タブ1: 攻撃側の持ち物 */
 let tab1AttackerItem = "";
 /** タブ1: 防御側の持ち物 */
@@ -357,6 +463,11 @@ interface Move {
   power: number | null;
   accuracy: number | null;
   pp: number;
+  contact?: boolean;
+  pulse?: boolean;
+  bite?: boolean;
+  punch?: boolean;
+  slicing?: boolean;
 }
 
 let movesData: Move[] = [];
@@ -1831,6 +1942,8 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
 
 function swapAttackerDefender(): void {
   [attackPokemon, defendPokemon] = [defendPokemon, attackPokemon];
+  [attackerAbility, defenderAbility] = [defenderAbility, attackerAbility];
+  [attackerAbilityActive, defenderAbilityActive] = [defenderAbilityActive, attackerAbilityActive];
   [tab1AttackerItem, tab1DefenderItem] = [tab1DefenderItem, tab1AttackerItem];
   // EVs・性格・ランクはスロットごとに保持（リセットしない）
   selectedMoves = attackPokemon ? getDefaultMoves(attackPokemon) : [];
@@ -1912,8 +2025,56 @@ function renderTab1DamageDisplay(): void {
 
   updateStatsRealValues();
   updateRankDisplays();
+  syncAbilityDropdowns();
 
   renderTab1MovesArea();
+}
+
+function syncAbilityDropdowns(): void {
+  const slots = [
+    { key: "attacker", pokemon: attackPokemon, current: attackerAbility, active: attackerAbilityActive },
+    { key: "defender", pokemon: defendPokemon, current: defenderAbility, active: defenderAbilityActive },
+  ] as const;
+  for (const { key, pokemon, current, active } of slots) {
+    const row = document.getElementById(`damage-${key}-ability-row`);
+    const sel = document.getElementById(`damage-${key}-ability-select`) as HTMLSelectElement | null;
+    const txt = document.getElementById(`damage-${key}-ability-text`) as HTMLElement | null;
+    const toggleBtn = document.getElementById(`damage-${key}-ability-toggle`) as HTMLButtonElement | null;
+    if (!sel || !txt) continue;
+
+    const abilities = pokemon?.abilities ?? [];
+    if (row) row.hidden = abilities.length === 0;
+    if (abilities.length === 0) continue;
+
+    const isMultiple = abilities.length > 1;
+    sel.hidden = !isMultiple;
+    txt.hidden = isMultiple;
+
+    if (isMultiple) {
+      sel.innerHTML = "";
+      for (const ab of abilities) {
+        const opt = document.createElement("option");
+        opt.value = ab; opt.textContent = ab;
+        sel.appendChild(opt);
+      }
+      sel.value = current || abilities[0];
+    } else {
+      txt.textContent = abilities[0];
+    }
+
+    // 条件付き特性のみトグルボタンを表示
+    const displayedAbility = isMultiple ? (sel.value || abilities[0]) : abilities[0];
+    if (toggleBtn) {
+      const selectedDef = displayedAbility ? abilitiesData.find(a => a.name === displayedAbility) : undefined;
+      if (selectedDef?.conditional) {
+        toggleBtn.hidden = false;
+        toggleBtn.textContent = active ? "ON" : "OFF";
+        toggleBtn.className = `ability-toggle-btn ${active ? "is-on" : "is-off"}`;
+      } else {
+        toggleBtn.hidden = true;
+      }
+    }
+  }
 }
 
 function syncStatsInputsFromState(): void {
@@ -2213,6 +2374,8 @@ function closeTab1PokemonSelect(): void {
 function onTab1PokemonSelected(pokemon: Pokemon): void {
   if (tab1SelectTarget === "attack") {
     attackPokemon = pokemon;
+    attackerAbility = pokemon.abilities?.[0] ?? "";
+    attackerAbilityActive = true;
     editingMoveSlotIndex = null;
     damageMovesTypeFilter = null;
     attackerAtkRank = 0;
@@ -2235,6 +2398,8 @@ function onTab1PokemonSelected(pokemon: Pokemon): void {
     }
   } else if (tab1SelectTarget === "defend") {
     defendPokemon = pokemon;
+    defenderAbility = pokemon.abilities?.[0] ?? "";
+    defenderAbilityActive = true;
     defenderDefRank = 0;
     defenderSpDefRank = 0;
     const boxEntry = tab1SourceMode === "box" ? box.find((e) => e.pokemon.id === pokemon.id) : null;
@@ -2376,6 +2541,17 @@ function renderTab1MovesSlots(): void {
           attackerItem: tab1AttackerItem || undefined,
           defenderItem: tab1DefenderItem || undefined,
           defenderHpOverride: defenderHpWithEV,
+          attackerAbility: attackerAbility || undefined,
+          defenderAbility: defenderAbility || undefined,
+          attackerAbilityActive,
+          defenderAbilityActive,
+          moveFlags: {
+            contact: move.contact,
+            pulse: move.pulse,
+            bite: move.bite,
+            punch: move.punch,
+            slicing: move.slicing,
+          },
         });
       }
 
@@ -2391,7 +2567,14 @@ function renderTab1MovesSlots(): void {
             damageResult.damageMin === damageResult.damageMax
               ? `${damageResult.damageMin}（${damageResult.percentMin.toFixed(1)}%）`
               : `${damageResult.damageMin}〜${damageResult.damageMax}（${damageResult.percentMin.toFixed(1)}〜${damageResult.percentMax.toFixed(1)}%）`;
-          body.innerHTML = `<span class="damage-move-damage-text">${dmgStr}</span>`;
+          const koCount = Math.round(damageResult.koChance / 100 * 16);
+          const koStr =
+            damageResult.koChance === 100 ? "確定" :
+            damageResult.koChance === 0   ? "" :
+            `乱${koCount}/16`;
+          const koBadgeClass = koCount === 16 ? "" : koCount >= 8 ? " damage-ko-badge--orange" : " damage-ko-badge--yellow";
+          const koBadge = koStr ? `<span class="damage-ko-badge${koBadgeClass}">${koStr}</span>` : "";
+          body.innerHTML = `<span class="damage-move-damage-text">${dmgStr}</span>${koBadge}`;
 
           const gaugeWrap = document.createElement("div");
           gaugeWrap.className = "damage-move-gauge-wrap";
@@ -2622,12 +2805,36 @@ document.addEventListener("DOMContentLoaded", () => {
       renderTab1DamageDisplay();
     });
 
+  fetch("data/abilities.json")
+    .then((res) => (res.ok ? res.json() : []))
+    .then((data: AbilityDef[]) => { abilitiesData = Array.isArray(data) ? data : []; })
+    .catch(() => { abilitiesData = []; });
+
   fetch("data/item.json")
     .then((res) => (res.ok ? res.json() : []))
     .then((data: CompetitiveItem[]) => {
       maItems = Array.isArray(data) ? data : [];
     })
     .catch(() => { maItems = []; });
+
+  document.getElementById("damage-attacker-ability-select")?.addEventListener("change", (e) => {
+    attackerAbility = (e.target as HTMLSelectElement).value;
+    attackerAbilityActive = true;
+    renderTab1DamageDisplay();
+  });
+  document.getElementById("damage-defender-ability-select")?.addEventListener("change", (e) => {
+    defenderAbility = (e.target as HTMLSelectElement).value;
+    defenderAbilityActive = true;
+    renderTab1DamageDisplay();
+  });
+  document.getElementById("damage-attacker-ability-toggle")?.addEventListener("click", () => {
+    attackerAbilityActive = !attackerAbilityActive;
+    renderTab1DamageDisplay();
+  });
+  document.getElementById("damage-defender-ability-toggle")?.addEventListener("click", () => {
+    defenderAbilityActive = !defenderAbilityActive;
+    renderTab1DamageDisplay();
+  });
 
   document.getElementById("damage-defender-select")?.addEventListener("click", () => openTab1PokemonSelect("defend"));
   document.getElementById("damage-attacker-select")?.addEventListener("click", () => openTab1PokemonSelect("attack"));

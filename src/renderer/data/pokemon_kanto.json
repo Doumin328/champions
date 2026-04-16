@@ -122,7 +122,11 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "しんりょく",
+      "ようりょくそ"
+    ]
   },
   {
     "id": "0002",
@@ -239,7 +243,11 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "しんりょく",
+      "ようりょくそ"
+    ]
   },
   {
     "id": "0003",
@@ -258,119 +266,69 @@
     },
     "learnset": [
       14,
-      15,
-      20,
-      22,
-      29,
-      33,
       34,
-      36,
       38,
-      39,
-      45,
-      47,
-      51,
-      52,
-      53,
-      57,
+      46,
       63,
       68,
+      69,
       71,
       72,
-      77,
       78,
       79,
       80,
-      81,
       82,
-      83,
-      84,
       85,
       86,
       87,
-      88,
       89,
       90,
-      91,
-      93,
       104,
       105,
-      109,
-      113,
-      125,
-      126,
-      128,
-      130,
+      106,
       131,
-      133,
-      135,
       141,
       142,
       146,
       148,
-      150,
-      151,
       153,
-      158,
       159,
       162,
-      163,
       174,
       175,
-      176,
-      183,
-      184,
-      186,
-      190,
-      194,
       208,
-      222,
       250,
       261,
       262,
       263,
-      265,
-      268,
-      271,
-      273,
-      275,
-      276,
-      287,
       305,
-      309,
       312,
+      317,
       324,
-      332,
       352,
-      371,
       374,
-      380,
-      396,
       432,
       439,
       441,
       443,
-      456,
       461,
       462,
-      468,
       470,
       496,
       511,
       516,
-      517,
-      540,
-      544,
       587,
       595,
-      605,
       760,
       762,
-      808,
       842
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "しんりょく",
+      "ようりょくそ"
+    ]
   },
   {
     "id": "0003Mega",
@@ -501,7 +459,10 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "あついしぼう"
+    ]
   },
   {
     "id": "0004",
@@ -644,7 +605,11 @@
       872
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "もうか",
+      "サンパワー"
+    ]
   },
   {
     "id": "0005",
@@ -776,7 +741,11 @@
       872
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "もうか",
+      "サンパワー"
+    ]
   },
   {
     "id": "0006",
@@ -794,95 +763,45 @@
       "speed": 100
     },
     "learnset": [
-      5,
       7,
       9,
-      10,
-      13,
       14,
-      15,
-      17,
       19,
       25,
-      29,
-      33,
       34,
-      36,
       38,
-      43,
-      45,
-      52,
+      44,
+      46,
       53,
-      57,
       63,
       68,
+      69,
       70,
-      71,
       72,
       73,
-      74,
       75,
       79,
       87,
-      88,
       89,
-      91,
-      93,
-      107,
       108,
-      109,
-      111,
       112,
-      113,
       114,
-      125,
       126,
       127,
       128,
-      129,
       130,
       131,
-      132,
-      133,
-      135,
-      136,
       141,
       142,
-      148,
-      150,
-      151,
       153,
-      157,
-      158,
-      165,
-      169,
       171,
-      172,
-      177,
-      183,
-      184,
-      186,
-      188,
-      190,
-      194,
-      204,
-      205,
-      228,
-      235,
       250,
       253,
       262,
-      265,
-      268,
       269,
-      271,
-      273,
-      275,
       284,
-      285,
-      287,
-      289,
       290,
+      293,
       296,
       299,
       303,
@@ -890,54 +809,39 @@
       306,
       312,
       322,
-      332,
-      341,
       348,
       352,
       355,
       356,
       373,
       388,
-      396,
-      399,
       407,
       425,
       433,
+      434,
       438,
       443,
       447,
       450,
-      457,
-      468,
-      488,
-      490,
-      503,
       508,
       516,
-      517,
-      527,
-      530,
       532,
       537,
-      539,
       543,
-      544,
       551,
-      605,
-      610,
-      622,
-      627,
       671,
       741,
       756,
-      771,
       772,
-      808,
       870,
       872
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "もうか",
+      "サンパワー"
+    ]
   },
   {
     "id": "0006MegaX",
@@ -1098,7 +1002,10 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "かたいツメ"
+    ]
   },
   {
     "id": "0006MegaY",
@@ -1259,7 +1166,10 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ひでり"
+    ]
   },
   {
     "id": "0007",
@@ -1399,7 +1309,11 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "げきりゅう",
+      "あめうけざら"
+    ]
   },
   {
     "id": "0008",
@@ -1523,7 +1437,11 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "げきりゅう",
+      "あめうけざら"
+    ]
   },
   {
     "id": "0009",
@@ -1540,135 +1458,85 @@
       "speed": 78
     },
     "learnset": [
-      5,
       8,
-      14,
       25,
-      29,
-      33,
       34,
-      36,
       38,
-      39,
-      43,
       44,
-      55,
+      46,
       56,
       57,
       58,
       59,
-      61,
       63,
       68,
+      69,
       70,
-      71,
       87,
-      88,
       89,
-      91,
-      93,
-      107,
       108,
-      109,
-      111,
       112,
-      113,
-      119,
       121,
-      123,
-      125,
-      126,
-      127,
-      128,
       131,
-      133,
-      134,
-      135,
       141,
       142,
-      148,
-      150,
       151,
       153,
-      157,
-      158,
       160,
-      165,
-      169,
-      171,
-      172,
-      183,
-      184,
-      186,
-      189,
-      190,
       192,
-      194,
       202,
-      205,
-      219,
+      242,
       250,
       262,
-      264,
-      265,
-      271,
-      273,
-      275,
       283,
       284,
-      287,
       290,
       295,
       297,
-      300,
       305,
       306,
       312,
       322,
-      332,
+      323,
       333,
       349,
       352,
+      362,
       368,
       370,
       377,
       385,
       393,
-      395,
-      396,
       407,
+      423,
       427,
       429,
       431,
-      433,
       438,
       443,
       446,
       453,
       455,
-      456,
-      468,
+      466,
       475,
       501,
       516,
-      523,
       524,
-      538,
-      543,
-      544,
-      605,
-      627,
       687,
       733,
+      748,
       762,
       769,
       791,
-      808,
       818,
       843
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "げきりゅう",
+      "あめうけざら"
+    ]
   },
   {
     "id": "0009Mega",
@@ -1813,7 +1681,10 @@
       843
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "メガランチャー"
+    ]
   },
   {
     "id": "0010",
@@ -1838,7 +1709,11 @@
       545
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "りんぷん",
+      "にげあし"
+    ]
   },
   {
     "id": "0011",
@@ -1862,7 +1737,10 @@
       545
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "だっぴ"
+    ]
   },
   {
     "id": "0012",
@@ -1976,7 +1854,11 @@
       771
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふくがん",
+      "いろめがね"
+    ]
   },
   {
     "id": "0013",
@@ -2001,7 +1883,11 @@
       545
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "りんぷん",
+      "にげあし"
+    ]
   },
   {
     "id": "0014",
@@ -2026,7 +1912,10 @@
       545
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "だっぴ"
+    ]
   },
   {
     "id": "0015",
@@ -2138,7 +2027,11 @@
       671
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "むしのしらせ",
+      "スナイパー"
+    ]
   },
   {
     "id": "0015Mega",
@@ -2250,7 +2143,10 @@
       671
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "てきおうりょく"
+    ]
   },
   {
     "id": "0016",
@@ -2340,7 +2236,12 @@
       605
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "するどいめ",
+      "ちどりあし",
+      "はとむね"
+    ]
   },
   {
     "id": "0017",
@@ -2427,7 +2328,12 @@
       605
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "するどいめ",
+      "ちどりあし",
+      "はとむね"
+    ]
   },
   {
     "id": "0018",
@@ -2515,7 +2421,12 @@
       652
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "するどいめ",
+      "ちどりあし",
+      "はとむね"
+    ]
   },
   {
     "id": "0018Mega",
@@ -2603,7 +2514,10 @@
       652
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ノーガード"
+    ]
   },
   {
     "id": "0019",
@@ -2710,7 +2624,12 @@
       605
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "こんじょう",
+      "はりきり"
+    ]
   },
   {
     "id": "0019Alola",
@@ -2818,7 +2737,12 @@
       605
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "くいしんぼう",
+      "はりきり",
+      "あついしぼう"
+    ]
   },
   {
     "id": "0020",
@@ -2927,7 +2851,12 @@
       654
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "こんじょう",
+      "はりきり"
+    ]
   },
   {
     "id": "0020Alola",
@@ -3037,7 +2966,12 @@
       654
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "くいしんぼう",
+      "はりきり",
+      "あついしぼう"
+    ]
   },
   {
     "id": "0021",
@@ -3134,7 +3068,11 @@
       605
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "するどいめ",
+      "スナイパー"
+    ]
   },
   {
     "id": "0022",
@@ -3229,7 +3167,11 @@
       654
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "するどいめ",
+      "スナイパー"
+    ]
   },
   {
     "id": "0023",
@@ -3350,7 +3292,12 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いかく",
+      "だっぴ",
+      "きんちょうかん"
+    ]
   },
   {
     "id": "0024",
@@ -3476,7 +3423,12 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "だっぴ",
+      "きんちょうかん"
+    ]
   },
   {
     "id": "0025",
@@ -3628,7 +3580,11 @@
       875
     ],
     "isFinalEvolution": false,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "せいでんき",
+      "ひらいしん"
+    ]
   },
   {
     "id": "0026",
@@ -3768,10 +3724,14 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "せいでんき",
+      "ひらいしん"
+    ]
   },
   {
-    "id": "0026Alola",
+    "id": "0026A",
     "name": "ライチュウ(アローラ)",
     "types": [
       "でんき",
@@ -3909,7 +3869,10 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "サーフテール"
+    ]
   },
   {
     "id": "0026MegaX",
@@ -4049,7 +4012,8 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": []
   },
   {
     "id": "0026MegaY",
@@ -4189,7 +4153,8 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": []
   },
   {
     "id": "0026A",
@@ -4208,7 +4173,10 @@
     },
     "learnset": [],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "サーフテール"
+    ]
   },
   {
     "id": "0027",
@@ -4333,7 +4301,11 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すながくれ",
+      "すなかき"
+    ]
   },
   {
     "id": "0027Alola",
@@ -4459,7 +4431,11 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ゆきがくれ",
+      "ゆきかき"
+    ]
   },
   {
     "id": "0028",
@@ -4586,7 +4562,11 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すながくれ",
+      "すなかき"
+    ]
   },
   {
     "id": "0028Alola",
@@ -4714,7 +4694,11 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ゆきがくれ",
+      "ゆきかき"
+    ]
   },
   {
     "id": "0029",
@@ -4821,7 +4805,12 @@
       614
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくのトゲ",
+      "とうそうしん",
+      "はりきり"
+    ]
   },
   {
     "id": "0030",
@@ -4927,7 +4916,12 @@
       614
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくのトゲ",
+      "とうそうしん",
+      "はりきり"
+    ]
   },
   {
     "id": "0031",
@@ -5089,7 +5083,12 @@
       772
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくのトゲ",
+      "とうそうしん",
+      "ちからずく"
+    ]
   },
   {
     "id": "0032",
@@ -5197,7 +5196,12 @@
       662
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくのトゲ",
+      "とうそうしん",
+      "はりきり"
+    ]
   },
   {
     "id": "0033",
@@ -5301,7 +5305,12 @@
       662
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくのトゲ",
+      "とうそうしん",
+      "はりきり"
+    ]
   },
   {
     "id": "0034",
@@ -5463,7 +5472,12 @@
       772
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくのトゲ",
+      "とうそうしん",
+      "ちからずく"
+    ]
   },
   {
     "id": "0035",
@@ -5650,7 +5664,12 @@
       871
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "メロメロボディ",
+      "マジックガード",
+      "フレンドガード"
+    ]
   },
   {
     "id": "0036",
@@ -5838,7 +5857,12 @@
       871
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "メロメロボディ",
+      "マジックガード",
+      "てんねん"
+    ]
   },
   {
     "id": "0036Mega",
@@ -6027,7 +6051,10 @@
       871
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "マジックミラー"
+    ]
   },
   {
     "id": "0037",
@@ -6147,7 +6174,11 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "もらいび",
+      "ひでり"
+    ]
   },
   {
     "id": "0037Alola",
@@ -6267,7 +6298,11 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ゆきがくれ",
+      "ゆきふらし"
+    ]
   },
   {
     "id": "0038",
@@ -6390,131 +6425,11 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
-  },
-  {
-    "id": "0038Alola",
-    "name": "キュウコン(アローラ)",
-    "types": [
-      "こおり",
-      "フェアリー"
-    ],
-    "baseStats": {
-      "hp": 73,
-      "attack": 67,
-      "defense": 75,
-      "spAttack": 81,
-      "spDefense": 100,
-      "speed": 109
-    },
-    "learnset": [
-      14,
-      29,
-      33,
-      34,
-      36,
-      38,
-      39,
-      43,
-      47,
-      50,
-      52,
-      53,
-      57,
-      63,
-      70,
-      71,
-      72,
-      73,
-      74,
-      75,
-      79,
-      87,
-      88,
-      89,
-      91,
-      92,
-      93,
-      95,
-      97,
-      98,
-      125,
-      126,
-      136,
-      137,
-      141,
-      142,
-      143,
-      145,
-      148,
-      149,
-      150,
-      151,
-      153,
-      163,
-      180,
-      182,
-      183,
-      184,
-      186,
-      194,
-      204,
-      205,
-      247,
-      262,
-      263,
-      265,
-      271,
-      273,
-      275,
-      276,
-      277,
-      281,
-      284,
-      287,
-      291,
-      299,
-      303,
-      305,
-      312,
-      314,
-      328,
-      330,
-      332,
-      352,
-      354,
-      356,
-      364,
-      396,
-      404,
-      417,
-      425,
-      429,
-      439,
-      443,
-      444,
-      453,
-      468,
-      488,
-      495,
-      508,
-      512,
-      516,
-      520,
-      526,
-      530,
-      537,
-      557,
-      570,
-      605,
-      610,
-      652,
-      764,
-      772,
-      808
-    ],
-    "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "M-A",
+    "abilities": [
+      "もらいび",
+      "ひでり"
+    ]
   },
   {
     "id": "0038A",
@@ -6531,9 +6446,78 @@
       "spDefense": 100,
       "speed": 109
     },
-    "learnset": [],
+    "learnset": [
+      34,
+      38,
+      46,
+      50,
+      58,
+      59,
+      63,
+      70,
+      87,
+      89,
+      92,
+      95,
+      121,
+      122,
+      141,
+      142,
+      145,
+      149,
+      151,
+      153,
+      180,
+      242,
+      247,
+      262,
+      263,
+      271,
+      276,
+      277,
+      281,
+      284,
+      291,
+      305,
+      312,
+      328,
+      352,
+      354,
+      364,
+      369,
+      372,
+      404,
+      417,
+      429,
+      443,
+      444,
+      446,
+      453,
+      494,
+      495,
+      512,
+      516,
+      520,
+      526,
+      557,
+      588,
+      592,
+      596,
+      598,
+      600,
+      620,
+      623,
+      672,
+      770,
+      840,
+      843
+    ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ゆきがくれ",
+      "ゆきふらし"
+    ]
   },
   {
     "id": "0039",
@@ -6713,7 +6697,12 @@
       874
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "メロメロボディ",
+      "かちき",
+      "フレンドガード"
+    ]
   },
   {
     "id": "0040",
@@ -6897,7 +6886,12 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "メロメロボディ",
+      "かちき",
+      "おみとおし"
+    ]
   },
   {
     "id": "0041",
@@ -7007,7 +7001,11 @@
       771
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "せいしんりょく",
+      "すりぬけ"
+    ]
   },
   {
     "id": "0042",
@@ -7117,7 +7115,11 @@
       771
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "せいしんりょく",
+      "すりぬけ"
+    ]
   },
   {
     "id": "0043",
@@ -7221,7 +7223,11 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "にげあし"
+    ]
   },
   {
     "id": "0044",
@@ -7324,7 +7330,11 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "あくしゅう"
+    ]
   },
   {
     "id": "0045",
@@ -7435,7 +7445,11 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "ほうし"
+    ]
   },
   {
     "id": "0046",
@@ -7551,7 +7565,12 @@
       605
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ほうし",
+      "かんそうはだ",
+      "しめりけ"
+    ]
   },
   {
     "id": "0047",
@@ -7660,7 +7679,12 @@
       654
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ほうし",
+      "かんそうはだ",
+      "しめりけ"
+    ]
   },
   {
     "id": "0048",
@@ -7761,7 +7785,12 @@
       874
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふくがん",
+      "いろめがね",
+      "にげあし"
+    ]
   },
   {
     "id": "0049",
@@ -7880,7 +7909,12 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "りんぷん",
+      "いろめがね",
+      "ミラクルスキン"
+    ]
   },
   {
     "id": "0050",
@@ -7988,7 +8022,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すながくれ",
+      "ありじごく",
+      "すなのちから"
+    ]
   },
   {
     "id": "0050Alola",
@@ -8097,7 +8136,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すながくれ",
+      "カーリーヘアー",
+      "すなのちから"
+    ]
   },
   {
     "id": "0051",
@@ -8208,7 +8252,12 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すながくれ",
+      "ありじごく",
+      "すなのちから"
+    ]
   },
   {
     "id": "0051Alola",
@@ -8320,7 +8369,12 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すながくれ",
+      "カーリーヘアー",
+      "すなのちから"
+    ]
   },
   {
     "id": "0052",
@@ -8461,7 +8515,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ものひろい",
+      "テクニシャン",
+      "きんちょうかん"
+    ]
   },
   {
     "id": "0052Alola",
@@ -8602,7 +8661,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ものひろい",
+      "テクニシャン",
+      "びびり"
+    ]
   },
   {
     "id": "0052galar",
@@ -8743,7 +8807,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ものひろい",
+      "かたいツメ",
+      "きんちょうかん"
+    ]
   },
   {
     "id": "0053",
@@ -8883,7 +8952,12 @@
       843
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "じゅうなん",
+      "テクニシャン",
+      "きんちょうかん"
+    ]
   },
   {
     "id": "0053Alola",
@@ -9023,7 +9097,12 @@
       843
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ファーコート",
+      "テクニシャン",
+      "びびり"
+    ]
   },
   {
     "id": "0054",
@@ -9172,7 +9251,12 @@
       874
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "しめりけ",
+      "ノーてんき",
+      "すいすい"
+    ]
   },
   {
     "id": "0055",
@@ -9323,7 +9407,12 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "しめりけ",
+      "ノーてんき",
+      "すいすい"
+    ]
   },
   {
     "id": "0056",
@@ -9468,7 +9557,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "やるき",
+      "いかりのつぼ",
+      "まけんき"
+    ]
   },
   {
     "id": "0057",
@@ -9610,7 +9704,12 @@
       846
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "やるき",
+      "いかりのつぼ",
+      "まけんき"
+    ]
   },
   {
     "id": "0058",
@@ -9718,7 +9817,12 @@
       872
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いかく",
+      "もらいび",
+      "せいぎのこころ"
+    ]
   },
   {
     "id": "0058hisui",
@@ -9827,7 +9931,12 @@
       872
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いかく",
+      "もらいび",
+      "いしあたま"
+    ]
   },
   {
     "id": "0059",
@@ -9943,10 +10052,15 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "もらいび",
+      "せいぎのこころ"
+    ]
   },
   {
-    "id": "0059hisui",
+    "id": "0059A",
     "name": "ウインディ(ヒスイ)",
     "types": [
       "ほのお",
@@ -10060,7 +10174,12 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いかく",
+      "もらいび",
+      "いしあたま"
+    ]
   },
   {
     "id": "0059A",
@@ -10079,7 +10198,12 @@
     },
     "learnset": [],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "もらいび",
+      "いしあたま"
+    ]
   },
   {
     "id": "0060",
@@ -10183,7 +10307,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ちょすい",
+      "しめりけ",
+      "すいすい"
+    ]
   },
   {
     "id": "0061",
@@ -10297,7 +10426,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ちょすい",
+      "しめりけ",
+      "すいすい"
+    ]
   },
   {
     "id": "0062",
@@ -10441,7 +10575,12 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ちょすい",
+      "しめりけ",
+      "すいすい"
+    ]
   },
   {
     "id": "0063",
@@ -10565,7 +10704,12 @@
       661
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "シンクロ",
+      "せいしんりょく",
+      "マジックガード"
+    ]
   },
   {
     "id": "0064",
@@ -10695,7 +10839,12 @@
       754
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "シンクロ",
+      "せいしんりょく",
+      "マジックガード"
+    ]
   },
   {
     "id": "0065",
@@ -10833,7 +10982,12 @@
       754
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "シンクロ",
+      "せいしんりょく",
+      "マジックガード"
+    ]
   },
   {
     "id": "0065Mega",
@@ -10971,7 +11125,10 @@
       754
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "トレース"
+    ]
   },
   {
     "id": "0066",
@@ -11096,7 +11253,12 @@
       768
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "こんじょう",
+      "ノーガード",
+      "ふくつのこころ"
+    ]
   },
   {
     "id": "0067",
@@ -11215,7 +11377,12 @@
       768
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "こんじょう",
+      "ノーガード",
+      "ふくつのこころ"
+    ]
   },
   {
     "id": "0068",
@@ -11345,7 +11512,12 @@
       768
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "こんじょう",
+      "ノーガード",
+      "ふくつのこころ"
+    ]
   },
   {
     "id": "0069",
@@ -11454,7 +11626,11 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "くいしんぼう"
+    ]
   },
   {
     "id": "0070",
@@ -11561,7 +11737,11 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "くいしんぼう"
+    ]
   },
   {
     "id": "0071",
@@ -11674,7 +11854,11 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ようりょくそ",
+      "くいしんぼう"
+    ]
   },
   {
     "id": "0071Mega",
@@ -11787,7 +11971,10 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "とびだすなかみ"
+    ]
   },
   {
     "id": "0072",
@@ -11905,7 +12092,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "クリアボディ",
+      "ヘドロえき",
+      "あめうけざら"
+    ]
   },
   {
     "id": "0073",
@@ -12025,7 +12217,12 @@
       843
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "クリアボディ",
+      "ヘドロえき",
+      "あめうけざら"
+    ]
   },
   {
     "id": "0074",
@@ -12136,7 +12333,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いしあたま",
+      "がんじょう",
+      "すながくれ"
+    ]
   },
   {
     "id": "0074Alola",
@@ -12247,7 +12449,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "じりょく",
+      "がんじょう",
+      "エレキスキン"
+    ]
   },
   {
     "id": "0075",
@@ -12359,7 +12566,12 @@
       869
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いしあたま",
+      "がんじょう",
+      "すながくれ"
+    ]
   },
   {
     "id": "0075Alola",
@@ -12471,7 +12683,12 @@
       869
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "じりょく",
+      "がんじょう",
+      "エレキスキン"
+    ]
   },
   {
     "id": "0076",
@@ -12589,7 +12806,12 @@
       869
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いしあたま",
+      "がんじょう",
+      "すながくれ"
+    ]
   },
   {
     "id": "0076Alola",
@@ -12707,7 +12929,12 @@
       869
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "じりょく",
+      "がんじょう",
+      "エレキスキン"
+    ]
   },
   {
     "id": "0077",
@@ -12802,7 +13029,12 @@
       648
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "もらいび",
+      "ほのおのからだ"
+    ]
   },
   {
     "id": "0077galar",
@@ -12897,7 +13129,12 @@
       648
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "パステルベール",
+      "きけんよち"
+    ]
   },
   {
     "id": "0078",
@@ -13000,7 +13237,12 @@
       772
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "もらいび",
+      "ほのおのからだ"
+    ]
   },
   {
     "id": "0078galar",
@@ -13104,7 +13346,12 @@
       772
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "パステルベール",
+      "きけんよち"
+    ]
   },
   {
     "id": "0079",
@@ -13247,7 +13494,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どんかん",
+      "マイペース",
+      "さいせいりょく"
+    ]
   },
   {
     "id": "0079galar",
@@ -13389,7 +13641,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "くいしんぼう",
+      "マイペース",
+      "さいせいりょく"
+    ]
   },
   {
     "id": "0080",
@@ -13552,7 +13809,12 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "どんかん",
+      "マイペース",
+      "さいせいりょく"
+    ]
   },
   {
     "id": "0080galar",
@@ -13715,7 +13977,12 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "クイックドロウ",
+      "マイペース",
+      "さいせいりょく"
+    ]
   },
   {
     "id": "0080Mega",
@@ -13878,7 +14145,10 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "シェルアーマー"
+    ]
   },
   {
     "id": "0080A",
@@ -13897,7 +14167,12 @@
     },
     "learnset": [],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "クイックドロウ",
+      "マイペース",
+      "さいせいりょく"
+    ]
   },
   {
     "id": "0081",
@@ -13997,7 +14272,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "じりょく",
+      "がんじょう",
+      "アナライズ"
+    ]
   },
   {
     "id": "0082",
@@ -14101,7 +14381,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "じりょく",
+      "がんじょう",
+      "アナライズ"
+    ]
   },
   {
     "id": "0083",
@@ -14227,7 +14512,12 @@
       771
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "するどいめ",
+      "せいしんりょく",
+      "まけんき"
+    ]
   },
   {
     "id": "0083galar",
@@ -14352,7 +14642,11 @@
       771
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふくつのこころ",
+      "きもったま"
+    ]
   },
   {
     "id": "0084",
@@ -14456,7 +14750,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "はやおき",
+      "ちどりあし"
+    ]
   },
   {
     "id": "0085",
@@ -14566,7 +14865,12 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "はやおき",
+      "ちどりあし"
+    ]
   },
   {
     "id": "0086",
@@ -14678,7 +14982,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "あついしぼう",
+      "うるおいボディ",
+      "アイスボディ"
+    ]
   },
   {
     "id": "0087",
@@ -14789,7 +15098,12 @@
       871
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "あついしぼう",
+      "うるおいボディ",
+      "アイスボディ"
+    ]
   },
   {
     "id": "0088",
@@ -14905,7 +15219,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "あくしゅう",
+      "ねんちゃく",
+      "どくしゅ"
+    ]
   },
   {
     "id": "0088Alola",
@@ -15022,7 +15341,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくしゅ",
+      "くいしんぼう",
+      "かがくのちから"
+    ]
   },
   {
     "id": "0089",
@@ -15148,7 +15472,12 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "あくしゅう",
+      "ねんちゃく",
+      "どくしゅ"
+    ]
   },
   {
     "id": "0089Alola",
@@ -15275,7 +15604,12 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくしゅ",
+      "くいしんぼう",
+      "かがくのちから"
+    ]
   },
   {
     "id": "0090",
@@ -15377,7 +15711,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "シェルアーマー",
+      "スキルリンク",
+      "ぼうじん"
+    ]
   },
   {
     "id": "0091",
@@ -15492,7 +15831,12 @@
       843
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "シェルアーマー",
+      "スキルリンク",
+      "ぼうじん"
+    ]
   },
   {
     "id": "0092",
@@ -15616,7 +15960,10 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふゆう"
+    ]
   },
   {
     "id": "0093",
@@ -15742,7 +16089,10 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふゆう"
+    ]
   },
   {
     "id": "0094",
@@ -15894,7 +16244,10 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "のろわれボディ"
+    ]
   },
   {
     "id": "0094Mega",
@@ -16046,7 +16399,10 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "かげふみ"
+    ]
   },
   {
     "id": "0095",
@@ -16161,7 +16517,12 @@
       772
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いしあたま",
+      "がんじょう",
+      "くだけるよろい"
+    ]
   },
   {
     "id": "0096",
@@ -16305,7 +16666,12 @@
       874
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふみん",
+      "よちむ",
+      "せいしんりょく"
+    ]
   },
   {
     "id": "0097",
@@ -16450,7 +16816,12 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふみん",
+      "よちむ",
+      "せいしんりょく"
+    ]
   },
   {
     "id": "0098",
@@ -16556,7 +16927,12 @@
       687
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "かいりきバサミ",
+      "シェルアーマー",
+      "ちからずく"
+    ]
   },
   {
     "id": "0099",
@@ -16664,7 +17040,12 @@
       687
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "かいりきバサミ",
+      "シェルアーマー",
+      "ちからずく"
+    ]
   },
   {
     "id": "0100",
@@ -16757,7 +17138,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ぼうおん",
+      "せいでんき",
+      "ゆうばく"
+    ]
   },
   {
     "id": "0100hisui",
@@ -16851,7 +17237,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ぼうおん",
+      "せいでんき",
+      "ゆうばく"
+    ]
   },
   {
     "id": "0101",
@@ -16949,7 +17340,12 @@
       873
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ぼうおん",
+      "せいでんき",
+      "ゆうばく"
+    ]
   },
   {
     "id": "0101hisui",
@@ -17048,7 +17444,12 @@
       873
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ぼうおん",
+      "せいでんき",
+      "ゆうばく"
+    ]
   },
   {
     "id": "0102",
@@ -17166,7 +17567,11 @@
       874
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "しゅうかく"
+    ]
   },
   {
     "id": "0103",
@@ -17300,7 +17705,11 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "しゅうかく"
+    ]
   },
   {
     "id": "0103Alola",
@@ -17434,7 +17843,11 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "おみとおし",
+      "しゅうかく"
+    ]
   },
   {
     "id": "0104",
@@ -17555,7 +17968,12 @@
       772
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いしあたま",
+      "ひらいしん",
+      "カブトアーマー"
+    ]
   },
   {
     "id": "0105",
@@ -17678,7 +18096,12 @@
       772
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いしあたま",
+      "ひらいしん",
+      "カブトアーマー"
+    ]
   },
   {
     "id": "0105Alola",
@@ -17802,7 +18225,12 @@
       772
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "のろわれボディ",
+      "ひらいしん",
+      "いしあたま"
+    ]
   },
   {
     "id": "0106",
@@ -17930,7 +18358,12 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "じゅうなん",
+      "すてみ",
+      "かるわざ"
+    ]
   },
   {
     "id": "0107",
@@ -18057,7 +18490,12 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "するどいめ",
+      "てつのこぶし",
+      "せいしんりょく"
+    ]
   },
   {
     "id": "0108",
@@ -18205,7 +18643,12 @@
       762
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "マイペース",
+      "どんかん",
+      "ノーてんき"
+    ]
   },
   {
     "id": "0109",
@@ -18309,7 +18752,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふゆう",
+      "かがくへんかガス",
+      "あくしゅう"
+    ]
   },
   {
     "id": "0110",
@@ -18412,7 +18860,12 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふゆう",
+      "かがくへんかガス",
+      "あくしゅう"
+    ]
   },
   {
     "id": "0110galar",
@@ -18516,7 +18969,12 @@
       808
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふゆう",
+      "かがくへんかガス",
+      "ミストメイカー"
+    ]
   },
   {
     "id": "0111",
@@ -18648,7 +19106,12 @@
       873
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ひらいしん",
+      "いしあたま",
+      "すてみ"
+    ]
   },
   {
     "id": "0112",
@@ -18807,7 +19270,12 @@
       873
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ひらいしん",
+      "いしあたま",
+      "すてみ"
+    ]
   },
   {
     "id": "0113",
@@ -18981,7 +19449,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "しぜんかいふく",
+      "てんのめぐみ",
+      "いやしのこころ"
+    ]
   },
   {
     "id": "0114",
@@ -19087,7 +19560,12 @@
       760
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ようりょくそ",
+      "リーフガード",
+      "さいせいりょく"
+    ]
   },
   {
     "id": "0115",
@@ -19236,7 +19714,12 @@
       762
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "はやおき",
+      "きもったま",
+      "せいしんりょく"
+    ]
   },
   {
     "id": "0115Mega",
@@ -19385,7 +19868,10 @@
       762
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "おやこあい"
+    ]
   },
   {
     "id": "0116",
@@ -19482,7 +19968,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "スナイパー",
+      "しめりけ"
+    ]
   },
   {
     "id": "0117",
@@ -19577,7 +20068,12 @@
       843
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どくのトゲ",
+      "スナイパー",
+      "しめりけ"
+    ]
   },
   {
     "id": "0118",
@@ -19677,7 +20173,12 @@
       769
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "みずのベール",
+      "ひらいしん"
+    ]
   },
   {
     "id": "0119",
@@ -19776,7 +20277,12 @@
       769
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "みずのベール",
+      "ひらいしん"
+    ]
   },
   {
     "id": "0120",
@@ -19877,7 +20383,12 @@
       769
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "はっこう",
+      "しぜんかいふく",
+      "アナライズ"
+    ]
   },
   {
     "id": "0121",
@@ -19996,7 +20507,12 @@
       769
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "はっこう",
+      "しぜんかいふく",
+      "アナライズ"
+    ]
   },
   {
     "id": "0121Mega",
@@ -20115,7 +20631,10 @@
       769
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ちからもち"
+    ]
   },
   {
     "id": "0122",
@@ -20272,7 +20791,12 @@
       754
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ぼうおん",
+      "フィルター",
+      "テクニシャン"
+    ]
   },
   {
     "id": "0122galar",
@@ -20313,7 +20837,12 @@
       163
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "やるき",
+      "バリアフリー",
+      "アイスボディ"
+    ]
   },
   {
     "id": "0123",
@@ -20433,7 +20962,12 @@
       842
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "むしのしらせ",
+      "テクニシャン",
+      "ふくつのこころ"
+    ]
   },
   {
     "id": "0124",
@@ -20583,7 +21117,12 @@
       770
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "どんかん",
+      "よちむ",
+      "かんそうはだ"
+    ]
   },
   {
     "id": "0125",
@@ -20706,7 +21245,11 @@
       873
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "せいでんき",
+      "やるき"
+    ]
   },
   {
     "id": "0126",
@@ -20829,7 +21372,11 @@
       872
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ほのおのからだ",
+      "やるき"
+    ]
   },
   {
     "id": "0127",
@@ -20942,7 +21489,12 @@
       671
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "かいりきバサミ",
+      "かたやぶり",
+      "じしんかじょう"
+    ]
   },
   {
     "id": "0127Mega",
@@ -21056,7 +21608,10 @@
       671
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "スカイスキン"
+    ]
   },
   {
     "id": "0128",
@@ -21175,7 +21730,12 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "いかりのつぼ",
+      "ちからずく"
+    ]
   },
   {
     "id": "0128paldea",
@@ -21294,7 +21854,12 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いかく",
+      "いかりのつぼ",
+      "はんすう"
+    ]
   },
   {
     "id": "0128paldeaFire",
@@ -21414,7 +21979,12 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いかく",
+      "いかりのつぼ",
+      "はんすう"
+    ]
   },
   {
     "id": "0128paldeaWater",
@@ -21534,7 +22104,12 @@
       842
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "いかく",
+      "いかりのつぼ",
+      "はんすう"
+    ]
   },
   {
     "id": "0128A",
@@ -21552,7 +22127,12 @@
     },
     "learnset": [],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "いかりのつぼ",
+      "はんすう"
+    ]
   },
   {
     "id": "0128Fire",
@@ -21571,7 +22151,12 @@
     },
     "learnset": [],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "いかりのつぼ",
+      "はんすう"
+    ]
   },
   {
     "id": "0128Water",
@@ -21590,7 +22175,12 @@
     },
     "learnset": [],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "いかりのつぼ",
+      "はんすう"
+    ]
   },
   {
     "id": "0129",
@@ -21619,7 +22209,11 @@
       621
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "びびり"
+    ]
   },
   {
     "id": "0130",
@@ -21750,7 +22344,11 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いかく",
+      "じしんかじょう"
+    ]
   },
   {
     "id": "0130Mega",
@@ -21881,7 +22479,10 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "かたやぶり"
+    ]
   },
   {
     "id": "0131",
@@ -22023,7 +22624,12 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ちょすい",
+      "シェルアーマー",
+      "うるおいボディ"
+    ]
   },
   {
     "id": "0132",
@@ -22043,7 +22649,11 @@
       218
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "じゅうなん",
+      "かわりもの"
+    ]
   },
   {
     "id": "0133",
@@ -22148,7 +22758,12 @@
       871
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "にげあし",
+      "てきおうりょく",
+      "きけんよち"
+    ]
   },
   {
     "id": "0134",
@@ -22274,7 +22889,11 @@
       871
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ちょすい",
+      "うるおいボディ"
+    ]
   },
   {
     "id": "0135",
@@ -22402,7 +23021,11 @@
       871
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "ちくでん",
+      "はやあし"
+    ]
   },
   {
     "id": "0136",
@@ -22526,7 +23149,11 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "もらいび",
+      "こんじょう"
+    ]
   },
   {
     "id": "0137",
@@ -22639,7 +23266,12 @@
       808
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "トレース",
+      "ダウンロード",
+      "アナライズ"
+    ]
   },
   {
     "id": "0138",
@@ -22744,7 +23376,12 @@
       757
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "シェルアーマー",
+      "くだけるよろい"
+    ]
   },
   {
     "id": "0139",
@@ -22855,7 +23492,12 @@
       757
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "シェルアーマー",
+      "くだけるよろい"
+    ]
   },
   {
     "id": "0140",
@@ -22961,7 +23603,12 @@
       757
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "カブトアーマー",
+      "くだけるよろい"
+    ]
   },
   {
     "id": "0141",
@@ -23087,7 +23734,12 @@
       769
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "すいすい",
+      "カブトアーマー",
+      "くだけるよろい"
+    ]
   },
   {
     "id": "0142",
@@ -23212,7 +23864,12 @@
       771
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "いしあたま",
+      "プレッシャー",
+      "きんちょうかん"
+    ]
   },
   {
     "id": "0142Mega",
@@ -23337,7 +23994,10 @@
       771
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "かたいツメ"
+    ]
   },
   {
     "id": "0143",
@@ -23505,7 +24165,12 @@
       873
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "めんえき",
+      "あついしぼう",
+      "くいしんぼう"
+    ]
   },
   {
     "id": "0144",
@@ -23620,7 +24285,11 @@
       840
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "プレッシャー",
+      "ゆきがくれ"
+    ]
   },
   {
     "id": "0144galar",
@@ -23735,7 +24404,10 @@
       840
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "かちき"
+    ]
   },
   {
     "id": "0145",
@@ -23850,7 +24522,11 @@
       873
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "プレッシャー",
+      "せいでんき"
+    ]
   },
   {
     "id": "0145galar",
@@ -23965,7 +24641,10 @@
       873
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "まけんき"
+    ]
   },
   {
     "id": "0146",
@@ -24074,7 +24753,11 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "プレッシャー",
+      "ほのおのからだ"
+    ]
   },
   {
     "id": "0146galar",
@@ -24183,7 +24866,10 @@
       872
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ぎゃくじょう"
+    ]
   },
   {
     "id": "0147",
@@ -24294,7 +24980,11 @@
       870
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "だっぴ",
+      "ふしぎなうろこ"
+    ]
   },
   {
     "id": "0148",
@@ -24403,7 +25093,11 @@
       870
     ],
     "isFinalEvolution": false,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "だっぴ",
+      "ふしぎなうろこ"
+    ]
   },
   {
     "id": "0149",
@@ -24570,7 +25264,11 @@
       870
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "せいしんりょく",
+      "マルチスケイル"
+    ]
   },
   {
     "id": "0149Mega",
@@ -24737,7 +25435,10 @@
       870
     ],
     "isFinalEvolution": true,
-    "regulation": "M-A"
+    "regulation": "M-A",
+    "abilities": [
+      "マルチスケイル"
+    ]
   },
   {
     "id": "0150",
@@ -24937,7 +25638,11 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "プレッシャー",
+      "きんちょうかん"
+    ]
   },
   {
     "id": "0150MegaX",
@@ -25138,7 +25843,10 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふくつのこころ"
+    ]
   },
   {
     "id": "0150MegaY",
@@ -25338,7 +26046,10 @@
       874
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "ふみん"
+    ]
   },
   {
     "id": "0151",
@@ -25787,6 +26498,9 @@
       875
     ],
     "isFinalEvolution": true,
-    "regulation": ""
+    "regulation": "",
+    "abilities": [
+      "シンクロ"
+    ]
   }
 ]
