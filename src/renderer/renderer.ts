@@ -99,6 +99,7 @@ function calculateDamage(input: {
   defenderAbility?: string;
   attackerAbilityActive?: boolean;
   defenderAbilityActive?: boolean;
+  isBurned?: boolean;
   moveFlags?: { contact?: boolean; pulse?: boolean; bite?: boolean; punch?: boolean; slicing?: boolean };
 }): DamageResult {
   const { movePower, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain, attackerItem, defenderItem } = input;
@@ -118,7 +119,9 @@ function calculateDamage(input: {
   const isNormalTypeMove = moveType === "ノーマル";
   const effectiveMoveType = (atkAb?.normalTypeChange && isNormalTypeMove) ? atkAb.normalTypeChange : moveType;
 
-  const typeEff = getTypeEff(effectiveMoveType, defenderTypes);
+  const typeEff = atkAb?.scrappy && (effectiveMoveType === "ノーマル" || effectiveMoveType === "かくとう") && defenderTypes.includes("ゴースト")
+    ? defenderTypes.reduce((mult, t) => mult * (t === "ゴースト" ? 1 : (TYPE_CHART[effectiveMoveType]?.[t] ?? 1)), 1)
+    : getTypeEff(effectiveMoveType, defenderTypes);
   if (typeEff === 0) {
     return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: false, isImmune: true, koChance: 0 };
   }
@@ -151,9 +154,10 @@ function calculateDamage(input: {
   const atkAbMult = (atkAb?.atkStatMult != null && atkAbStatCondMet && (!atkAb.moveCategory || atkAb.moveCategory === moveCategory)) ? atkAb.atkStatMult : 1;
   // 防御側特性：ステータス倍率（ファーコート等）。かたやぶりで無効化
   const defAbMult = !ignoreDefAb && defAb?.defStatMult != null && (!defAb.moveCategory || defAb.moveCategory === moveCategory) ? defAb.defStatMult : 1;
+  const snowDefenseMult = effectiveWeather === "ゆき" && moveCategory === "物理" && defenderTypes.includes("こおり") ? 1.5 : 1;
 
   const atkStat = Math.max(1, Math.floor(Math.floor(atkBase * rankMult(atkRank)) * atkItemMult * atkAbMult));
-  const defStat = Math.max(1, Math.floor(Math.floor(defBase * rankMult(defRank)) * defItemMult * defAbMult));
+  const defStat = Math.max(1, Math.floor(Math.floor(defBase * rankMult(defRank)) * defItemMult * defAbMult * snowDefenseMult));
 
   // 威力倍率（テクニシャン / かたいツメ / すなのちから / アナライズ等の条件チェック）
   const powerMultCondMet =
@@ -208,9 +212,10 @@ function calculateDamage(input: {
   // 防御側特性：全体ダメージ軽減（マルチスケイル等）。かたやぶりで無効化
   let defDamageMult = 1;
   if (!ignoreDefAb && defAb?.damageMult != null) defDamageMult = defAb.damageMult;
+  const burnMult = input.isBurned && moveCategory === "物理" ? 0.5 : 1;
 
   const otherMult = weatherMult * terrainMult * attackerDamageMult * defenderDamageReduceMult
-    * attackerAbTypeMult * defAbTypeMult * superEffAbMult * defDamageMult;
+    * attackerAbTypeMult * defAbTypeMult * superEffAbMult * defDamageMult * burnMult;
   const applyRoll = (r: number): number => {
     let d = Math.floor(base * r / 100);   // ×乱数 → 切り捨て
     d = Math.round(d * stab);             // ×タイプ一致補正 → 五捨五超入
@@ -229,6 +234,116 @@ function calculateDamage(input: {
     remainingHPMin: Math.max(0, defenderHP - damageMax), remainingHPMax: Math.max(0, defenderHP - damageMin),
     isStatusMove: false, isImmune: false, koChance,
   };
+}
+
+function calculateMoveDamageResult(
+  move: Move,
+  attackerStats: { hp: number; attack: number; defense: number; spAttack: number; spDefense: number; speed: number },
+  defenderStats: { hp: number; attack: number; defense: number; spAttack: number; spDefense: number; speed: number },
+): DamageResult {
+  const atkOverride = {
+    attack: calcStatWithEV(attackerStats.attack, attackerAtkEV, attackerAtkNature),
+    spAttack: calcStatWithEV(attackerStats.spAttack, attackerSpAtkEV, attackerSpAtkNature),
+  };
+  const defOverride = {
+    defense: calcStatWithEV(defenderStats.defense, defenderDefEV, defenderDefNature),
+    spDefense: calcStatWithEV(defenderStats.spDefense, defenderSpDefEV, defenderSpDefNature),
+  };
+  const defenderHpWithEV = Math.floor((2 * defenderStats.hp + 31 + defenderHpEV * 2) * 50 / 100) + 60;
+  const baseInput = {
+    moveType: move.type,
+    moveCategory: move.category,
+    attackerTypes: attackPokemon!.types,
+    attackerBaseStats: attackerStats,
+    defenderTypes: defendPokemon!.types,
+    defenderBaseStats: defenderStats,
+    attackerStatOverride: atkOverride,
+    defenderStatOverride: defOverride,
+    attackerAtkRank,
+    attackerSpAtkRank,
+    defenderDefRank,
+    defenderSpDefRank,
+    weather: currentWeather || undefined,
+    terrain: currentTerrain || undefined,
+    attackerItem: tab1AttackerItem || undefined,
+    defenderItem: tab1DefenderItem || undefined,
+    defenderHpOverride: defenderHpWithEV,
+    attackerAbility: attackerAbility || undefined,
+    defenderAbility: defenderAbility || undefined,
+    attackerAbilityActive,
+    defenderAbilityActive,
+    isBurned: attackerIsBurned,
+    moveFlags: {
+      contact: move.contact,
+      pulse: move.pulse,
+      bite: move.bite,
+      punch: move.punch,
+      slicing: move.slicing,
+    },
+  };
+
+  if (move.name !== "トリプルアクセル") {
+    return calculateDamage({ ...baseInput, movePower: move.power });
+  }
+
+  const hitPowers = [20, 40, 60].slice(0, Math.max(1, Math.min(3, tripleAxelHits)));
+  const hitResults = hitPowers.map((power) => calculateDamage({ ...baseInput, movePower: power }));
+  const totalMin = hitResults.reduce((sum, r) => sum + r.damageMin, 0);
+  const totalMax = hitResults.reduce((sum, r) => sum + r.damageMax, 0);
+  const defenderHP = hitResults[0]?.defenderHP ?? defenderHpWithEV;
+  return {
+    damageMin: totalMin,
+    damageMax: totalMax,
+    percentMin: (totalMin / defenderHP) * 100,
+    percentMax: (totalMax / defenderHP) * 100,
+    defenderHP,
+    remainingHPMin: Math.max(0, defenderHP - totalMax),
+    remainingHPMax: Math.max(0, defenderHP - totalMin),
+    isStatusMove: hitResults.every((r) => r.isStatusMove),
+    isImmune: hitResults.every((r) => r.isImmune),
+    koChance: totalMin >= defenderHP ? 100 : 0,
+  };
+}
+
+function syncDamageConditionButtons(): void {
+  document.querySelectorAll<HTMLElement>("[data-weather]").forEach((btn) => {
+    const active = (btn.dataset.weather ?? "") === currentWeather;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+  document.querySelectorAll<HTMLElement>("[data-terrain]").forEach((btn) => {
+    const active = (btn.dataset.terrain ?? "") === currentTerrain;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function createTripleAxelControl(): HTMLLabelElement {
+  const wrap = document.createElement("label");
+  wrap.className = "damage-hit-count-control damage-hit-count-control--inline";
+  const text = document.createElement("span");
+  text.className = "damage-hit-count-label";
+  text.textContent = "回数";
+  const select = document.createElement("select");
+  select.className = "damage-hit-count-select";
+  select.setAttribute("aria-label", "トリプルアクセルのヒット回数");
+  [1, 2, 3].forEach((hits) => {
+    const option = document.createElement("option");
+    option.value = String(hits);
+    option.textContent = `${hits}回`;
+    option.selected = hits === tripleAxelHits;
+    select.appendChild(option);
+  });
+  wrap.addEventListener("click", (e) => e.stopPropagation());
+  wrap.addEventListener("mousedown", (e) => e.stopPropagation());
+  select.addEventListener("click", (e) => e.stopPropagation());
+  select.addEventListener("mousedown", (e) => e.stopPropagation());
+  select.addEventListener("change", (e) => {
+    tripleAxelHits = Math.max(1, Math.min(3, Number((e.target as HTMLSelectElement).value) || 3));
+    renderTab1MovesSlots();
+  });
+  wrap.append(text, select);
+  return wrap;
 }
 // ========== ダメージ計算ここまで ==========
 
@@ -295,6 +410,7 @@ interface AbilityDef {
   powerMultMaxPower?: number;
   requiresFlag?: "contact" | "pulse" | "bite" | "punch" | "slicing";
   normalTypeChange?: string;
+  scrappy?: boolean;
 }
 let abilitiesData: AbilityDef[] = [];
 
@@ -320,7 +436,43 @@ const DUMMY_POKEMON_IMAGE =
 /** 空きマス用画像（6匹に満たない箇所）。src/img/ball_monster.png を優先し、無ければ ball_monster.svg を使用 */
 const BALL_MONSTER_IMAGE = "img/ball_monster.png";
 
+/** demoPokemon から最新データを取得（learnset・abilities が古い場合の対策） */
+function getFreshPokemon(pokemon: Pokemon): Pokemon {
+  const fresh = demoPokemon.find((p) => p.id === pokemon.id);
+  return fresh ?? pokemon;
+}
+
+const AEGISLASH_SHIELD_ID = "0681";
+const AEGISLASH_BLADE_ID = "0681A";
+
+function isAegislashForm(pokemon: Pokemon | null | undefined): boolean {
+  return !!pokemon && (pokemon.id === AEGISLASH_SHIELD_ID || pokemon.id === AEGISLASH_BLADE_ID);
+}
+
+function getAegislashAlternateForm(pokemon: Pokemon | null | undefined): Pokemon | null {
+  if (!pokemon) return null;
+  const nextId =
+    pokemon.id === AEGISLASH_SHIELD_ID ? AEGISLASH_BLADE_ID :
+    pokemon.id === AEGISLASH_BLADE_ID ? AEGISLASH_SHIELD_ID :
+    null;
+  if (!nextId) return null;
+  return demoPokemon.find((p) => p.id === nextId) ?? null;
+}
+
 /** タイプ画像HTMLを生成 */
+const TYPE_NAME_TO_SV: Record<string, string> = {
+  "ノーマル": "Normal", "ほのお": "Fire", "みず": "Water", "でんき": "Electric",
+  "くさ": "Grass", "こおり": "Ice", "かくとう": "Fighting", "どく": "Poison",
+  "じめん": "Ground", "ひこう": "Flying", "エスパー": "Psychic", "むし": "Bug",
+  "いわ": "Rock", "ゴースト": "Ghost", "ドラゴン": "Dragon", "あく": "Dark",
+  "はがね": "Steel", "フェアリー": "Fairy",
+};
+
+function typeSvSrc(type: string): string {
+  const en = TYPE_NAME_TO_SV[type];
+  return en ? `img/type/sv/${en}.png` : `img/type/${type}.png`;
+}
+
 function typeBadgesHtml(types: string[]): string {
   return types.map(t => `<img class="type-img" src="img/type/${t}.png" alt="${t}" />`).join("");
 }
@@ -346,13 +498,16 @@ function notifyStreamChanged(stream: MediaStream | null): void {
 }
 
 /** 複数チーム（各チームは最大6匹） */
-let teams: Pokemon[][] = [];
+let teams: TeamMember[][] = [];
+
+/** 各チームの名前（teams と同インデックス） */
+let teamNames: string[] = [];
 
 /** 編集中のチームのインデックス（ピッカーで追加する先）※未使用時は -1 */
 let editingTeamIndex: number = -1;
 
 /** ダイアログで作成中のチーム（作成ボタン押下まで teams には追加しない） */
-let editingTeam: Pokemon[] = [];
+let editingTeam: TeamMember[] = [];
 
 /** ポケモン一覧のタイプ絞り込み（null または "すべて" で全件表示） */
 let pickerTypeFilter: string | null = null;
@@ -362,6 +517,9 @@ let isEditMode: boolean = false;
 
 /** 削除確認モーダルで削除対象のチームインデックス */
 let deleteTargetTeamIndex: number = -1;
+
+/** ドラッグ中のチームインデックス */
+let dragSourceTeamIndex: number = -1;
 
 /** タブ1: 攻撃側ポケモン */
 let attackPokemon: Pokemon | null = null;
@@ -389,6 +547,10 @@ let tab1ShowOnlyFinalEvolution = true;
 
 /** タブ1: レギュレーションフィルター（"M-A" | "all"） */
 let tab1RegulationFilter: "M-A" | "all" = "M-A";
+
+type Tab1PickerEntry =
+  | { kind: "pokemon"; pokemon: Pokemon }
+  | { kind: "box"; entry: BoxEntry; boxIndex: number };
 
 /** タブ2: ピッカーの表示ソース（all=全ポケモン, box=BOXのみ） */
 let pickerSourceMode: "all" | "box" = "all";
@@ -436,6 +598,7 @@ let defenderSpDefRank = 0;
 /** タブ1: 天候・フィールド */
 let currentWeather = "";
 let currentTerrain = "";
+let tripleAxelHits = 3;
 
 /** タブ1: 攻撃側の選択特性 */
 let attackerAbility = "";
@@ -445,6 +608,8 @@ let defenderAbility = "";
 let attackerAbilityActive = true;
 /** タブ1: 防御側の条件付き特性が有効かどうか */
 let defenderAbilityActive = true;
+/** タブ1: 攻撃側がやけど状態かどうか */
+let attackerIsBurned = false;
 
 /** タブ1: 攻撃側の持ち物 */
 let tab1AttackerItem = "";
@@ -478,9 +643,34 @@ interface BoxEntry {
   pokemon: Pokemon;
   ev: { hp: number; atk: number; def: number; spAtk: number; spDef: number; spd: number };
   natureName: string;
+  ability: string;
   heldItem: string;
   moves: number[];
 }
+
+interface TeamMember {
+  pokemon: Pokemon;
+  ev: BoxEntry["ev"];
+  natureName: string;
+  ability: string;
+  heldItem: string;
+  moves: number[];
+}
+
+type DetailModalContext =
+  | { mode: "box" }
+  | { mode: "team"; teamIndex: number; slotIndex: number };
+
+type PokemonPickerMode = "create-team" | "team-slot" | "change-pokemon";
+
+const EV_TABLE_COLS: { label: string; key: keyof BoxEntry["ev"]; natKey: keyof Omit<(typeof NATURES)[0], "name"> | null }[] = [
+  { label: "H", key: "hp", natKey: null },
+  { label: "A", key: "atk", natKey: "atk" },
+  { label: "B", key: "def", natKey: "def" },
+  { label: "C", key: "spAtk", natKey: "spAtk" },
+  { label: "D", key: "spDef", natKey: "spDef" },
+  { label: "S", key: "spd", natKey: "spd" },
+];
 
 const NATURES: { name: string; atk: number; def: number; spAtk: number; spDef: number; spd: number }[] = [
   { name: "がんばりや", atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
@@ -509,6 +699,16 @@ const NATURES: { name: string; atk: number; def: number; spAtk: number; spDef: n
   { name: "しんちょう", atk: 1.0, def: 1.0, spAtk: 0.9, spDef: 1.1, spd: 1.0 },
   { name: "きまぐれ",   atk: 1.0, def: 1.0, spAtk: 1.0, spDef: 1.0, spd: 1.0 },
 ];
+
+/** 5×5 性格グリッド（行=上昇ステータス, 列=下降ステータス）*/
+const NATURE_GRID_5x5: string[][] = [
+  ["がんばりや", "さみしがり", "いじっぱり", "やんちゃ",   "ゆうかん"],
+  ["ずぶとい",   "すなお",    "わんぱく",   "のうてんき",  "のんき"],
+  ["ひかえめ",   "おとなしい", "まじめ",     "うっかりや",  "れいせい"],
+  ["おだやか",   "なごやか",   "しんちょう", "てれや",     "なまいき"],
+  ["おくびょう",  "せっかち",   "ようき",    "むじゃき",   "きまぐれ"],
+];
+const NATURE_STAT_LABELS = ["こうげき", "ぼうぎょ", "とくこう", "とくぼう", "すばやさ"];
 
 /** 性格名に上昇・下降する能力を付加したラベルを返す */
 function getNatureLabel(n: typeof NATURES[number]): string {
@@ -626,6 +826,7 @@ const DEFENDER_ITEM_IDS = new Set([
 const STORAGE_KEY_BOX = "champions_box";
 let box: BoxEntry[] = [];
 let boxTypeFilter: string | null = null;
+let boxSortMode: "created" | "number" = "created";
 let boxEditingPokemon: Pokemon | null = null;
 
 /** BOX詳細モーダル: 選択中の持ち物 */
@@ -646,6 +847,14 @@ let boxMoveSearchText = "";
 
 /** 詳細確認中のBOXエントリのインデックス（null=新規作成） */
 let boxViewingIndex: number | null = null;
+let detailModalContext: DetailModalContext | null = null;
+let selectedTeamIndex: number | null = null;
+let selectedTeamSlotIndex: number | null = null;
+let teamDetailPendingSlotIndex: number | null = null;
+let pendingTeamDraft: { teamIndex: number; slotIndex: number } | null = null;
+let pokemonPickerMode: PokemonPickerMode = "create-team";
+let shouldReopenTeamDetailOnPickerClose = false;
+let hasAddedCurrentEntryToBox = false;
 
 /** タブ1技一覧の検索テキスト */
 let tab1MoveSearchText = "";
@@ -693,7 +902,7 @@ function renderBoxTypeButtons(): void {
     btn.type = "button";
     btn.className = "box-type-btn" + (boxTypeFilter === typeName ? " is-active" : "");
     const img = document.createElement("img");
-    img.src = `img/type/logos/■${typeName}.png`;
+    img.src = typeSvSrc(typeName);
     img.alt = typeName;
     img.onerror = () => { img.style.display = "none"; btn.textContent = typeName; };
     btn.appendChild(img);
@@ -706,9 +915,8 @@ function renderBoxGrid(): void {
   const grid = document.getElementById("box-pokemon-grid");
   if (!grid) return;
   grid.innerHTML = "";
-  const filtered = boxTypeFilter
-    ? box.filter((e) => e.pokemon.types.includes(boxTypeFilter!))
-    : box;
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  const filtered = getDisplayedBoxEntries();
   if (filtered.length === 0) {
     const p = document.createElement("p");
     p.className = "box-empty-msg";
@@ -716,111 +924,48 @@ function renderBoxGrid(): void {
     grid.appendChild(p);
     return;
   }
-  filtered.forEach((entry, idx) => {
-    const card = document.createElement("div");
-    card.className = "box-pokemon-card";
-    const realIndex = box.indexOf(entry);
-    card.dataset.boxIndex = String(realIndex);
-
-    // 左側: 画像 + ポケモン名
-    const leftEl = document.createElement("div");
-    leftEl.className = "box-card-left";
-    const pokImg = document.createElement("img");
-    pokImg.className = "box-card-img";
-    pokImg.alt = entry.pokemon.name;
-    pokImg.src = entry.pokemon.id ? `img/pokemon/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
-    pokImg.onerror = () => { pokImg.src = BALL_MONSTER_IMAGE; };
-    leftEl.appendChild(pokImg);
-    const nameEl = document.createElement("span");
-    nameEl.className = "box-card-name";
-    nameEl.textContent = entry.pokemon.name;
-    leftEl.appendChild(nameEl);
-    card.appendChild(leftEl);
-
-    // 右側: 性格 + ステータステーブル + 持ち物
-    const rightEl = document.createElement("div");
-    rightEl.className = "box-card-right";
-
-    const nat = NATURES.find((n) => n.name === entry.natureName);
-    const natLabel = nat ? getNatureLabel(nat) : entry.natureName;
-    const natureEl = document.createElement("span");
-    natureEl.className = "box-card-nature";
-    natureEl.textContent = natLabel;
-    rightEl.appendChild(natureEl);
-
-    // ステータステーブル
-    const bs = entry.pokemon.baseStats;
-    const statDefs: { label: string; base: number | undefined; ev: number; nature: number }[] = [
-      { label: "HP",    base: bs?.hp,         ev: entry.ev.hp,    nature: 1.0 },
-      { label: "こうげき", base: bs?.attack,     ev: entry.ev.atk,   nature: nat?.atk  ?? 1.0 },
-      { label: "ぼうぎょ", base: bs?.defense,    ev: entry.ev.def,   nature: nat?.def  ?? 1.0 },
-      { label: "とくこう", base: bs?.spAttack,   ev: entry.ev.spAtk, nature: nat?.spAtk ?? 1.0 },
-      { label: "とくぼう", base: bs?.spDefense,  ev: entry.ev.spDef, nature: nat?.spDef ?? 1.0 },
-      { label: "すばやさ", base: bs?.speed,      ev: entry.ev.spd,   nature: nat?.spd  ?? 1.0 },
-    ];
-    const tbl = document.createElement("div");
-    tbl.className = "box-card-stat-table";
-    // ヘッダ行
-    ["", "種族値", "努力値", "実数値"].forEach((h) => {
-      const hd = document.createElement("span");
-      hd.className = "box-card-stat-hd";
-      hd.textContent = h;
-      tbl.appendChild(hd);
+  filtered.forEach(({ entry, index }) => {
+    const card = createPokemonDetailCard(createTeamMemberFromBoxEntry(entry), moveMap, {
+      asButton: true,
+      extraClassName: "box-pokemon-card",
     });
-    statDefs.forEach(({ label, base, ev, nature }) => {
-      const labelEl = document.createElement("span");
-      labelEl.className = "box-card-stat-label";
-      labelEl.textContent = label;
-      tbl.appendChild(labelEl);
-
-      const baseVal = base ?? "—";
-      const baseEl = document.createElement("span");
-      baseEl.className = "box-card-stat-val";
-      baseEl.textContent = String(baseVal);
-      tbl.appendChild(baseEl);
-
-      const evEl = document.createElement("span");
-      evEl.className = `box-card-stat-val${ev > 0 ? " box-card-stat-ev-nz" : ""}`;
-      evEl.textContent = String(ev);
-      tbl.appendChild(evEl);
-
-      let real: number | string = "—";
-      if (base !== undefined) {
-        if (label === "HP") {
-          real = Math.floor((2 * base + 31 + ev * 2) * DMG_LEVEL / 100) + DMG_LEVEL + 10;
-        } else {
-          real = calcStatWithEV(base, ev, nature);
-        }
-      }
-      const realEl = document.createElement("span");
-      realEl.className = "box-card-stat-val box-card-stat-real";
-      realEl.textContent = String(real);
-      tbl.appendChild(realEl);
-    });
-    rightEl.appendChild(tbl);
-
-    if (entry.heldItem) {
-      const itemBadge = document.createElement("div");
-      itemBadge.className = "box-card-item-badge";
-      const itemImg = document.createElement("img");
-      itemImg.className = "box-card-item-img";
-      itemImg.alt = entry.heldItem;
-      itemImg.src = `img/item/${entry.heldItem}.png`;
-      itemImg.onerror = () => { itemBadge.hidden = true; };
-      itemBadge.appendChild(itemImg);
-      rightEl.appendChild(itemBadge);
-    }
-
-    card.appendChild(rightEl);
+    card.dataset.boxIndex = String(index);
     grid.appendChild(card);
-    card.addEventListener("click", () => openBoxDetailView(realIndex));
-    void idx;
+    card.addEventListener("click", () => openBoxDetailView(index));
   });
 }
 
 function renderTab3(): void {
   renderBoxTypeButtons();
   renderBoxGrid();
+}
+
+function getPokemonNumberSortKey(pokemon: Pokemon): { number: number; id: string; name: string } {
+  const num = Number.parseInt(pokemon.id, 10);
+  return {
+    number: Number.isFinite(num) ? num : Number.MAX_SAFE_INTEGER,
+    id: pokemon.id,
+    name: pokemon.name,
+  };
+}
+
+function getDisplayedBoxEntries(): { entry: BoxEntry; index: number }[] {
+  const indexed = box
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => !boxTypeFilter || entry.pokemon.types.includes(boxTypeFilter));
+
+  if (boxSortMode === "number") {
+    indexed.sort((a, b) => {
+      const aKey = getPokemonNumberSortKey(a.entry.pokemon);
+      const bKey = getPokemonNumberSortKey(b.entry.pokemon);
+      if (aKey.number !== bKey.number) return aKey.number - bKey.number;
+      const idCmp = aKey.id.localeCompare(bKey.id, "ja");
+      if (idCmp !== 0) return idCmp;
+      return a.index - b.index;
+    });
+  }
+
+  return indexed;
 }
 
 // BOX努力値グリッド生成
@@ -834,6 +979,8 @@ const BOX_EV_LABELS: { label: string; key: keyof BoxEntry["ev"]; id: string }[] 
 ];
 
 function openBoxDetailModal(pokemon: Pokemon): void {
+  detailModalContext = { mode: "box" };
+  hasAddedCurrentEntryToBox = false;
   boxViewingIndex = null;
   boxEditingPokemon = pokemon;
   const modal = document.getElementById("box-detail-modal");
@@ -842,7 +989,7 @@ function openBoxDetailModal(pokemon: Pokemon): void {
   const typesEl = document.getElementById("box-detail-types");
   if (title) title.textContent = pokemon.name;
   if (img) {
-    img.src = pokemon.id ? `img/pokemon/${pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    img.src = getPokemonImageSrc(pokemon);
     img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
   }
   if (typesEl) typesEl.innerHTML = typeBadgesHtml(pokemon.types);
@@ -851,34 +998,65 @@ function openBoxDetailModal(pokemon: Pokemon): void {
   const editEl = document.getElementById("box-detail-edit");
   if (viewEl) viewEl.hidden = true;
   if (editEl) editEl.hidden = false;
-  // フォーム初期化
   initBoxEditForm(pokemon);
+  updateDetailModalActionButtons();
   if (modal) modal.hidden = false;
 }
 
 function closeBoxDetailModal(): void {
   const modal = document.getElementById("box-detail-modal");
   if (modal) modal.hidden = true;
+  if (pendingTeamDraft) {
+    const team = teams[pendingTeamDraft.teamIndex];
+    if (team) delete team[pendingTeamDraft.slotIndex];
+    renderTeamList();
+    if (selectedTeamIndex === pendingTeamDraft.teamIndex) renderTeamDetailModal(pendingTeamDraft.teamIndex);
+    pendingTeamDraft = null;
+    teamDetailPendingSlotIndex = null;
+  }
   boxEditingPokemon = null;
   boxSelectedItem = null;
   boxItemSearchText = "";
   boxSelectedMoves = [0, 0, 0, 0];
   boxEditingMoveSlot = null;
   boxViewingIndex = null;
+  detailModalContext = null;
+  hasAddedCurrentEntryToBox = false;
 }
 
-function saveBoxEntry(): void {
-  if (!boxEditingPokemon) return;
+function collectBoxEntryFromForm(): BoxEntry | null {
+  if (!boxEditingPokemon) return null;
+  normalizeAllBoxEvInputs();
   const ev: BoxEntry["ev"] = { hp: 0, atk: 0, def: 0, spAtk: 0, spDef: 0, spd: 0 };
   BOX_EV_LABELS.forEach(({ key, id }) => {
     const el = document.getElementById(id) as HTMLInputElement | null;
-    ev[key] = clampEv(Number(el?.value) || 0);
+    ev[key] = clampBoxEv(Number(el?.value) || 0);
   });
   const natSel = document.getElementById("box-detail-nature") as HTMLSelectElement | null;
   const natureName = natSel?.value ?? "がんばりや";
+  const abilitySel = document.getElementById("box-detail-ability") as HTMLSelectElement | null;
+  const ability = abilitySel?.value ?? "";
   const heldItem = boxSelectedItem?.id ?? "";
   const moves = boxSelectedMoves.filter((v) => v > 0);
-  const entry: BoxEntry = { pokemon: boxEditingPokemon, ev, natureName, heldItem, moves };
+  return { pokemon: boxEditingPokemon, ev, natureName, ability, heldItem, moves };
+}
+
+function saveBoxEntry(): void {
+  const entry = collectBoxEntryFromForm();
+  if (!entry) return;
+  if (detailModalContext?.mode === "team") {
+    const { teamIndex, slotIndex } = detailModalContext;
+    const team = teams[teamIndex];
+    if (!team || !team[slotIndex]) return;
+    team[slotIndex] = createTeamMemberFromBoxEntry(entry);
+    pendingTeamDraft = null;
+    teamDetailPendingSlotIndex = null;
+    saveTeamToStorage();
+    closeBoxDetailModal();
+    renderTeamList();
+    renderTeamDetailModal(teamIndex);
+    return;
+  }
   if (boxViewingIndex !== null) {
     box[boxViewingIndex] = entry;
   } else {
@@ -886,6 +1064,16 @@ function saveBoxEntry(): void {
   }
   saveBoxToStorage();
   closeBoxDetailModal();
+  renderTab3();
+}
+
+function addCurrentEntryToBox(): void {
+  const entry = collectBoxEntryFromForm();
+  if (!entry) return;
+  box.push(entry);
+  saveBoxToStorage();
+  hasAddedCurrentEntryToBox = true;
+  updateDetailModalActionButtons();
   renderTab3();
 }
 
@@ -907,8 +1095,10 @@ function openBoxCreate(): void {
 function openBoxDetailView(index: number): void {
   const entry = box[index];
   if (!entry) return;
+  detailModalContext = { mode: "box" };
+  hasAddedCurrentEntryToBox = false;
   boxViewingIndex = index;
-  boxEditingPokemon = entry.pokemon;
+  boxEditingPokemon = getFreshPokemon(entry.pokemon);
 
   // ヘッダー
   const modal = document.getElementById("box-detail-modal");
@@ -917,7 +1107,7 @@ function openBoxDetailView(index: number): void {
   const typesEl = document.getElementById("box-detail-types");
   if (title) title.textContent = entry.pokemon.name;
   if (img) {
-    img.src = entry.pokemon.id ? `img/pokemon/${entry.pokemon.id}.png` : BALL_MONSTER_IMAGE;
+    img.src = getPokemonImageSrc(entry.pokemon);
     img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
   }
   if (typesEl) typesEl.innerHTML = typeBadgesHtml(entry.pokemon.types);
@@ -930,10 +1120,38 @@ function openBoxDetailView(index: number): void {
 
   // 詳細コンテンツ描画
   renderBoxDetailView(entry);
-
-  // 編集フォームの初期化（編集ボタン押下時にすぐ使えるよう準備）
   initBoxEditForm(entry.pokemon, entry);
+  updateDetailModalActionButtons();
 
+  if (modal) modal.hidden = false;
+}
+
+function openTeamMemberDetailView(teamIndex: number, slotIndex: number, startInEditMode = false): void {
+  const member = teams[teamIndex]?.[slotIndex];
+  if (!member) return;
+  detailModalContext = { mode: "team", teamIndex, slotIndex };
+  hasAddedCurrentEntryToBox = false;
+  selectedTeamIndex = teamIndex;
+  selectedTeamSlotIndex = slotIndex;
+  boxViewingIndex = null;
+  boxEditingPokemon = getFreshPokemon(member.pokemon);
+  const modal = document.getElementById("box-detail-modal");
+  const title = document.getElementById("box-detail-title");
+  const img = document.getElementById("box-detail-img") as HTMLImageElement | null;
+  const typesEl = document.getElementById("box-detail-types");
+  if (title) title.textContent = member.pokemon.name;
+  if (img) {
+    img.src = getPokemonImageSrc(member.pokemon);
+    img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
+  }
+  if (typesEl) typesEl.innerHTML = typeBadgesHtml(member.pokemon.types);
+  const viewEl = document.getElementById("box-detail-view");
+  const editEl = document.getElementById("box-detail-edit");
+  if (viewEl) viewEl.hidden = startInEditMode;
+  if (editEl) editEl.hidden = !startInEditMode;
+  renderBoxDetailView(teamMemberToBoxEntry(member));
+  initBoxEditForm(member.pokemon, teamMemberToBoxEntry(member));
+  updateDetailModalActionButtons();
   if (modal) modal.hidden = false;
 }
 
@@ -945,9 +1163,9 @@ function renderBoxDetailView(entry: BoxEntry): void {
   const nat = NATURES.find((n) => n.name === entry.natureName) ?? NATURES[0];
   const natLabel = getNatureLabel(nat);
 
-  const item = COMPETITIVE_ITEMS.find((it) => it.id === entry.heldItem);
+  const item = getDisplayHeldItemInfo(entry.heldItem, entry.pokemon);
   const itemHtml = item
-    ? `<img src="img/item/${escapeHtml(item.id)}.png"
+    ? `<img src="${escapeHtml(item.imageSrc)}"
          class="box-view-item-img" onerror="this.style.display='none'" />
        <span class="box-view-item-name">${escapeHtml(item.nameJa)}</span>
        <span class="box-view-item-effect">${escapeHtml(item.effect)}</span>`
@@ -973,6 +1191,10 @@ function renderBoxDetailView(entry: BoxEntry): void {
     : "なし";
 
   viewContent.innerHTML = `
+    <div class="box-view-section">
+      <span class="box-view-label">とくせい</span>
+      <span class="box-view-value">${entry.ability ? escapeHtml(entry.ability) : "—"}</span>
+    </div>
     <div class="box-view-section">
       <span class="box-view-label">性格</span>
       <span class="box-view-value">${escapeHtml(natLabel)}</span>
@@ -1010,7 +1232,7 @@ function updateBoxEditRealStats(pokemon: Pokemon): void {
     const realEl = document.getElementById(`${id}-real`);
     const labelEl = document.getElementById(`${id}-label`);
     if (!inp || !realEl || base === undefined) return;
-    const ev = clampEv(Number(inp.value) || 0);
+    const ev = clampBoxEv(Number(inp.value) || 0);
     let natMul = 1.0;
     let real: number;
     if (natureKey === "hp") {
@@ -1030,8 +1252,81 @@ function updateBoxEditRealStats(pokemon: Pokemon): void {
   });
 }
 
+/** 性格5×5グリッドを描画（現在の natSel.value をハイライト） */
+function renderNatureGrid(): void {
+  const wrap = document.getElementById("box-nature-grid-wrap");
+  const natSel = document.getElementById("box-detail-nature") as HTMLSelectElement | null;
+  if (!wrap) return;
+  const current = natSel?.value ?? "がんばりや";
+  wrap.innerHTML = "";
+  const table = document.createElement("table");
+  table.className = "box-nature-table";
+  // ヘッダ行
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  headerRow.appendChild(document.createElement("th"));
+  NATURE_STAT_LABELS.forEach((label) => {
+    const th = document.createElement("th");
+    th.className = "nature-col-header";
+    th.innerHTML = `${label}<span class="nature-arrow">▼</span>`;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+  // ボディ行
+  const tbody = document.createElement("tbody");
+  NATURE_GRID_5x5.forEach((row, ri) => {
+    const tr = document.createElement("tr");
+    const rowTh = document.createElement("th");
+    rowTh.className = "nature-row-header";
+    rowTh.innerHTML = `${NATURE_STAT_LABELS[ri]}<span class="nature-arrow">▲</span>`;
+    tr.appendChild(rowTh);
+    row.forEach((natureName, ci) => {
+      const td = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "box-nature-cell" +
+        (ri === ci ? " is-neutral" : "") +
+        (natureName === current ? " is-selected" : "");
+      btn.textContent = natureName;
+      btn.addEventListener("click", () => {
+        if (natSel) {
+          natSel.value = natureName;
+          natSel.dispatchEvent(new Event("change"));
+        }
+        const nb = document.getElementById("box-nature-btn");
+        if (nb) nb.textContent = natureName;
+        if (wrap) wrap.hidden = true;
+      });
+      td.appendChild(btn);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+}
+
 /** 編集フォームを初期化（新規 or 既存エントリで事前充填） */
 function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
+  // とくせい
+  const abilitySel = document.getElementById("box-detail-ability") as HTMLSelectElement | null;
+  if (abilitySel) {
+    abilitySel.innerHTML = "";
+    const abilities = pokemon.abilities ?? [];
+    if (abilities.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = ""; opt.textContent = "—";
+      abilitySel.appendChild(opt);
+    } else {
+      abilities.forEach((ab) => {
+        const opt = document.createElement("option");
+        opt.value = ab; opt.textContent = ab;
+        abilitySel.appendChild(opt);
+      });
+    }
+    abilitySel.value = existing?.ability && abilities.includes(existing.ability) ? existing.ability : (abilities[0] ?? "");
+  }
   // 性格select
   const natSel = document.getElementById("box-detail-nature") as HTMLSelectElement | null;
   if (natSel) {
@@ -1044,6 +1339,10 @@ function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
     });
     natSel.value = existing?.natureName ?? "がんばりや";
     natSel.addEventListener("change", () => updateBoxEditRealStats(pokemon));
+    const nb = document.getElementById("box-nature-btn");
+    if (nb) nb.textContent = natSel.value;
+    const ngw = document.getElementById("box-nature-grid-wrap");
+    if (ngw) ngw.hidden = true;
   }
   // ステータスグリッド生成（種族値 / 努力値 / 実数値）
   const evGrid = document.getElementById("box-ev-grid");
@@ -1078,11 +1377,14 @@ function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
       const btn0 = document.createElement("button");
       btn0.type = "button"; btn0.className = "damage-ev-btn damage-ev-btn-0"; btn0.dataset.evInput = id; btn0.textContent = "0";
       const inp = document.createElement("input");
-      inp.type = "number"; inp.id = id; inp.className = "damage-ev-input"; inp.min = "0"; inp.max = "255";
-      inp.value = String(existing?.ev[key] ?? 0);
-      inp.addEventListener("input", () => updateBoxEditRealStats(pokemon));
+      inp.type = "number"; inp.id = id; inp.className = "damage-ev-input"; inp.min = "0"; inp.max = String(BOX_EV_PER_STAT_MAX);
+      inp.value = String(clampBoxEv(existing?.ev[key] ?? 0));
+      inp.addEventListener("input", () => {
+        normalizeBoxEvInput(inp);
+        updateBoxEditRealStats(pokemon);
+      });
       const btn252 = document.createElement("button");
-      btn252.type = "button"; btn252.className = "damage-ev-btn damage-ev-btn-252"; btn252.dataset.evInput = id; btn252.textContent = "32";
+      btn252.type = "button"; btn252.className = "damage-ev-btn damage-ev-btn-252"; btn252.dataset.evInput = id; btn252.textContent = String(BOX_EV_PER_STAT_MAX);
       const btnDn = document.createElement("button");
       btnDn.type = "button"; btnDn.className = "damage-ev-step-btn damage-ev-step-down"; btnDn.dataset.evInput = id; btnDn.textContent = "−";
       const btnUp = document.createElement("button");
@@ -1094,10 +1396,11 @@ function initBoxEditForm(pokemon: Pokemon, existing?: BoxEntry): void {
       realEl.id = `${id}-real`;
       evGrid.append(lbl, baseEl, ctrlWrap, realEl);
     });
+    normalizeAllBoxEvInputs();
     updateBoxEditRealStats(pokemon);
   }
-  // 持ち物
-  boxSelectedItem = existing ? (COMPETITIVE_ITEMS.find((it) => it.id === existing.heldItem) ?? null) : null;
+  boxSelectedItem = existing ? (getCompetitiveItemById(existing.heldItem, pokemon) ?? null) : null;
+  syncMegaStoneForCurrentEditingPokemon(existing?.heldItem ?? "");
   boxItemSearchText = "";
   renderBoxItemSelected();
   const picker = document.getElementById("box-item-picker");
@@ -1127,28 +1430,40 @@ function switchToBoxEditMode(): void {
 function renderBoxItemSelected(): void {
   const img = document.getElementById("box-detail-item-img") as HTMLImageElement | null;
   const nameEl = document.getElementById("box-detail-item-name");
+  const selectBtn = document.getElementById("box-detail-item-select-btn") as HTMLButtonElement | null;
   const clearBtn = document.getElementById("box-detail-item-clear-btn") as HTMLButtonElement | null;
+  const isMega = !!boxEditingPokemon && getMegaStoneItemId(boxEditingPokemon.id) !== null;
+  const displayItem = getDisplayHeldItemInfo(boxSelectedItem?.id ?? "", boxEditingPokemon);
   if (img) {
-    if (boxSelectedItem) {
-      img.src = `img/item/${boxSelectedItem.id}.png`;
+    if (displayItem) {
+      img.src = displayItem.imageSrc;
       img.hidden = false;
       img.onerror = () => { img.hidden = true; };
     } else {
       img.hidden = true;
     }
   }
-  if (nameEl) nameEl.textContent = boxSelectedItem ? boxSelectedItem.nameJa : "—";
-  if (clearBtn) clearBtn.hidden = !boxSelectedItem;
+  if (nameEl) nameEl.textContent = displayItem ? displayItem.nameJa : "—";
+  if (selectBtn) {
+    selectBtn.disabled = isMega;
+    selectBtn.textContent = isMega ? "メガストーン固定" : "選択する";
+  }
+  if (clearBtn) clearBtn.hidden = !boxSelectedItem || isMega;
 }
 
 function renderBoxItemPicker(): void {
   const list = document.getElementById("box-item-list");
   if (!list) return;
+  if (boxEditingPokemon && getMegaStoneItemId(boxEditingPokemon.id)) {
+    list.innerHTML = "";
+    return;
+  }
   list.innerHTML = "";
   const query = boxItemSearchText.trim().toLowerCase();
+  const sourceItems = maItems.length > 0 ? maItems : COMPETITIVE_ITEMS;
   const items = query
-    ? COMPETITIVE_ITEMS.filter((it) => it.nameJa.includes(boxItemSearchText.trim()) || it.id.includes(query))
-    : COMPETITIVE_ITEMS;
+    ? sourceItems.filter((it) => it.nameJa.includes(boxItemSearchText.trim()) || it.id.includes(query))
+    : sourceItems;
   items.forEach((item) => {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -1208,8 +1523,7 @@ function renderBoxMoveSlots(): void {
       renderBoxMovesArea();
     });
     if (move) {
-      const powerStr = move.power != null ? String(move.power) : "—";
-      btn.innerHTML = `<span class="damage-move-slot-name">${escapeHtml(move.name)}</span> <span class="damage-move-slot-meta"><img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" />・${escapeHtml(move.category)}・威力${powerStr}</span>`;
+      btn.innerHTML = getMoveMetaHtml(move);
     } else {
       btn.textContent = "—（クリックで技を選択）";
     }
@@ -1474,29 +1788,364 @@ function isValidPokemon(p: unknown): p is Pokemon {
   );
 }
 
+function createDefaultTeamMember(pokemon: Pokemon): TeamMember {
+  return {
+    pokemon,
+    ev: { hp: 0, atk: 0, def: 0, spAtk: 0, spDef: 0, spd: 0 },
+    natureName: "がんばりや",
+    ability: "",
+    heldItem: "",
+    moves: [],
+  };
+}
+
+function isValidTeamMember(value: unknown): value is TeamMember {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    isValidPokemon((value as TeamMember).pokemon) &&
+    typeof (value as TeamMember).natureName === "string" &&
+    typeof (value as TeamMember).heldItem === "string" &&
+    Array.isArray((value as TeamMember).moves) &&
+    typeof (value as TeamMember).ev === "object"
+  );
+}
+
+function normalizeTeamMember(value: unknown): TeamMember | null {
+  if (isValidTeamMember(value)) {
+    return {
+      pokemon: value.pokemon,
+      natureName: value.natureName,
+      ability: typeof (value as TeamMember).ability === "string" ? (value as TeamMember).ability : "",
+      heldItem: value.heldItem,
+      moves: value.moves.filter((moveId): moveId is number => typeof moveId === "number"),
+      ev: {
+        hp: Number(value.ev?.hp) || 0,
+        atk: Number(value.ev?.atk) || 0,
+        def: Number(value.ev?.def) || 0,
+        spAtk: Number(value.ev?.spAtk) || 0,
+        spDef: Number(value.ev?.spDef) || 0,
+        spd: Number(value.ev?.spd) || 0,
+      },
+    };
+  }
+  if (isValidPokemon(value)) {
+    return createDefaultTeamMember(value);
+  }
+  return null;
+}
+
+function teamMemberToBoxEntry(member: TeamMember): BoxEntry {
+  return {
+    pokemon: member.pokemon,
+    ev: { ...member.ev },
+    natureName: member.natureName,
+    ability: member.ability,
+    heldItem: member.heldItem,
+    moves: [...member.moves],
+  };
+}
+
+function createTeamMemberFromBoxEntry(entry: BoxEntry): TeamMember {
+  return {
+    pokemon: entry.pokemon,
+    ev: { ...entry.ev },
+    natureName: entry.natureName,
+    ability: entry.ability,
+    heldItem: entry.heldItem,
+    moves: [...entry.moves],
+  };
+}
+
+function buildPokemonDetailEvTable(member: TeamMember | null): HTMLTableElement {
+  const nat = member ? (NATURES.find((n) => n.name === member.natureName) ?? NATURES[0]) : null;
+  const evTable = document.createElement("table");
+  evTable.className = "team-detail-ev-table";
+  const labelRow = document.createElement("tr");
+  const valRow = document.createElement("tr");
+
+  EV_TABLE_COLS.forEach(({ label, key, natKey }) => {
+    const mul = (nat && natKey) ? (nat[natKey] as number) : 1;
+    const th = document.createElement("th");
+    th.textContent = label;
+    if (mul > 1) th.classList.add("nat-up");
+    else if (mul < 1) th.classList.add("nat-down");
+    labelRow.appendChild(th);
+
+    const td = document.createElement("td");
+    const val = member ? member.ev[key] : 0;
+    td.textContent = val > 0 ? String(val) : "—";
+    valRow.appendChild(td);
+  });
+
+  const tbody = document.createElement("tbody");
+  tbody.append(labelRow, valRow);
+  evTable.appendChild(tbody);
+  return evTable;
+}
+
+function createPokemonDetailCard(
+  member: TeamMember | null,
+  moveMap: Map<number, Move>,
+  options: { asButton?: boolean; extraClassName?: string } = {},
+): HTMLElement {
+  const pokemon = member?.pokemon;
+  const isBoxCard = options.extraClassName?.split(" ").includes("box-pokemon-card") ?? false;
+  const root = options.asButton ? document.createElement("button") : document.createElement("div");
+  if (root instanceof HTMLButtonElement) root.type = "button";
+  root.className = [
+    "team-detail-slot",
+    pokemon ? "is-filled" : "is-empty",
+    options.extraClassName ?? "",
+  ].filter(Boolean).join(" ");
+
+  const rightCol = document.createElement("div");
+  rightCol.className = "team-slot-right";
+
+  const imgWrap = document.createElement("div");
+  imgWrap.className = "team-slot-img-wrap";
+
+  const img = document.createElement("img");
+  img.className = "team-detail-slot-img" + (pokemon ? "" : " team-detail-slot-img--empty");
+  img.alt = pokemon?.name ?? "";
+  img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
+  img.src = pokemon ? getPokemonImageSrc(pokemon) : BALL_MONSTER_IMAGE;
+  imgWrap.appendChild(img);
+
+  const itemData = getDisplayHeldItemInfo(member?.heldItem ?? "", pokemon ?? null);
+  if (itemData) {
+    const itemIcon = document.createElement("img");
+    itemIcon.className = "team-slot-item-icon";
+    itemIcon.src = itemData.imageSrc;
+    itemIcon.alt = itemData.nameJa;
+    itemIcon.onerror = () => { itemIcon.hidden = true; };
+    imgWrap.appendChild(itemIcon);
+  }
+  rightCol.appendChild(imgWrap);
+
+  const leftCol = document.createElement("div");
+  leftCol.className = "team-slot-left";
+  const movesEl = document.createElement("div");
+  movesEl.className = "team-detail-slot-moves" + (isBoxCard ? " box-card-moves-grid" : "");
+
+  if (!pokemon || !member) {
+    const name = document.createElement("span");
+    name.className = "team-detail-slot-name team-detail-slot-name--empty";
+    name.textContent = "未選択";
+
+    const typesEl = document.createElement("div");
+    typesEl.className = "team-detail-slot-types";
+
+    const abilityEl = document.createElement("span");
+    abilityEl.className = "team-detail-slot-ability";
+    abilityEl.textContent = "\u00a0";
+
+    for (let i = 0; i < 4; i++) {
+      const row = document.createElement("div");
+      row.className = "team-slot-move";
+      row.textContent = "\u00a0";
+      movesEl.appendChild(row);
+    }
+    leftCol.append(name, typesEl, abilityEl);
+  } else {
+    const name = document.createElement("span");
+    name.className = "team-detail-slot-name";
+    name.textContent = pokemon.name;
+
+    const typesEl = document.createElement("div");
+    typesEl.className = "team-detail-slot-types";
+    pokemon.types.forEach((t) => {
+      const typeImg = document.createElement("img");
+      typeImg.className = "team-detail-type-img";
+      typeImg.src = typeSvSrc(t);
+      typeImg.alt = t;
+      typeImg.onerror = () => { typeImg.src = `img/type/${t}.png`; };
+      typesEl.appendChild(typeImg);
+    });
+
+    const abilityEl = document.createElement("span");
+    abilityEl.className = "team-detail-slot-ability";
+    abilityEl.textContent = member.ability || "—";
+
+    const filledMoves = [...member.moves.filter((id) => id > 0), 0, 0, 0, 0].slice(0, 4);
+    filledMoves.forEach((id) => {
+      const row = document.createElement("div");
+      row.className = "team-slot-move";
+      const move = id > 0 ? moveMap.get(id) : null;
+      if (move) {
+        const typeIcon = document.createElement("img");
+        typeIcon.className = "team-slot-move-type";
+        typeIcon.src = typeSvSrc(move.type);
+        typeIcon.alt = move.type;
+        typeIcon.onerror = () => { typeIcon.src = `img/type/${move.type}.png`; };
+        const moveName = document.createElement("span");
+        moveName.textContent = move.name;
+        row.append(typeIcon, moveName);
+      } else {
+        row.textContent = "\u00a0";
+      }
+      movesEl.appendChild(row);
+    });
+
+    leftCol.append(name, typesEl, abilityEl);
+  }
+
+  const evEl = document.createElement("div");
+  evEl.className = "team-detail-slot-evs";
+  evEl.appendChild(buildPokemonDetailEvTable(member));
+
+  if (isBoxCard) {
+    const boxMovesWrap = document.createElement("div");
+    boxMovesWrap.className = "team-detail-slot-evs box-card-moves-wrap";
+    boxMovesWrap.appendChild(movesEl);
+    evEl.classList.add("box-card-evs");
+    root.append(leftCol, rightCol, boxMovesWrap, evEl);
+  } else {
+    leftCol.append(movesEl);
+    root.append(leftCol, rightCol, evEl);
+  }
+  return root;
+}
+
+const SUPPORTED_MEGA_POKEMON_IDS = new Set([
+  "0003Mega", "0006MegaX", "0006MegaY", "0009Mega", "0015Mega", "0018Mega",
+  "0026MegaX", "0026MegaY", "0036Mega", "0065Mega", "0071Mega", "0080Mega",
+  "0094Mega", "0115Mega", "0121Mega", "0127Mega", "0130Mega", "0142Mega",
+  "0149Mega", "0150MegaX", "0150MegaY", "0154Mega", "0160Mega", "0181Mega",
+  "0208Mega", "0212Mega", "0214Mega", "0227Mega", "0229Mega", "0248Mega",
+  "0254Mega", "0257Mega", "0260Mega", "0282Mega", "0302Mega", "0303Mega",
+  "0306Mega", "0308Mega", "0310Mega", "0319Mega", "0323Mega", "0334Mega",
+  "0354Mega", "0358Mega", "0359Mega", "0359MegaZ", "0362Mega", "0373Mega",
+  "0376Mega", "0380Mega", "0381Mega", "0384Mega", "0428Mega", "0445Mega",
+  "0445MegaZ", "0448Mega", "0448MegaZ", "0460Mega", "0475Mega", "0478Mega",
+  "0500Mega", "0530Mega", "0531Mega", "0609Mega", "0623Mega", "0652Mega",
+  "0655Mega", "0658Mega", "0670AMega", "0678Mega", "0701Mega", "0719Mega",
+  "0740Mega", "0780Mega", "0952Mega", "0970Mega",
+]);
+
+function isMegaStoneItemId(itemId: string | undefined): boolean {
+  return !!itemId && itemId.startsWith("mega-stone-");
+}
+
+function getMegaStoneItemId(pokemonId: string): string | null {
+  return SUPPORTED_MEGA_POKEMON_IDS.has(pokemonId) ? `mega-stone-${pokemonId}` : null;
+}
+
+function getMegaStoneItemByPokemonId(pokemonId: string, pokemonName?: string): CompetitiveItem | null {
+  const itemId = getMegaStoneItemId(pokemonId);
+  if (!itemId) return null;
+  const megaIndex = pokemonId.indexOf("Mega");
+  const baseId = megaIndex >= 0 ? pokemonId.slice(0, megaIndex) : pokemonId;
+  const suffixRaw = megaIndex >= 0 ? pokemonId.slice(megaIndex + 4) : "";
+  const suffix = suffixRaw === "X" || suffixRaw === "Y" || suffixRaw === "Z" ? suffixRaw : "";
+  const basePokemon = demoPokemon.find((p) => p.id === baseId);
+  const baseName = basePokemon?.name ?? pokemonName ?? pokemonId;
+  return {
+    id: itemId,
+    nameJa: `${baseName}ナイト${suffix}`,
+    effect: `${baseName}をメガシンカさせる。`,
+  };
+}
+
+function getCompetitiveItemById(itemId: string, pokemon?: Pokemon | null): CompetitiveItem | null {
+  const found = COMPETITIVE_ITEMS.find((it) => it.id === itemId) ?? maItems.find((it) => it.id === itemId);
+  if (found) return found;
+  if (isMegaStoneItemId(itemId)) {
+    return getMegaStoneItemByPokemonId(itemId.replace("mega-stone-", ""), pokemon?.name);
+  }
+  return null;
+}
+
+function getHeldItemImageSrc(item: CompetitiveItem): string {
+  const imageItem = maItems.find((it) => it.id === item.id)
+    ?? maItems.find((it) => it.nameJa === item.nameJa)
+    ?? item;
+  return `img/item/${imageItem.id}.png`;
+}
+
+function getDisplayHeldItemInfo(heldItem: string, pokemon?: Pokemon | null): (CompetitiveItem & { imageSrc: string }) | null {
+  const megaItem = pokemon ? getMegaStoneItemByPokemonId(pokemon.id, pokemon.name) : null;
+  if (megaItem) {
+    return {
+      id: "megaStone",
+      nameJa: "メガストーン",
+      effect: megaItem.effect,
+      imageSrc: "img/item/megaStone.png",
+    };
+  }
+  const item = heldItem ? getCompetitiveItemById(heldItem, pokemon) : null;
+  return item ? { ...item, imageSrc: getHeldItemImageSrc(item) } : null;
+}
+
+function syncMegaStoneForCurrentEditingPokemon(existingHeldItem = ""): void {
+  if (!boxEditingPokemon) return;
+  const megaItem = getMegaStoneItemByPokemonId(boxEditingPokemon.id, boxEditingPokemon.name);
+  if (megaItem) {
+    boxSelectedItem = megaItem;
+    return;
+  }
+  if (!boxSelectedItem || isMegaStoneItemId(boxSelectedItem.id)) {
+    boxSelectedItem = existingHeldItem ? getCompetitiveItemById(existingHeldItem, boxEditingPokemon) : null;
+  }
+}
+
+function getMoveMetaHtml(move: Move): string {
+  const powerStr = move.power != null ? String(move.power) : "—";
+  return `<img class="type-img type-img-sv" src="${typeSvSrc(move.type)}" alt="${escapeHtml(move.type)}" /> <span class="damage-move-slot-name">${escapeHtml(move.name)}</span> <span class="damage-move-slot-meta">${escapeHtml(move.category)}・威力${powerStr}</span>`;
+}
+
 function loadTeamFromStorage(): void {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_TEAM);
     if (!raw) return;
     const parsed = JSON.parse(raw) as unknown;
+    // 新フォーマット: { version: 2, teams, names }
+    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) && "teams" in (parsed as object)) {
+      const data = parsed as { teams: unknown[][]; names?: string[] };
+      teams = (data.teams as unknown[][])
+        .map((t) => {
+          const team: TeamMember[] = [];
+          for (let i = 0; i < MAX_TEAM_SIZE; i++) {
+            const member = normalizeTeamMember(Array.isArray(t) ? t[i] : undefined);
+            if (member) team[i] = member;
+          }
+          return team;
+        })
+        .filter((team) => team.some(Boolean));
+      teamNames = (data.names ?? []).slice(0, teams.length);
+      while (teamNames.length < teams.length) teamNames.push(`チーム ${teamNames.length + 1}`);
+      return;
+    }
+    // 旧フォーマット: TeamMember[][] or TeamMember[]
     if (!Array.isArray(parsed)) return;
-    // 旧形式（1チームの配列）か新形式（チームの配列）かを判定
     if (parsed.length > 0 && Array.isArray(parsed[0])) {
-      teams = (parsed as unknown[][]).map((t) =>
-        (Array.isArray(t) ? t : []).filter(isValidPokemon).slice(0, MAX_TEAM_SIZE)
-      );
+      teams = (parsed as unknown[][])
+        .map((t) => {
+          const team: TeamMember[] = [];
+          for (let i = 0; i < MAX_TEAM_SIZE; i++) {
+            const member = normalizeTeamMember(Array.isArray(t) ? t[i] : undefined);
+            if (member) team[i] = member;
+          }
+          return team;
+        })
+        .filter((team) => team.some(Boolean));
     } else {
-      const single = (Array.isArray(parsed) ? parsed : []).filter(isValidPokemon).slice(0, MAX_TEAM_SIZE);
+      const single = (parsed as unknown[])
+        .map(normalizeTeamMember)
+        .filter((member): member is TeamMember => member != null)
+        .slice(0, MAX_TEAM_SIZE);
       teams = single.length > 0 ? [single] : [];
     }
+    teamNames = teams.map((_, i) => `チーム ${i + 1}`);
   } catch {
     teams = [];
+    teamNames = [];
   }
 }
 
 function saveTeamToStorage(): void {
   try {
-    localStorage.setItem(STORAGE_KEY_TEAM, JSON.stringify(teams));
+    localStorage.setItem(STORAGE_KEY_TEAM, JSON.stringify({ teams, names: teamNames }));
   } catch {
     // 無視
   }
@@ -1512,7 +2161,130 @@ function clearLocalStorageAndResetTeams(): void {
     // 無視
   }
   teams = [];
+  teamNames = [];
   renderTeamList();
+}
+
+function updateDetailModalActionButtons(): void {
+  const deleteBtn = document.getElementById("box-detail-delete-btn") as HTMLButtonElement | null;
+  const saveBtn = document.getElementById("box-detail-save") as HTMLButtonElement | null;
+  const editBtn = document.getElementById("box-detail-edit-btn") as HTMLButtonElement | null;
+  const addToBoxBtn = document.getElementById("box-detail-add-to-box-btn") as HTMLButtonElement | null;
+  if (detailModalContext?.mode === "team") {
+    if (deleteBtn) deleteBtn.hidden = true;
+    if (saveBtn) saveBtn.textContent = "更新";
+    if (editBtn) editBtn.textContent = "編集";
+    if (addToBoxBtn) {
+      addToBoxBtn.hidden = false;
+      addToBoxBtn.disabled = hasAddedCurrentEntryToBox;
+      addToBoxBtn.textContent = hasAddedCurrentEntryToBox ? "BOXに追加しました！" : "BOXに追加";
+    }
+  } else {
+    if (deleteBtn) deleteBtn.hidden = false;
+    if (saveBtn) saveBtn.textContent = "保存";
+    if (editBtn) editBtn.textContent = "編集";
+    if (addToBoxBtn) {
+      addToBoxBtn.hidden = true;
+      addToBoxBtn.disabled = false;
+      addToBoxBtn.textContent = "BOXに追加";
+    }
+  }
+}
+
+function updateTeamEditButtonLabel(): void {
+  const teamEditBtn = document.getElementById("team-edit-btn") as HTMLButtonElement | null;
+  if (teamEditBtn) teamEditBtn.textContent = isEditMode ? "完了" : "編集";
+}
+
+function renderTeamDetailModal(teamIndex: number): void {
+  const grid = document.getElementById("team-detail-grid");
+  const title = document.getElementById("team-detail-title");
+  if (!grid) return;
+  const team = teams[teamIndex];
+  if (!team) return;
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  if (title) {
+    const name = teamNames[teamIndex] ?? `チーム ${teamIndex + 1}`;
+    title.innerHTML = "";
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = name;
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "team-name-edit-btn";
+    editBtn.innerHTML = "✎";
+    editBtn.setAttribute("aria-label", "チーム名を変更");
+    editBtn.addEventListener("click", () => {
+      const current = teamNames[teamIndex] ?? `チーム ${teamIndex + 1}`;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = current;
+      input.className = "team-name-input";
+      nameSpan.replaceWith(input);
+      editBtn.hidden = true;
+      input.focus();
+      input.select();
+      const save = () => {
+        const newName = input.value.trim() || current;
+        teamNames[teamIndex] = newName;
+        saveTeamToStorage();
+        renderTeamList();
+        renderTeamDetailModal(teamIndex);
+      };
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); save(); }
+        if (e.key === "Escape") renderTeamDetailModal(teamIndex);
+      });
+      input.addEventListener("blur", save);
+    });
+    title.appendChild(nameSpan);
+    title.appendChild(editBtn);
+  }
+  grid.innerHTML = "";
+  for (let i = 0; i < MAX_TEAM_SIZE; i++) {
+    const member = team[i];
+    const btn = createPokemonDetailCard(member ?? null, moveMap, { asButton: true }) as HTMLButtonElement;
+    btn.dataset.slotIndex = String(i);
+    grid.appendChild(btn);
+  }
+}
+
+function openTeamDetailModal(teamIndex: number): void {
+  const modal = document.getElementById("team-detail-modal");
+  selectedTeamIndex = teamIndex;
+  selectedTeamSlotIndex = null;
+  teamDetailPendingSlotIndex = null;
+  renderTeamDetailModal(teamIndex);
+  if (modal) modal.hidden = false;
+}
+
+function closeTeamDetailModal(): void {
+  const modal = document.getElementById("team-detail-modal");
+  if (modal) modal.hidden = true;
+  selectedTeamIndex = null;
+  selectedTeamSlotIndex = null;
+  teamDetailPendingSlotIndex = null;
+}
+
+function beginTeamDraftAtSlot(teamIndex: number, slotIndex: number, member: TeamMember): void {
+  const team = teams[teamIndex];
+  if (!team) return;
+  team[slotIndex] = member;
+  pendingTeamDraft = { teamIndex, slotIndex };
+  selectedTeamIndex = teamIndex;
+  selectedTeamSlotIndex = slotIndex;
+  teamDetailPendingSlotIndex = slotIndex;
+  renderTeamList();
+  renderTeamDetailModal(teamIndex);
+}
+
+function openTeamEmptySlotSelection(teamIndex: number, slotIndex: number): void {
+  selectedTeamIndex = teamIndex;
+  selectedTeamSlotIndex = slotIndex;
+  teamDetailPendingSlotIndex = slotIndex;
+  const teamModal = document.getElementById("team-detail-modal");
+  if (teamModal) teamModal.hidden = true;
+  shouldReopenTeamDetailOnPickerClose = true;
+  openPokemonPicker("team-slot");
 }
 
 function renderTeamList(): void {
@@ -1523,13 +2295,22 @@ function renderTeamList(): void {
     const card = document.createElement("li");
     card.className = "team-card";
     card.dataset.teamIndex = String(teamIndex);
+    const nameEl = document.createElement("div");
+    nameEl.className = "team-card-name";
+    nameEl.textContent = teamNames[teamIndex] ?? `チーム ${teamIndex + 1}`;
+    card.appendChild(nameEl);
     const grid = document.createElement("div");
     grid.className = "team-grid";
     for (let i = 0; i < 6; i++) {
       const slot = document.createElement("div");
       slot.className = "team-slot";
-      const pokemon = team[i];
+      slot.dataset.teamIndex = String(teamIndex);
+      slot.dataset.slotIndex = String(i);
+      const member = team[i];
+      const pokemon = member?.pokemon;
       if (pokemon) {
+        const imgWrap = document.createElement("div");
+        imgWrap.className = "team-slot-img-wrap";
         const img = document.createElement("img");
         img.alt = pokemon.name;
         img.className = "team-slot-img";
@@ -1537,10 +2318,20 @@ function renderTeamList(): void {
         img.src = DUMMY_POKEMON_IMAGE;
         const teamPicSrc = getPokemonImageSrc(pokemon);
         if (teamPicSrc !== DUMMY_POKEMON_IMAGE) img.src = teamPicSrc;
+        imgWrap.appendChild(img);
+        const heldItemObj = getDisplayHeldItemInfo(member.heldItem, pokemon);
+        if (heldItemObj) {
+          const itemImg = document.createElement("img");
+          itemImg.src = heldItemObj.imageSrc;
+          itemImg.alt = heldItemObj.nameJa;
+          itemImg.className = "team-list-item-icon";
+          itemImg.onerror = () => { itemImg.hidden = true; };
+          imgWrap.appendChild(itemImg);
+        }
         const name = document.createElement("span");
         name.className = "team-slot-name";
         name.textContent = pokemon.name;
-        slot.appendChild(img);
+        slot.appendChild(imgWrap);
         slot.appendChild(name);
       } else {
         const img = document.createElement("img");
@@ -1558,16 +2349,43 @@ function renderTeamList(): void {
     }
     card.appendChild(grid);
     if (isEditMode) {
-      const actions = document.createElement("div");
-      actions.className = "team-card-actions";
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "team-delete-btn";
-      deleteBtn.textContent = "削除";
-      deleteBtn.dataset.teamIndex = String(teamIndex);
-      deleteBtn.setAttribute("aria-label", "このチームを削除");
-      actions.appendChild(deleteBtn);
-      card.appendChild(actions);
+      const deleteBadge = document.createElement("button");
+      deleteBadge.type = "button";
+      deleteBadge.className = "team-delete-badge";
+      deleteBadge.dataset.teamIndex = String(teamIndex);
+      deleteBadge.setAttribute("aria-label", "このチームを削除");
+      deleteBadge.textContent = "−";
+      card.appendChild(deleteBadge);
+      card.draggable = true;
+      card.addEventListener("dragstart", (e) => {
+        dragSourceTeamIndex = teamIndex;
+        card.classList.add("is-dragging");
+        e.dataTransfer?.setData("text/plain", String(teamIndex));
+      });
+      card.addEventListener("dragend", () => {
+        card.classList.remove("is-dragging");
+        document.querySelectorAll(".team-card").forEach((c) => c.classList.remove("drag-over"));
+      });
+      card.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (dragSourceTeamIndex !== teamIndex) card.classList.add("drag-over");
+      });
+      card.addEventListener("dragleave", () => {
+        card.classList.remove("drag-over");
+      });
+      card.addEventListener("drop", (e) => {
+        e.preventDefault();
+        card.classList.remove("drag-over");
+        const src = dragSourceTeamIndex;
+        const dst = teamIndex;
+        if (src === dst || src < 0) return;
+        const moved = teams.splice(src, 1)[0];
+        const movedName = teamNames.splice(src, 1)[0];
+        teams.splice(dst, 0, moved);
+        teamNames.splice(dst, 0, movedName);
+        saveTeamToStorage();
+        renderTeamList();
+      });
     }
     listEl.appendChild(card);
   });
@@ -1579,7 +2397,7 @@ function escapeHtml(s: string): string {
   return div.innerHTML;
 }
 
-function getCurrentEditingTeam(): Pokemon[] {
+function getCurrentEditingTeam(): TeamMember[] {
   return editingTeam;
 }
 
@@ -1588,11 +2406,16 @@ function renderPickerTeamPreview(): void {
   const wrap = document.getElementById("pokemon-picker-team-preview");
   if (!wrap) return;
   const team = getCurrentEditingTeam();
+  const activeSlotIndex = Math.min(team.length, MAX_TEAM_SIZE - 1);
   wrap.innerHTML = "";
   for (let i = 0; i < 6; i++) {
     const slot = document.createElement("div");
     slot.className = "pokemon-picker-team-slot";
-    const pokemon = team[i];
+    const isActiveSlot = i === activeSlotIndex && team.length < MAX_TEAM_SIZE;
+    slot.classList.toggle("is-active-slot", isActiveSlot);
+    slot.setAttribute("aria-selected", isActiveSlot ? "true" : "false");
+    const member = team[i];
+    const pokemon = member?.pokemon;
     if (pokemon) {
       slot.dataset.slotIndex = String(i);
       const img = document.createElement("img");
@@ -1615,6 +2438,12 @@ function renderPickerTeamPreview(): void {
       img.className = "pokemon-picker-team-slot-img";
       img.onerror = () => { img.src = "img/ball_monster.svg"; };
       slot.appendChild(img);
+      if (isActiveSlot) {
+        const name = document.createElement("span");
+        name.className = "pokemon-picker-team-slot-name pokemon-picker-team-slot-name--active";
+        name.textContent = "選択中";
+        slot.appendChild(name);
+      }
     }
     wrap.appendChild(slot);
   }
@@ -1624,25 +2453,29 @@ function renderPickerTeamPreview(): void {
 function updatePickerListButtons(): void {
   const team = getCurrentEditingTeam();
   const isFull = team.length >= MAX_TEAM_SIZE;
-  document.querySelectorAll(".pokemon-picker-btn").forEach((b) => {
+  document.querySelectorAll(".pokemon-picker-btn, .pokemon-picker-btn-detail-card").forEach((b) => {
     (b as HTMLButtonElement).disabled = isFull;
   });
 }
 
+type PickerEntry = Pokemon | BoxEntry;
+
 /** タイプ絞り込み後のポケモン一覧を返す */
-function getFilteredPokemonList(): Pokemon[] {
-  let list: Pokemon[] = pickerSourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
+function getFilteredPickerEntries(): PickerEntry[] {
+  let list: PickerEntry[] = pickerSourceMode === "box" ? box : demoPokemon;
   if (pickerRegulationFilter === "M-A") {
-    list = list.filter((p) => p.regulation === "M-A");
+    list = list.filter((entry) => ("pokemon" in entry ? entry.pokemon.regulation : entry.regulation) === "M-A");
   }
   if (pickerShowOnlyFinalEvolution) {
-    list = list.filter((p) => p.isFinalEvolution !== false);
+    list = list.filter((entry) => ("pokemon" in entry ? entry.pokemon.isFinalEvolution : entry.isFinalEvolution) !== false);
   }
   if (pickerTypeFilter && pickerTypeFilter !== "すべて") {
-    list = list.filter((p) => p.types.includes(pickerTypeFilter!));
+    list = list.filter((entry) => ("pokemon" in entry ? entry.pokemon.types : entry.types).includes(pickerTypeFilter!));
   }
   if (pickerSortKey === "name") {
-    list = [...list].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    list = [...list].sort((a, b) =>
+      ("pokemon" in a ? a.pokemon.name : a.name).localeCompare("pokemon" in b ? b.pokemon.name : b.name, "ja")
+    );
   }
   return list;
 }
@@ -1719,15 +2552,35 @@ function renderPickerList(): void {
   const listEl = document.getElementById("pokemon-picker-list");
   if (!listEl) return;
   listEl.innerHTML = "";
-  const filtered = getFilteredPokemonList();
+  listEl.classList.toggle("pokemon-picker-list--box-cards", pickerSourceMode === "box");
+  const filtered = getFilteredPickerEntries();
   const team = getCurrentEditingTeam();
   const isFull = team.length >= MAX_TEAM_SIZE;
-  filtered.forEach((pokemon) => {
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  if (pickerSourceMode === "box") {
+    filtered.forEach((entry, index) => {
+      if ("pokemon" in entry) {
+        const li = document.createElement("li");
+        const card = createPokemonDetailCard(createTeamMemberFromBoxEntry(entry), moveMap, {
+          asButton: true,
+          extraClassName: "box-pokemon-card pokemon-picker-btn-detail-card",
+        }) as HTMLButtonElement;
+        card.dataset.pickerIndex = String(index);
+        if (isFull && pokemonPickerMode === "create-team") card.disabled = true;
+        li.appendChild(card);
+        listEl.appendChild(li);
+      }
+    });
+    updatePickerListButtons();
+    return;
+  }
+  filtered.forEach((entry, index) => {
+    const pokemon = "pokemon" in entry ? entry.pokemon : entry;
     const li = document.createElement("li");
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "pokemon-picker-btn";
-    btn.dataset.pokemonId = pokemon.id;
+    btn.dataset.pickerIndex = String(index);
     const img = document.createElement("img");
     img.className = "pokemon-picker-btn-img";
     img.alt = pokemon.name;
@@ -1745,24 +2598,44 @@ function renderPickerList(): void {
     nameEl.textContent = pokemon.name;
     btn.appendChild(img);
     btn.appendChild(nameEl);
-    if (isFull) btn.disabled = true;
+    if (isFull && pokemonPickerMode === "create-team") btn.disabled = true;
     li.appendChild(btn);
     listEl.appendChild(li);
   });
   updatePickerListButtons();
 }
 
-function openPokemonPicker(): void {
+function updatePokemonPickerModeUI(): void {
+  const teamWrap = document.querySelector(".pokemon-picker-team-wrap") as HTMLElement | null;
+  const confirmBtn = document.getElementById("pokemon-picker-confirm") as HTMLButtonElement | null;
+  const title = document.getElementById("pokemon-picker-title");
+  if (teamWrap) teamWrap.hidden = pokemonPickerMode !== "create-team";
+  if (confirmBtn) confirmBtn.hidden = pokemonPickerMode !== "create-team";
+  if (title) {
+    if (pokemonPickerMode === "create-team") title.textContent = "ポケモンを選択";
+    else if (pokemonPickerMode === "change-pokemon") title.textContent = "ポケモンを変更";
+    else title.textContent = "追加するポケモンを選択";
+  }
+}
+
+function openPokemonPicker(mode: PokemonPickerMode = "create-team"): void {
   const modal = document.getElementById("pokemon-picker-modal");
   const listEl = document.getElementById("pokemon-picker-list");
   if (!modal || !listEl) return;
+  pokemonPickerMode = mode;
   pickerTypeFilter = null;
   pickerSourceMode = "all";
   pickerSortKey = "number";
   pickerShowOnlyFinalEvolution = true;
   pickerRegulationFilter = "M-A";
   listEl.innerHTML = "";
-  renderPickerTeamPreview();
+  if (pokemonPickerMode === "create-team") {
+    renderPickerTeamPreview();
+  } else {
+    const preview = document.getElementById("pokemon-picker-team-preview");
+    if (preview) preview.innerHTML = "";
+  }
+  updatePokemonPickerModeUI();
   updatePickerSourceSortUI();
   renderPickerTypeButtons();
   if (demoPokemon.length === 0) {
@@ -1789,23 +2662,44 @@ function removeFromTeamInPicker(slotIndex: number): void {
 function closePokemonPicker(): void {
   const modal = document.getElementById("pokemon-picker-modal");
   if (modal) modal.hidden = true;
-  editingTeam = [];
+  if (pokemonPickerMode === "create-team") editingTeam = [];
   editingTeamIndex = -1;
+  pokemonPickerMode = "create-team";
+  updatePokemonPickerModeUI();
+  if (shouldReopenTeamDetailOnPickerClose && selectedTeamIndex !== null) {
+    shouldReopenTeamDetailOnPickerClose = false;
+    openTeamDetailModal(selectedTeamIndex);
+  }
 }
 
 /** チーム作成をキャンセル（編集中チームを破棄してモーダルを閉じる） */
 function cancelTeamCreation(): void {
-  editingTeam = [];
+  if (pokemonPickerMode === "create-team") editingTeam = [];
   closePokemonPicker();
 }
 
 /** ダイアログの作成ボタン押下：編集中チームを teams に追加してモーダルを閉じる */
 function confirmTeamCreation(): void {
   teams.push([...editingTeam]);
+  teamNames.push(`チーム ${teams.length}`);
   saveTeamToStorage();
   renderTeamList();
   editingTeam = [];
   closePokemonPicker();
+}
+
+function moveTeamUp(teamIndex: number): void {
+  if (teamIndex <= 0) return;
+  [teams[teamIndex - 1], teams[teamIndex]] = [teams[teamIndex], teams[teamIndex - 1]];
+  saveTeamToStorage();
+  renderTeamList();
+}
+
+function moveTeamDown(teamIndex: number): void {
+  if (teamIndex >= teams.length - 1) return;
+  [teams[teamIndex], teams[teamIndex + 1]] = [teams[teamIndex + 1], teams[teamIndex]];
+  saveTeamToStorage();
+  renderTeamList();
 }
 
 function openDeleteConfirmModal(teamIndex: number): void {
@@ -1823,6 +2717,7 @@ function closeDeleteConfirmModal(): void {
 function confirmDeleteTeam(): void {
   if (deleteTargetTeamIndex >= 0 && deleteTargetTeamIndex < teams.length) {
     teams.splice(deleteTargetTeamIndex, 1);
+    teamNames.splice(deleteTargetTeamIndex, 1);
     saveTeamToStorage();
     renderTeamList();
   }
@@ -1831,11 +2726,39 @@ function confirmDeleteTeam(): void {
   renderTeamList();
 }
 
-function addPokemonToTeam(pokemon: Pokemon): void {
+function addPokemonToTeam(member: TeamMember): void {
   if (editingTeam.length >= MAX_TEAM_SIZE) return;
-  editingTeam.push(pokemon);
+  editingTeam.push(member);
   renderPickerTeamPreview();
   updatePickerListButtons();
+}
+
+function handlePokemonPicked(member: TeamMember): void {
+  if (pokemonPickerMode === "team-slot" && selectedTeamIndex !== null && selectedTeamSlotIndex !== null) {
+    const tIdx = selectedTeamIndex;
+    beginTeamDraftAtSlot(selectedTeamIndex, selectedTeamSlotIndex, member);
+    pendingTeamDraft = null;
+    shouldReopenTeamDetailOnPickerClose = false;
+    closePokemonPicker();
+    openTeamDetailModal(tIdx);
+    return;
+  }
+  if (pokemonPickerMode === "change-pokemon") {
+    boxEditingPokemon = member.pokemon;
+    const title = document.getElementById("box-detail-title");
+    const img = document.getElementById("box-detail-img") as HTMLImageElement | null;
+    const typesEl = document.getElementById("box-detail-types");
+    if (title) title.textContent = member.pokemon.name;
+    if (img) {
+      img.src = getPokemonImageSrc(member.pokemon);
+      img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
+    }
+    if (typesEl) typesEl.innerHTML = typeBadgesHtml(member.pokemon.types);
+    initBoxEditForm(member.pokemon);
+    closePokemonPicker();
+    return;
+  }
+  addPokemonToTeam(member);
 }
 
 // ---------- タブ1: アイテムピッカー ----------
@@ -1865,6 +2788,47 @@ function renderTab1ItemDisplay(slot: "attacker" | "defender"): void {
   }
   if (nameEl) nameEl.textContent = found ? found.nameJa : "持ち物なし";
   if (effectEl) effectEl.textContent = found ? found.effect : "";
+}
+
+function toggleAegislashForm(slot: "attacker" | "defender"): void {
+  const currentPokemon = slot === "attacker" ? attackPokemon : defendPokemon;
+  const alternateForm = getAegislashAlternateForm(currentPokemon);
+  if (!alternateForm) return;
+  if (slot === "attacker") attackPokemon = alternateForm;
+  else defendPokemon = alternateForm;
+  syncStatsInputsFromState();
+  renderTab1DamageDisplay();
+}
+
+function renderTab1FormChangeRow(slot: "attacker" | "defender"): void {
+  const row = document.getElementById(`damage-${slot}-form-change-row`);
+  if (!row) return;
+
+  const pokemon = slot === "attacker" ? attackPokemon : defendPokemon;
+  if (!pokemon || !isAegislashForm(pokemon)) {
+    row.hidden = true;
+    row.innerHTML = "";
+    return;
+  }
+
+  const alternateForm = getAegislashAlternateForm(pokemon);
+  if (!alternateForm) {
+    row.hidden = true;
+    row.innerHTML = "";
+    return;
+  }
+
+  row.hidden = false;
+  row.innerHTML = "";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "form-change-btn form-change-btn-revert";
+  btn.textContent = "フォルムチェンジ";
+  btn.addEventListener("click", () => {
+    toggleAegislashForm(slot);
+  });
+  row.appendChild(btn);
 }
 
 function openTab1ItemPicker(slot: "attacker" | "defender"): void {
@@ -1959,6 +2923,13 @@ function renderTab1DamageDisplay(): void {
   const defenderTypes = document.getElementById("damage-defender-types");
   const attackerName = document.getElementById("damage-attacker-name");
   const attackerTypes = document.getElementById("damage-attacker-types");
+  const burnToggleBtn = document.getElementById("damage-burn-toggle");
+
+  if (burnToggleBtn) {
+    burnToggleBtn.classList.toggle("is-active", attackerIsBurned);
+    burnToggleBtn.setAttribute("aria-pressed", attackerIsBurned ? "true" : "false");
+  }
+  syncDamageConditionButtons();
 
   if (defenderImg) {
     if (defendPokemon) {
@@ -2010,6 +2981,8 @@ function renderTab1DamageDisplay(): void {
       closeTab1ItemPicker("attacker");
     }
   }
+  renderTab1FormChangeRow("defender");
+  renderTab1FormChangeRow("attacker");
   const defenderStatsBlock = document.getElementById("damage-slot-stats-defender");
   const attackerStatsBlock = document.getElementById("damage-slot-stats-attacker");
   if (defenderStatsBlock) {
@@ -2117,31 +3090,31 @@ function updateStatsRealValues(): void {
 
   if (defendPokemon && hpReal) {
     const base = getBaseStats(defendPokemon);
-    const ev = clampEv(Number(hpEv?.value) || 0);
+    const ev = clampDamageTabEv(Number(hpEv?.value) || 0);
     hpReal.textContent = String(Math.floor((2 * base.hp + 31 + ev * 2) * 50 / 100) + 60);
   } else if (hpReal) hpReal.textContent = "—";
 
   if (defendPokemon && defReal && defEv && defNat) {
     const base = getBaseStats(defendPokemon);
-    const real = calcStatWithEV(base.defense, clampEv(Number(defEv.value) || 0), clampNature(Number(defNat.value) || 1));
+    const real = calcStatWithEV(base.defense, clampDamageTabEv(Number(defEv.value) || 0), clampNature(Number(defNat.value) || 1));
     defReal.textContent = String(real);
   } else if (defReal) defReal.textContent = "—";
 
   if (defendPokemon && spDefReal && spDefEv && spDefNat) {
     const base = getBaseStats(defendPokemon);
-    const real = calcStatWithEV(base.spDefense, clampEv(Number(spDefEv.value) || 0), clampNature(Number(spDefNat.value) || 1));
+    const real = calcStatWithEV(base.spDefense, clampDamageTabEv(Number(spDefEv.value) || 0), clampNature(Number(spDefNat.value) || 1));
     spDefReal.textContent = String(real);
   } else if (spDefReal) spDefReal.textContent = "—";
 
   if (attackPokemon && atkReal && atkEv && atkNat) {
     const base = getBaseStats(attackPokemon);
-    const real = calcStatWithEV(base.attack, clampEv(Number(atkEv.value) || 0), clampNature(Number(atkNat.value) || 1));
+    const real = calcStatWithEV(base.attack, clampDamageTabEv(Number(atkEv.value) || 0), clampNature(Number(atkNat.value) || 1));
     atkReal.textContent = String(real);
   } else if (atkReal) atkReal.textContent = "—";
 
   if (attackPokemon && spatkReal && spatkEv && spatkNat) {
     const base = getBaseStats(attackPokemon);
-    const real = calcStatWithEV(base.spAttack, clampEv(Number(spatkEv.value) || 0), clampNature(Number(spatkNat.value) || 1));
+    const real = calcStatWithEV(base.spAttack, clampDamageTabEv(Number(spatkEv.value) || 0), clampNature(Number(spatkNat.value) || 1));
     spatkReal.textContent = String(real);
   } else if (spatkReal) spatkReal.textContent = "—";
 }
@@ -2156,48 +3129,62 @@ function readStatsInputsToState(): void {
   const atkNat = document.getElementById("stats-atk-nature") as HTMLSelectElement | null;
   const spatkEv = document.getElementById("stats-spatk-ev") as HTMLInputElement | null;
   const spatkNat = document.getElementById("stats-spatk-nature") as HTMLSelectElement | null;
-  defenderHpEV = clampEv(Number(hpEv?.value) || 0);
-  defenderDefEV = clampEv(Number(defEv?.value) || 0);
+  defenderHpEV = clampDamageTabEv(Number(hpEv?.value) || 0);
+  defenderDefEV = clampDamageTabEv(Number(defEv?.value) || 0);
   defenderDefNature = clampNature(Number(defNat?.value) || 1);
-  defenderSpDefEV = clampEv(Number(spDefEv?.value) || 0);
+  defenderSpDefEV = clampDamageTabEv(Number(spDefEv?.value) || 0);
   defenderSpDefNature = clampNature(Number(spDefNat?.value) || 1);
-  attackerAtkEV = clampEv(Number(atkEv?.value) || 0);
+  attackerAtkEV = clampDamageTabEv(Number(atkEv?.value) || 0);
   attackerAtkNature = clampNature(Number(atkNat?.value) || 1);
-  attackerSpAtkEV = clampEv(Number(spatkEv?.value) || 0);
+  attackerSpAtkEV = clampDamageTabEv(Number(spatkEv?.value) || 0);
   attackerSpAtkNature = clampNature(Number(spatkNat?.value) || 1);
 }
 
-/** 努力値のステップ値（4,12,20,...244,252 および 0） */
-const EV_STEPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+const DAMAGE_TAB_EV_MAX = 32;
+const BOX_EV_PER_STAT_MAX = 32;
+const BOX_EV_TOTAL_MAX = 66;
 
-function clampEv(v: number): number {
-  return Math.max(0, Math.min(32, Math.floor(v)));
+function clampDamageTabEv(v: number): number {
+  return Math.max(0, Math.min(DAMAGE_TAB_EV_MAX, Math.floor(v)));
 }
 
-function getClosestEvStep(v: number): number {
-  let closest = EV_STEPS[0];
-  let minDist = Math.abs(v - closest);
-  for (const s of EV_STEPS) {
-    const d = Math.abs(v - s);
-    if (d < minDist) {
-      minDist = d;
-      closest = s;
-    }
-  }
-  return closest;
+function clampBoxEv(v: number): number {
+  return Math.max(0, Math.min(BOX_EV_PER_STAT_MAX, Math.floor(v)));
 }
 
-function getNextEvStep(v: number): number {
-  const idx = EV_STEPS.indexOf(getClosestEvStep(v));
-  if (idx < 0) return EV_STEPS[0];
-  if (idx >= EV_STEPS.length - 1) return EV_STEPS[EV_STEPS.length - 1];
-  return EV_STEPS[idx + 1];
+function getNextEvStep(v: number, max: number): number {
+  return Math.min(max, Math.floor(v) + 1);
 }
 
 function getPrevEvStep(v: number): number {
-  const idx = EV_STEPS.indexOf(getClosestEvStep(v));
-  if (idx <= 0) return EV_STEPS[0];
-  return EV_STEPS[idx - 1];
+  return Math.max(0, Math.floor(v) - 1);
+}
+
+function getCurrentBoxEvTotal(excludeId?: string): number {
+  return BOX_EV_LABELS.reduce((sum, { id }) => {
+    if (id === excludeId) return sum;
+    const input = document.getElementById(id) as HTMLInputElement | null;
+    return sum + clampBoxEv(Number(input?.value) || 0);
+  }, 0);
+}
+
+function normalizeBoxEvInput(input: HTMLInputElement): number {
+  const ownValue = clampBoxEv(Number(input.value) || 0);
+  const remaining = Math.max(0, BOX_EV_TOTAL_MAX - getCurrentBoxEvTotal(input.id));
+  const normalized = Math.min(ownValue, remaining);
+  input.value = String(normalized);
+  return normalized;
+}
+
+function normalizeAllBoxEvInputs(): void {
+  let remaining = BOX_EV_TOTAL_MAX;
+  BOX_EV_LABELS.forEach(({ id }) => {
+    const input = document.getElementById(id) as HTMLInputElement | null;
+    if (!input) return;
+    const normalized = Math.min(clampBoxEv(Number(input.value) || 0), remaining);
+    input.value = String(normalized);
+    remaining -= normalized;
+  });
 }
 
 function clampNature(v: number): number {
@@ -2227,22 +3214,45 @@ function applyStatsFromInputsAndRecalc(): void {
   renderTab1DamageDisplay();
 }
 
-function getTab1FilteredPokemonList(): Pokemon[] {
-  let list: Pokemon[] = tab1SourceMode === "box" ? box.map((e) => e.pokemon) : demoPokemon;
+function getTab1FilteredPokemonList(): Tab1PickerEntry[] {
+  let list: Tab1PickerEntry[] = tab1SourceMode === "box"
+    ? box.map((entry, boxIndex) => ({ kind: "box", entry, boxIndex }))
+    : demoPokemon.map((pokemon) => ({ kind: "pokemon", pokemon }));
   if (tab1RegulationFilter === "M-A") {
-    list = list.filter((p) => p.regulation === "M-A");
+    list = list.filter((item) => (item.kind === "box" ? item.entry.pokemon.regulation : item.pokemon.regulation) === "M-A");
   }
   if (tab1ShowOnlyFinalEvolution) {
-    list = list.filter((p) => p.isFinalEvolution !== false);
+    list = list.filter((item) => (item.kind === "box" ? item.entry.pokemon.isFinalEvolution : item.pokemon.isFinalEvolution) !== false);
   }
   if (tab1SelectTypeFilter && tab1SelectTypeFilter !== "すべて") {
-    list = list.filter((p) => p.types.includes(tab1SelectTypeFilter!));
+    list = list.filter((item) => (item.kind === "box" ? item.entry.pokemon.types : item.pokemon.types).includes(tab1SelectTypeFilter!));
   }
   if (tab1NameSearchText.trim()) {
-    list = list.filter((p) => toHiragana(p.name).includes(toHiragana(tab1NameSearchText.trim())));
+    list = list.filter((item) => {
+      const name = item.kind === "box" ? item.entry.pokemon.name : item.pokemon.name;
+      return toHiragana(name).includes(toHiragana(tab1NameSearchText.trim()));
+    });
   }
-  if (tab1SortKey === "name") {
-    list = [...list].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  if (tab1SortKey === "number") {
+    list = [...list].sort((a, b) => {
+      const aPokemon = a.kind === "box" ? a.entry.pokemon : a.pokemon;
+      const bPokemon = b.kind === "box" ? b.entry.pokemon : b.pokemon;
+      const aKey = getPokemonNumberSortKey(aPokemon);
+      const bKey = getPokemonNumberSortKey(bPokemon);
+      if (aKey.number !== bKey.number) return aKey.number - bKey.number;
+      const idCmp = aKey.id.localeCompare(bKey.id, "ja");
+      if (idCmp !== 0) return idCmp;
+      const nameCmp = aKey.name.localeCompare(bKey.name, "ja");
+      if (nameCmp !== 0) return nameCmp;
+      if (a.kind === "box" && b.kind === "box") return a.boxIndex - b.boxIndex;
+      return 0;
+    });
+  } else if (tab1SortKey === "name") {
+    list = [...list].sort((a, b) => {
+      const aName = a.kind === "box" ? a.entry.pokemon.name : a.pokemon.name;
+      const bName = b.kind === "box" ? b.entry.pokemon.name : b.pokemon.name;
+      return aName.localeCompare(bName, "ja");
+    });
   }
   return list;
 }
@@ -2311,26 +3321,37 @@ function renderTab1SelectList(): void {
   const listEl = document.getElementById("tab1-pokemon-select-list");
   if (!listEl) return;
   listEl.innerHTML = "";
+  listEl.classList.toggle("pokemon-picker-list--box-cards", tab1SourceMode === "box");
   const filtered = getTab1FilteredPokemonList();
-  filtered.forEach((pokemon) => {
+  const moveMap = new Map(movesData.map((m) => [m.id, m]));
+  filtered.forEach((item, index) => {
     const li = document.createElement("li");
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "pokemon-picker-btn";
-    btn.dataset.pokemonId = pokemon.id;
-    const img = document.createElement("img");
-    img.className = "pokemon-picker-btn-img";
-    img.alt = pokemon.name;
-    img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
-    img.src = BALL_MONSTER_IMAGE;
-    const picSrc = getPickerPokemonImageSrc(pokemon);
-    if (picSrc !== BALL_MONSTER_IMAGE) img.src = picSrc;
-    const nameEl = document.createElement("span");
-    nameEl.className = "pokemon-picker-btn-name";
-    nameEl.textContent = pokemon.name;
-    btn.appendChild(img);
-    btn.appendChild(nameEl);
-    li.appendChild(btn);
+    if (item.kind === "box") {
+      const card = createPokemonDetailCard(createTeamMemberFromBoxEntry(item.entry), moveMap, {
+        asButton: true,
+        extraClassName: "box-pokemon-card pokemon-picker-btn-detail-card",
+      });
+      card.dataset.tab1PickerIndex = String(index);
+      li.appendChild(card);
+    } else {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "pokemon-picker-btn";
+      btn.dataset.tab1PickerIndex = String(index);
+      const img = document.createElement("img");
+      img.className = "pokemon-picker-btn-img";
+      img.alt = item.pokemon.name;
+      img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
+      img.src = BALL_MONSTER_IMAGE;
+      const picSrc = getPickerPokemonImageSrc(item.pokemon);
+      if (picSrc !== BALL_MONSTER_IMAGE) img.src = picSrc;
+      const nameEl = document.createElement("span");
+      nameEl.className = "pokemon-picker-btn-name";
+      nameEl.textContent = item.pokemon.name;
+      btn.appendChild(img);
+      btn.appendChild(nameEl);
+      li.appendChild(btn);
+    }
     listEl.appendChild(li);
   });
 }
@@ -2371,6 +3392,38 @@ function closeTab1PokemonSelect(): void {
   if (modal) modal.hidden = true;
 }
 
+function applyTab1BoxEntrySelection(target: "attack" | "defend", entry: BoxEntry): void {
+  const pokemon = entry.pokemon;
+  const nat = NATURES.find((n) => n.name === entry.natureName);
+  if (target === "attack") {
+    attackPokemon = pokemon;
+    attackerAbility = entry.ability || (pokemon.abilities?.[0] ?? "");
+    attackerAbilityActive = true;
+    editingMoveSlotIndex = null;
+    damageMovesTypeFilter = null;
+    attackerAtkRank = 0;
+    attackerSpAtkRank = 0;
+    selectedMoves = [...entry.moves, 0, 0, 0, 0].slice(0, 4);
+    attackerAtkEV = entry.ev.atk;
+    attackerSpAtkEV = entry.ev.spAtk;
+    attackerAtkNature = nat?.atk ?? 1.0;
+    attackerSpAtkNature = nat?.spAtk ?? 1.0;
+    tab1AttackerItem = entry.heldItem;
+    return;
+  }
+  defendPokemon = pokemon;
+  defenderAbility = entry.ability || (pokemon.abilities?.[0] ?? "");
+  defenderAbilityActive = true;
+  defenderDefRank = 0;
+  defenderSpDefRank = 0;
+  defenderHpEV = entry.ev.hp;
+  defenderDefEV = entry.ev.def;
+  defenderSpDefEV = entry.ev.spDef;
+  defenderDefNature = nat?.def ?? 1.0;
+  defenderSpDefNature = nat?.spDef ?? 1.0;
+  tab1DefenderItem = entry.heldItem;
+}
+
 function onTab1PokemonSelected(pokemon: Pokemon): void {
   if (tab1SelectTarget === "attack") {
     attackPokemon = pokemon;
@@ -2380,44 +3433,24 @@ function onTab1PokemonSelected(pokemon: Pokemon): void {
     damageMovesTypeFilter = null;
     attackerAtkRank = 0;
     attackerSpAtkRank = 0;
-    const boxEntry = tab1SourceMode === "box" ? box.find((e) => e.pokemon.id === pokemon.id) : null;
-    if (boxEntry) {
-      selectedMoves = [...boxEntry.moves, 0, 0, 0, 0].slice(0, 4);
-      attackerAtkEV = boxEntry.ev.atk;
-      attackerSpAtkEV = boxEntry.ev.spAtk;
-      const nat = NATURES.find((n) => n.name === boxEntry.natureName);
-      attackerAtkNature = nat?.atk ?? 1.0;
-      attackerSpAtkNature = nat?.spAtk ?? 1.0;
-      tab1AttackerItem = boxEntry.heldItem;
-    } else {
-      selectedMoves = getDefaultMoves(pokemon);
-      attackerAtkEV = 0;
-      attackerAtkNature = 1.0;
-      attackerSpAtkEV = 0;
-      attackerSpAtkNature = 1.0;
-    }
+    selectedMoves = getDefaultMoves(pokemon);
+    attackerAtkEV = 0;
+    attackerAtkNature = 1.0;
+    attackerSpAtkEV = 0;
+    attackerSpAtkNature = 1.0;
+    tab1AttackerItem = "";
   } else if (tab1SelectTarget === "defend") {
     defendPokemon = pokemon;
     defenderAbility = pokemon.abilities?.[0] ?? "";
     defenderAbilityActive = true;
     defenderDefRank = 0;
     defenderSpDefRank = 0;
-    const boxEntry = tab1SourceMode === "box" ? box.find((e) => e.pokemon.id === pokemon.id) : null;
-    if (boxEntry) {
-      defenderHpEV = boxEntry.ev.hp;
-      defenderDefEV = boxEntry.ev.def;
-      defenderSpDefEV = boxEntry.ev.spDef;
-      const nat = NATURES.find((n) => n.name === boxEntry.natureName);
-      defenderDefNature = nat?.def ?? 1.0;
-      defenderSpDefNature = nat?.spDef ?? 1.0;
-      tab1DefenderItem = boxEntry.heldItem;
-    } else {
-      defenderHpEV = 0;
-      defenderDefEV = 0;
-      defenderDefNature = 1.0;
-      defenderSpDefEV = 0;
-      defenderSpDefNature = 1.0;
-    }
+    defenderHpEV = 0;
+    defenderDefEV = 0;
+    defenderDefNature = 1.0;
+    defenderSpDefEV = 0;
+    defenderSpDefNature = 1.0;
+    tab1DefenderItem = "";
   } else if (tab1SelectTarget === "box") {
     closeTab1PokemonSelect();
     openBoxDetailModal(pokemon);
@@ -2519,40 +3552,7 @@ function renderTab1MovesSlots(): void {
 
       let damageResult: DamageResult | null = null;
       if (defendPokemon && defenderStats) {
-        const atkOverride = { attack: calcStatWithEV(attackerStats.attack, attackerAtkEV, attackerAtkNature), spAttack: calcStatWithEV(attackerStats.spAttack, attackerSpAtkEV, attackerSpAtkNature) };
-        const defOverride = { defense: calcStatWithEV(defenderStats.defense, defenderDefEV, defenderDefNature), spDefense: calcStatWithEV(defenderStats.spDefense, defenderSpDefEV, defenderSpDefNature) };
-        const defenderHpWithEV = Math.floor((2 * defenderStats.hp + 31 + defenderHpEV * 2) * 50 / 100) + 60;
-        damageResult = calculateDamage({
-          movePower: move.power,
-          moveType: move.type,
-          moveCategory: move.category,
-          attackerTypes: attackPokemon.types,
-          attackerBaseStats: attackerStats,
-          defenderTypes: defendPokemon.types,
-          defenderBaseStats: defenderStats,
-          attackerStatOverride: atkOverride,
-          defenderStatOverride: defOverride,
-          attackerAtkRank,
-          attackerSpAtkRank,
-          defenderDefRank,
-          defenderSpDefRank,
-          weather: currentWeather || undefined,
-          terrain: currentTerrain || undefined,
-          attackerItem: tab1AttackerItem || undefined,
-          defenderItem: tab1DefenderItem || undefined,
-          defenderHpOverride: defenderHpWithEV,
-          attackerAbility: attackerAbility || undefined,
-          defenderAbility: defenderAbility || undefined,
-          attackerAbilityActive,
-          defenderAbilityActive,
-          moveFlags: {
-            contact: move.contact,
-            pulse: move.pulse,
-            bite: move.bite,
-            punch: move.punch,
-            slicing: move.slicing,
-          },
-        });
+        damageResult = calculateMoveDamageResult(move, attackerStats, defenderStats);
       }
 
       const body = document.createElement("div");
@@ -2601,6 +3601,9 @@ function renderTab1MovesSlots(): void {
     }
 
     slot.appendChild(btn);
+    if (move?.name === "トリプルアクセル") {
+      slot.appendChild(createTripleAxelControl());
+    }
     slotsEl.appendChild(slot);
   }
 }
@@ -2785,13 +3788,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const pokemonPickerModal = document.getElementById("pokemon-picker-modal");
   const pokemonPickerList = document.getElementById("pokemon-picker-list");
   const pokemonPickerConfirm = document.getElementById("pokemon-picker-confirm");
+  const boxSortSelect = document.getElementById("box-sort-select") as HTMLSelectElement | null;
   const pokemonPickerCancel = document.getElementById("pokemon-picker-cancel");
   const teamDeleteConfirmModal = document.getElementById("team-delete-confirm-modal");
   const teamDeleteConfirmOk = document.getElementById("team-delete-confirm-ok");
   const teamDeleteConfirmCancel = document.getElementById("team-delete-confirm-cancel");
   loadTeamFromStorage();
   loadBoxFromStorage();
+  if (boxSortSelect) boxSortSelect.value = boxSortMode;
   renderTeamList();
+  updateTeamEditButtonLabel();
   renderTab1DamageDisplay();
 
   fetch("data/moves.json")
@@ -2814,8 +3820,14 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((res) => (res.ok ? res.json() : []))
     .then((data: CompetitiveItem[]) => {
       maItems = Array.isArray(data) ? data : [];
+      renderTeamList();
+      if (selectedTeamIndex !== null) renderTeamDetailModal(selectedTeamIndex);
     })
-    .catch(() => { maItems = []; });
+    .catch(() => {
+      maItems = [];
+      renderTeamList();
+      if (selectedTeamIndex !== null) renderTeamDetailModal(selectedTeamIndex);
+    });
 
   document.getElementById("damage-attacker-ability-select")?.addEventListener("change", (e) => {
     attackerAbility = (e.target as HTMLSelectElement).value;
@@ -2850,13 +3862,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inputId) {
       const input = document.getElementById(inputId) as HTMLInputElement | null;
       if (!input) return;
-      const val = clampEv(Number(input.value) || 0);
+      const val = clampDamageTabEv(Number(input.value) || 0);
       if (target.classList.contains("damage-ev-btn-0")) {
         input.value = "0";
       } else if (target.classList.contains("damage-ev-btn-252")) {
-        input.value = "32";
+        input.value = String(DAMAGE_TAB_EV_MAX);
       } else if (target.classList.contains("damage-ev-step-up")) {
-        input.value = String(getNextEvStep(val));
+        input.value = String(getNextEvStep(val, DAMAGE_TAB_EV_MAX));
       } else if (target.classList.contains("damage-ev-step-down")) {
         input.value = String(getPrevEvStep(val));
       } else {
@@ -2888,7 +3900,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const inp = el as HTMLInputElement;
       let v = Number(inp.value);
       if (Number.isNaN(v) || v < 0) v = 0;
-      if (v > 255) v = 255;
+      if (v > DAMAGE_TAB_EV_MAX) v = DAMAGE_TAB_EV_MAX;
       inp.value = String(Math.floor(v));
       readStatsInputsToState();
       updateStatsRealValues();
@@ -2903,20 +3915,39 @@ document.addEventListener("DOMContentLoaded", () => {
       renderTab1MovesSlots();
     }
   });
-  // 天候・フィールドの変更
-  document.getElementById("damage-weather-select")?.addEventListener("change", (e) => {
-    currentWeather = (e.target as HTMLSelectElement).value;
-    renderTab1MovesSlots();
-  });
-  document.getElementById("damage-terrain-select")?.addEventListener("change", (e) => {
-    currentTerrain = (e.target as HTMLSelectElement).value;
+  document.getElementById("damage-weather-section")?.addEventListener("click", (e) => {
+    const target = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-weather], [data-terrain]");
+    if (!target) return;
+    if (target.dataset.weather !== undefined) currentWeather = target.dataset.weather;
+    if (target.dataset.terrain !== undefined) currentTerrain = target.dataset.terrain;
+    syncDamageConditionButtons();
     renderTab1MovesSlots();
   });
   // タブ3: BOX
   document.getElementById("box-create-btn")?.addEventListener("click", openBoxCreate);
+  boxSortSelect?.addEventListener("change", () => {
+    boxSortMode = boxSortSelect.value === "number" ? "number" : "created";
+    renderBoxGrid();
+  });
+  document.getElementById("box-detail-img")?.addEventListener("click", () => {
+    if (!boxEditingPokemon) return;
+    const editEl = document.getElementById("box-detail-edit");
+    if (editEl?.hidden) return;
+    openPokemonPicker("change-pokemon");
+  });
+  document.getElementById("box-nature-btn")?.addEventListener("click", () => {
+    const wrap = document.getElementById("box-nature-grid-wrap");
+    if (!wrap) return;
+    if (wrap.hidden) {
+      renderNatureGrid();
+      wrap.hidden = false;
+    } else {
+      wrap.hidden = true;
+    }
+  });
   document.getElementById("box-detail-cancel")?.addEventListener("click", closeBoxDetailModal);
-  document.getElementById("box-detail-backdrop")?.addEventListener("click", closeBoxDetailModal);
   document.getElementById("box-detail-save")?.addEventListener("click", saveBoxEntry);
+  document.getElementById("box-detail-add-to-box-btn")?.addEventListener("click", addCurrentEntryToBox);
   // 持ち物ピッカー
   document.getElementById("box-detail-item-select-btn")?.addEventListener("click", () => {
     const picker = document.getElementById("box-item-picker");
@@ -2970,19 +4001,32 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!inputId) return;
     const input = document.getElementById(inputId) as HTMLInputElement | null;
     if (!input) return;
-    const val = clampEv(Number(input.value) || 0);
+    const val = clampBoxEv(Number(input.value) || 0);
     if (target.classList.contains("damage-ev-btn-0")) input.value = "0";
-    else if (target.classList.contains("damage-ev-btn-252")) input.value = "32";
-    else if (target.classList.contains("damage-ev-step-up")) input.value = String(getNextEvStep(val));
+    else if (target.classList.contains("damage-ev-btn-252")) input.value = String(BOX_EV_PER_STAT_MAX);
+    else if (target.classList.contains("damage-ev-step-up")) input.value = String(getNextEvStep(val, BOX_EV_PER_STAT_MAX));
     else if (target.classList.contains("damage-ev-step-down")) input.value = String(getPrevEvStep(val));
+    normalizeBoxEvInput(input);
     if (boxEditingPokemon) updateBoxEditRealStats(boxEditingPokemon);
   });
+  document.getElementById("damage-burn-toggle")?.addEventListener("click", () => {
+    attackerIsBurned = !attackerIsBurned;
+    renderTab1DamageDisplay();
+  });
   document.getElementById("tab1-pokemon-select-list")?.addEventListener("click", (e) => {
-    const btn = (e.target as HTMLElement).closest(".pokemon-picker-btn");
+    const btn = (e.target as HTMLElement).closest<HTMLElement>(".pokemon-picker-btn, .pokemon-picker-btn-detail-card");
     if (!btn) return;
-    const id = (btn as HTMLElement).dataset.pokemonId;
-    const pokemon = demoPokemon.find((p) => p.id === id);
-    if (pokemon) onTab1PokemonSelected(pokemon);
+    const index = parseInt(btn.dataset.tab1PickerIndex ?? "", 10);
+    const entry = Number.isNaN(index) ? null : getTab1FilteredPokemonList()[index];
+    if (!entry) return;
+    if (entry.kind === "box" && tab1SelectTarget && tab1SelectTarget !== "box") {
+      applyTab1BoxEntrySelection(tab1SelectTarget, entry.entry);
+      syncStatsInputsFromState();
+      closeTab1PokemonSelect();
+      renderTab1DamageDisplay();
+      return;
+    }
+    onTab1PokemonSelected(entry.kind === "box" ? entry.entry.pokemon : entry.pokemon);
   });
   document.getElementById("tab1-pokemon-select-cancel")?.addEventListener("click", closeTab1PokemonSelect);
   document.getElementById("tab1-pokemon-select-modal")?.querySelector(".pokemon-modal-backdrop")?.addEventListener("click", closeTab1PokemonSelect);
@@ -3069,6 +4113,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   teamEditBtn?.addEventListener("click", () => {
     isEditMode = !isEditMode;
+    updateTeamEditButtonLabel();
     renderTeamList();
   });
   const teamResetStorageBtn = document.getElementById("team-reset-storage-btn");
@@ -3077,20 +4122,31 @@ document.addEventListener("DOMContentLoaded", () => {
     clearLocalStorageAndResetTeams();
   });
   teamListEl?.addEventListener("click", (e) => {
-    const deleteBtn = (e.target as HTMLElement).closest(".team-delete-btn");
-    if (!deleteBtn) return;
-    const index = parseInt((deleteBtn as HTMLElement).dataset.teamIndex ?? "", 10);
-    if (!Number.isNaN(index)) openDeleteConfirmModal(index);
+    const target = e.target as HTMLElement;
+    const deleteBadge = target.closest(".team-delete-badge");
+    if (deleteBadge) {
+      const index = parseInt((deleteBadge as HTMLElement).dataset.teamIndex ?? "", 10);
+      if (!Number.isNaN(index)) openDeleteConfirmModal(index);
+      return;
+    }
+    if (isEditMode) return;
+    const card = target.closest(".team-card");
+    if (!card) return;
+    const teamIndex = parseInt((card as HTMLElement).dataset.teamIndex ?? "", 10);
+    if (!Number.isNaN(teamIndex)) openTeamDetailModal(teamIndex);
   });
   pokemonPickerConfirm?.addEventListener("click", () => confirmTeamCreation());
   pokemonPickerCancel?.addEventListener("click", () => cancelTeamCreation());
   pokemonPickerModal?.querySelector(".pokemon-modal-backdrop")?.addEventListener("click", () => cancelTeamCreation());
   pokemonPickerList?.addEventListener("click", (e) => {
-    const btn = (e.target as HTMLElement).closest(".pokemon-picker-btn");
+    const btn = (e.target as HTMLElement).closest(".pokemon-picker-btn, .pokemon-picker-btn-detail-card");
     if (!btn || (btn as HTMLButtonElement).disabled) return;
-    const id = (btn as HTMLElement).dataset.pokemonId;
-    const pokemon = demoPokemon.find((p) => p.id === id);
-    if (pokemon) addPokemonToTeam(pokemon);
+    const index = parseInt((btn as HTMLElement).dataset.pickerIndex ?? "", 10);
+    const filtered = getFilteredPickerEntries();
+    const entry = Number.isNaN(index) ? null : filtered[index];
+    if (!entry) return;
+    const member = "pokemon" in entry ? createTeamMemberFromBoxEntry(entry) : createDefaultTeamMember(entry);
+    handlePokemonPicked(member);
   });
   document.getElementById("pokemon-picker-team-preview")?.addEventListener("click", (e) => {
     const slot = (e.target as HTMLElement).closest(".pokemon-picker-team-slot");
@@ -3101,6 +4157,21 @@ document.addEventListener("DOMContentLoaded", () => {
   teamDeleteConfirmOk?.addEventListener("click", () => confirmDeleteTeam());
   teamDeleteConfirmCancel?.addEventListener("click", () => closeDeleteConfirmModal());
   teamDeleteConfirmModal?.querySelector(".pokemon-modal-backdrop")?.addEventListener("click", () => closeDeleteConfirmModal());
+  document.getElementById("team-detail-close")?.addEventListener("click", () => closeTeamDetailModal());
+  document.getElementById("team-detail-modal")?.querySelector(".pokemon-modal-backdrop")?.addEventListener("click", () => closeTeamDetailModal());
+  document.getElementById("team-detail-grid")?.addEventListener("click", (e) => {
+    const slot = (e.target as HTMLElement).closest(".team-detail-slot");
+    if (!slot || selectedTeamIndex === null) return;
+    const slotIndex = parseInt((slot as HTMLElement).dataset.slotIndex ?? "", 10);
+    if (Number.isNaN(slotIndex)) return;
+    const team = teams[selectedTeamIndex];
+    if (!team) return;
+    if (team[slotIndex]?.pokemon) {
+      openTeamMemberDetailView(selectedTeamIndex, slotIndex, true);
+      return;
+    }
+    openTeamEmptySlotSelection(selectedTeamIndex, slotIndex);
+  });
 
   if (!deviceSelect || !videoEl) return;
 

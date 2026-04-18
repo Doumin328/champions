@@ -1168,7 +1168,7 @@
   {
     "id": 125,
     "name": "かげうち",
-    "type": "ノーマル",
+    "type": "ゴースト",
     "category": "物理",
     "power": 40,
     "accuracy": 100,

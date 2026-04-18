@@ -81,6 +81,12 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
 
 const LEVEL = 50;
 
+function getTypeMultiplier(moveType: string, defenderType: string): number {
+  const row = TYPE_CHART[moveType];
+  if (!row) return 1;
+  return row[defenderType] ?? 1;
+}
+
 export interface BaseStats {
   hp: number;
   attack: number;
@@ -98,6 +104,11 @@ export interface DamageInput {
   attackerBaseStats: BaseStats;
   defenderTypes: string[];
   defenderBaseStats: BaseStats;
+  isCritical?: boolean;
+  isBurned?: boolean;
+  isSpreadMove?: boolean;
+  protectMultiplier?: number;
+  hasParentalBond?: boolean;
 }
 
 export interface DamageResult {
@@ -114,11 +125,9 @@ export interface DamageResult {
 
 /** タイプ相性倍率（複数タイプは乗算） */
 function getTypeEffectiveness(moveType: string, defenderTypes: string[]): number {
-  const row = TYPE_CHART[moveType];
-  if (!row) return 1;
   let mult = 1;
   for (const t of defenderTypes) {
-    mult *= row[t] ?? 1;
+    mult *= getTypeMultiplier(moveType, t);
   }
   return mult;
 }
@@ -134,6 +143,11 @@ function calcStat(base: number, isHP: boolean): number {
     return Math.floor((2 * base * LEVEL) / 100) + LEVEL + 10;
   }
   return Math.floor(Math.floor((2 * base * LEVEL) / 100) + 5);
+}
+
+function roundHalfDown(value: number): number {
+  const floored = Math.floor(value);
+  return value - floored > 0.5 ? floored + 1 : floored;
 }
 
 /**
@@ -183,6 +197,11 @@ export function calculateDamage(input: DamageInput): DamageResult {
   }
 
   const stab = getStab(moveType, attackerTypes);
+  const spreadMult = input.isSpreadMove ? 0.75 : 1;
+  const parentalBondMult = input.hasParentalBond ? 1.25 : 1;
+  const criticalMult = input.isCritical ? 1.5 : 1;
+  const burnMult = input.isBurned && moveCategory === "物理" ? 0.5 : 1;
+  const protectMult = input.protectMultiplier ?? 1;
   const atkStat =
     moveCategory === "物理"
       ? calcStat(attackerBaseStats.attack, false)
@@ -197,9 +216,23 @@ export function calculateDamage(input: DamageInput): DamageResult {
     (Math.floor((2 * LEVEL) / 5 + 2) * movePower * atkStat) / defStat / 50
   ) + 2;
 
-  const modifier = stab * typeEff;
-  const damageMin = Math.floor(Math.max(1, Math.floor(base * modifier * 0.85)));
-  const damageMax = Math.floor(Math.max(1, Math.floor(base * modifier * 1.0)));
+  const applyRoll = (roll: number): number => {
+    let damage = base;
+    damage = roundHalfDown(damage * spreadMult);
+    damage = roundHalfDown(damage * parentalBondMult);
+    damage = roundHalfDown(damage * 1);
+    damage = roundHalfDown(damage * criticalMult);
+    damage = Math.floor(damage * roll / 100);
+    damage = roundHalfDown(damage * stab);
+    damage = Math.floor(damage * typeEff);
+    damage = roundHalfDown(damage * burnMult);
+    damage = roundHalfDown(damage * 1);
+    damage = roundHalfDown(damage * protectMult);
+    return Math.max(1, damage);
+  };
+
+  const damageMin = applyRoll(85);
+  const damageMax = applyRoll(100);
 
   const percentMin = (damageMin / defenderHP) * 100;
   const percentMax = (damageMax / defenderHP) * 100;

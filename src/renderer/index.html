@@ -101,11 +101,14 @@
                         </div>
                       </button>
                     </div>
-                    <div class="damage-slot-ability-row" id="damage-defender-ability-row" hidden>
-                      <span class="ability-label">特性</span>
-                      <select id="damage-defender-ability-select" class="ability-select"></select>
-                      <span id="damage-defender-ability-text" class="ability-text" hidden></span>
-                      <button type="button" class="ability-toggle-btn is-on" id="damage-defender-ability-toggle" hidden>ON</button>
+                    <div class="damage-ability-formchange-row">
+                      <div class="damage-slot-ability-row" id="damage-defender-ability-row" hidden>
+                        <span class="ability-label">特性</span>
+                        <select id="damage-defender-ability-select" class="ability-select"></select>
+                        <span id="damage-defender-ability-text" class="ability-text" hidden></span>
+                        <button type="button" class="ability-toggle-btn is-on" id="damage-defender-ability-toggle" hidden>ON</button>
+                      </div>
+                      <div class="damage-form-change-row" id="damage-defender-form-change-row" hidden></div>
                     </div>
                     <div class="damage-slot-stats" id="damage-slot-stats-defender">
                       <div class="damage-slot-stat-row">
@@ -113,10 +116,10 @@
                         <span class="damage-stats-real-value" id="stats-hp-real">—</span>
                         <div class="damage-ev-input-group">
                           <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-hp-ev">0</button>
-                          <input type="number" id="stats-hp-ev" class="damage-ev-input" min="0" max="32" value="0" />
-                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-hp-ev">32</button>
                           <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-hp-ev" aria-label="減らす">−</button>
+                          <input type="number" id="stats-hp-ev" class="damage-ev-input" min="0" max="32" value="0" />
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-hp-ev" aria-label="増やす">＋</button>
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-hp-ev">32</button>
                         </div>
                       </div>
                       <div class="damage-slot-stat-row">
@@ -124,10 +127,10 @@
                         <span class="damage-stats-real-value" id="stats-def-real">—</span>
                         <div class="damage-ev-input-group">
                           <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-def-ev">0</button>
-                          <input type="number" id="stats-def-ev" class="damage-ev-input" min="0" max="32" value="0" />
-                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-def-ev">32</button>
                           <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-def-ev" aria-label="減らす">−</button>
+                          <input type="number" id="stats-def-ev" class="damage-ev-input" min="0" max="32" value="0" />
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-def-ev" aria-label="増やす">＋</button>
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-def-ev">32</button>
                         </div>
                         <select id="stats-def-nature">
                           <option value="0.9">↓</option>
@@ -144,10 +147,10 @@
                         <span class="damage-stats-real-value" id="stats-spdef-real">—</span>
                         <div class="damage-ev-input-group">
                           <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-spdef-ev">0</button>
-                          <input type="number" id="stats-spdef-ev" class="damage-ev-input" min="0" max="32" value="0" />
-                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spdef-ev">32</button>
                           <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-spdef-ev" aria-label="減らす">−</button>
+                          <input type="number" id="stats-spdef-ev" class="damage-ev-input" min="0" max="32" value="0" />
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-spdef-ev" aria-label="増やす">＋</button>
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spdef-ev">32</button>
                         </div>
                         <select id="stats-spdef-nature">
                           <option value="0.9">↓</option>
@@ -192,11 +195,14 @@
                         </div>
                       </button>
                     </div>
-                    <div class="damage-slot-ability-row" id="damage-attacker-ability-row" hidden>
-                      <span class="ability-label">特性</span>
-                      <select id="damage-attacker-ability-select" class="ability-select"></select>
-                      <span id="damage-attacker-ability-text" class="ability-text" hidden></span>
-                      <button type="button" class="ability-toggle-btn is-on" id="damage-attacker-ability-toggle" hidden>ON</button>
+                    <div class="damage-ability-formchange-row">
+                      <div class="damage-slot-ability-row" id="damage-attacker-ability-row" hidden>
+                        <span class="ability-label">特性</span>
+                        <select id="damage-attacker-ability-select" class="ability-select"></select>
+                        <span id="damage-attacker-ability-text" class="ability-text" hidden></span>
+                        <button type="button" class="ability-toggle-btn is-on" id="damage-attacker-ability-toggle" hidden>ON</button>
+                      </div>
+                      <div class="damage-form-change-row" id="damage-attacker-form-change-row" hidden></div>
                     </div>
                     <div class="damage-slot-stats" id="damage-slot-stats-attacker">
                       <div class="damage-slot-stat-row">
@@ -204,10 +210,10 @@
                         <span class="damage-stats-real-value" id="stats-atk-real">—</span>
                         <div class="damage-ev-input-group">
                           <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-atk-ev">0</button>
-                          <input type="number" id="stats-atk-ev" class="damage-ev-input" min="0" max="32" value="0" />
-                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-atk-ev">32</button>
                           <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-atk-ev" aria-label="減らす">−</button>
+                          <input type="number" id="stats-atk-ev" class="damage-ev-input" min="0" max="32" value="0" />
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-atk-ev" aria-label="増やす">＋</button>
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-atk-ev">32</button>
                         </div>
                         <select id="stats-atk-nature">
                           <option value="0.9">↓</option>
@@ -224,10 +230,10 @@
                         <span class="damage-stats-real-value" id="stats-spatk-real">—</span>
                         <div class="damage-ev-input-group">
                           <button type="button" class="damage-ev-btn damage-ev-btn-0" data-ev-input="stats-spatk-ev">0</button>
-                          <input type="number" id="stats-spatk-ev" class="damage-ev-input" min="0" max="32" value="0" />
-                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spatk-ev">32</button>
                           <button type="button" class="damage-ev-step-btn damage-ev-step-down" data-ev-input="stats-spatk-ev" aria-label="減らす">−</button>
+                          <input type="number" id="stats-spatk-ev" class="damage-ev-input" min="0" max="32" value="0" />
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-spatk-ev" aria-label="増やす">＋</button>
+                          <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spatk-ev">32</button>
                         </div>
                         <select id="stats-spatk-nature">
                           <option value="0.9">↓</option>
@@ -240,6 +246,9 @@
                         <button type="button" class="rank-btn rank-btn-up" id="spatk-rank-up" aria-label="特攻ランクを上げる">＋</button>
                       </div>
                     </div>
+                    <div class="damage-attacker-status-row">
+                      <button type="button" id="damage-burn-toggle" class="damage-status-btn">やけど</button>
+                    </div>
                     <div class="damage-item-picker" id="damage-attacker-item-picker" hidden>
                       <input type="text" class="damage-item-picker-search" id="tab1-attacker-item-search" placeholder="アイテム名で検索…" />
                       <div class="damage-item-picker-grid" id="damage-attacker-item-grid"></div>
@@ -249,23 +258,25 @@
               </section>
               <!-- 天候・フィールド -->
               <section id="damage-weather-section" class="damage-weather-section">
-                <div class="damage-weather-row">
+                <div class="damage-condition-group">
                   <span class="damage-weather-label">天候</span>
-                  <select id="damage-weather-select">
-                    <option value="">なし</option>
-                    <option value="はれ">はれ</option>
-                    <option value="あめ">あめ</option>
-                    <option value="すなあらし">すなあらし</option>
-                    <option value="ゆき">ゆき</option>
-                  </select>
+                  <div class="damage-condition-options" role="group" aria-label="天候">
+                    <button type="button" class="damage-condition-option is-active" data-weather="">なし</button>
+                    <button type="button" class="damage-condition-option" data-weather="はれ">はれ</button>
+                    <button type="button" class="damage-condition-option" data-weather="あめ">あめ</button>
+                    <button type="button" class="damage-condition-option" data-weather="すなあらし">すなあらし</button>
+                    <button type="button" class="damage-condition-option" data-weather="ゆき">ゆき</button>
+                  </div>
+                </div>
+                <div class="damage-condition-group">
                   <span class="damage-weather-label">フィールド</span>
-                  <select id="damage-terrain-select">
-                    <option value="">なし</option>
-                    <option value="エレキフィールド">エレキ</option>
-                    <option value="グラスフィールド">グラス</option>
-                    <option value="サイコフィールド">サイコ</option>
-                    <option value="ミストフィールド">ミスト</option>
-                  </select>
+                  <div class="damage-condition-options" role="group" aria-label="フィールド">
+                    <button type="button" class="damage-condition-option is-active" data-terrain="">なし</button>
+                    <button type="button" class="damage-condition-option" data-terrain="エレキフィールド">エレキ</button>
+                    <button type="button" class="damage-condition-option" data-terrain="グラスフィールド">グラス</button>
+                    <button type="button" class="damage-condition-option" data-terrain="サイコフィールド">サイコ</button>
+                    <button type="button" class="damage-condition-option" data-terrain="ミストフィールド">ミスト</button>
+                  </div>
                 </div>
               </section>
               <!-- ③ 技選択・ダメージ結果 -->
@@ -311,7 +322,14 @@
             <div class="box-panel">
               <div class="box-header">
                 <h2 class="box-title">BOX</h2>
-                <button type="button" id="box-create-btn" class="box-create-btn">新規作成</button>
+                <div class="box-header-actions">
+                  <label class="box-sort-label" for="box-sort-select">並び替え</label>
+                  <select id="box-sort-select" class="box-sort-select">
+                    <option value="created">作成順</option>
+                    <option value="number">番号順</option>
+                  </select>
+                  <button type="button" id="box-create-btn" class="box-create-btn">新規作成</button>
+                </div>
               </div>
               <div id="box-pokemon-grid" class="box-pokemon-grid"></div>
               <div class="box-type-filter-wrap">
@@ -394,6 +412,17 @@
         </div>
       </div>
 
+      <div id="team-detail-modal" class="pokemon-modal" role="dialog" aria-modal="true" aria-labelledby="team-detail-title" hidden>
+        <div class="pokemon-modal-backdrop"></div>
+        <div class="pokemon-modal-content team-detail-content">
+          <h2 id="team-detail-title" class="pokemon-modal-title">チーム詳細</h2>
+          <div id="team-detail-grid" class="team-detail-grid"></div>
+          <div class="pokemon-modal-actions">
+            <button type="button" class="pokemon-modal-btn pokemon-modal-cancel" id="team-detail-close">閉じる</button>
+          </div>
+        </div>
+      </div>
+
       <!-- BOX詳細モーダル -->
       <div id="box-detail-modal" class="pokemon-modal" role="dialog" aria-modal="true" aria-labelledby="box-detail-title" hidden>
         <div class="pokemon-modal-backdrop" id="box-detail-backdrop"></div>
@@ -404,6 +433,7 @@
               <h2 id="box-detail-title" class="pokemon-modal-title">ポケモン名</h2>
               <span id="box-detail-types" class="box-detail-types"></span>
             </div>
+            <button type="button" class="box-detail-add-btn" id="box-detail-add-to-box-btn" hidden>BOXに追加</button>
           </div>
 
           <!-- 詳細確認モード -->
@@ -418,16 +448,33 @@
 
           <!-- 編集モード -->
           <div id="box-detail-edit">
-            <!-- 性格 -->
-            <div class="box-detail-section">
-              <label class="box-detail-label" for="box-detail-nature">性格</label>
-              <select id="box-detail-nature" class="box-detail-nature-select"></select>
+            <!-- とくせい＋性格（横並び） -->
+            <div class="box-ability-nature-row">
+              <div class="box-detail-section box-ability-col">
+                <label class="box-detail-label" for="box-detail-ability">とくせい</label>
+                <select id="box-detail-ability" class="box-detail-ability-select"></select>
+              </div>
+              <div class="box-detail-section box-nature-col">
+                <span class="box-detail-label">性格</span>
+                <button type="button" id="box-nature-btn" class="box-nature-btn">がんばりや</button>
+                <select id="box-detail-nature" class="box-detail-nature-select" hidden></select>
+              </div>
             </div>
-            <!-- ステータス -->
-            <div class="box-detail-section">
-              <span class="box-detail-label">ステータス</span>
-              <div class="box-ev-grid" id="box-ev-grid">
-                <!-- JS で動的生成 -->
+            <!-- 性格グリッド -->
+            <div id="box-nature-grid-wrap" class="box-nature-grid-wrap" hidden></div>
+            <!-- ステータス＋技（横並び） -->
+            <div class="box-stats-moves-row">
+              <!-- ステータス -->
+              <div class="box-detail-section box-stats-col">
+                <span class="box-detail-label">ステータス</span>
+                <div class="box-ev-grid" id="box-ev-grid">
+                  <!-- JS で動的生成 -->
+                </div>
+              </div>
+              <!-- 技スロット -->
+              <div class="box-detail-section box-moves-col">
+                <span class="box-detail-label">技</span>
+                <div id="box-moves-slots" class="box-moves-slots"></div>
               </div>
             </div>
             <!-- 持ち物 -->
@@ -444,19 +491,13 @@
                 <div id="box-item-list" class="box-item-list"></div>
               </div>
             </div>
-            <!-- 技 -->
-            <div class="box-detail-section">
-              <span class="box-detail-label">技</span>
-              <div id="box-moves-area" class="box-moves-area">
-                <div id="box-moves-slots" class="box-moves-slots"></div>
-                <div id="box-moves-list-wrap" class="box-moves-list-wrap" hidden>
-                  <input type="text" id="box-moves-search" class="move-search-input" placeholder="技名で検索…" />
-                  <div id="box-moves-list-type-btns" class="damage-moves-list-type-buttons" role="group"></div>
-                  <div id="box-moves-list-cat-btns" class="damage-moves-list-category-buttons" role="group"></div>
-                  <div class="box-moves-list-scroll">
-                    <div id="box-moves-list" class="damage-moves-list"></div>
-                  </div>
-                </div>
+            <!-- 技一覧ピッカー（持ち物の下） -->
+            <div id="box-moves-list-wrap" class="box-moves-list-wrap" hidden>
+              <input type="text" id="box-moves-search" class="move-search-input" placeholder="技名で検索…" />
+              <div id="box-moves-list-type-btns" class="damage-moves-list-type-buttons" role="group"></div>
+              <div id="box-moves-list-cat-btns" class="damage-moves-list-category-buttons" role="group"></div>
+              <div class="box-moves-list-scroll">
+                <div id="box-moves-list" class="damage-moves-list"></div>
               </div>
             </div>
             <div class="pokemon-modal-actions">
