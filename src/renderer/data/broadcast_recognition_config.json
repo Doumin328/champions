@@ -12,12 +12,23 @@
     {
       "id": "selection-complete",
       "targetState": "selection",
-      "rect": { "x": 0.1859375, "y": 0.8388888888888889, "width": 0.08854166666666667, "height": 0.05555555555555555 },
-      "threshold": 0.91,
+      "rect": { "x": 0.15625, "y": 0.8407407407407408, "width": 0.13020833333333334, "height": 0.05925925925925926 },
+      "threshold": 0.93,
       "templateImage": "scene/selection_complete_text.png",
-      "minTemplateScore": 0.91,
+      "minTemplateScore": 0.93,
       "templateSearchOffsetX": 0.02,
       "templateSearchOffsetY": 0.02,
+      "templateSearchScale": 0.02
+    },
+    {
+      "id": "selection-arrow",
+      "targetState": "selection",
+      "rect": { "x": 0.0, "y": 0.1574074074074074, "width": 0.06145833333333334, "height": 0.11851851851851852 },
+      "threshold": 0.9,
+      "templateImage": "scene/selection_arrow.png",
+      "minTemplateScore": 0.9,
+      "templateSearchOffsetX": 0.015,
+      "templateSearchOffsetY": 0.015,
       "templateSearchScale": 0.02
     },
     {
