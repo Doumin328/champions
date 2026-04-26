@@ -1,0 +1,46 @@
+{
+  "opponentSlotRects": [
+    { "x": 0.828, "y": 0.143, "width": 0.08, "height": 0.105 },
+    { "x": 0.828, "y": 0.260, "width": 0.08, "height": 0.105 },
+    { "x": 0.828, "y": 0.377, "width": 0.08, "height": 0.105 },
+    { "x": 0.828, "y": 0.493, "width": 0.08, "height": 0.105 },
+    { "x": 0.828, "y": 0.611, "width": 0.08, "height": 0.103 },
+    { "x": 0.828, "y": 0.727, "width": 0.08, "height": 0.105 }
+  ],
+  "spriteSubrect": { "x": 0.03, "y": 0.08, "width": 0.54, "height": 1.00 },
+  "battleIndicators": [
+    {
+      "id": "selection-complete",
+      "targetState": "selection",
+      "rect": { "x": 0.1859375, "y": 0.8388888888888889, "width": 0.08854166666666667, "height": 0.05555555555555555 },
+      "threshold": 0.91,
+      "templateImage": "scene/selection_complete_text.png",
+      "minTemplateScore": 0.91,
+      "templateSearchOffsetX": 0.02,
+      "templateSearchOffsetY": 0.02,
+      "templateSearchScale": 0.02
+    },
+    {
+      "id": "vs-center",
+      "targetState": "battle",
+      "rect": { "x": 0.385, "y": 0.327, "width": 0.23, "height": 0.345 },
+      "threshold": 0.88,
+      "templateImage": "scene/vs_center.png",
+      "minTemplateScore": 0.88,
+      "templateSearchOffsetX": 0.04,
+      "templateSearchOffsetY": 0.04,
+      "templateSearchScale": 0.06
+    },
+    {
+      "id": "continue-battle-button",
+      "targetState": "idle",
+      "rect": { "x": 0.71875, "y": 0.8851851851851852, "width": 0.13958333333333334, "height": 0.06481481481481481 },
+      "threshold": 0.82,
+      "templateImage": "scene/continue_battle_text.png",
+      "minTemplateScore": 0.82,
+      "templateSearchOffsetX": 0.1,
+      "templateSearchOffsetY": 0.08,
+      "templateSearchScale": 0.08
+    }
+  ]
+}

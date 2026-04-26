@@ -30,4 +30,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // MediaRecorder のチャンクを main プロセスへ送る（一方向）
   sendStreamChunk: (chunk: ArrayBuffer) => ipcRenderer.send("stream:chunk", chunk),
+  startRecognitionWorker: () => ipcRenderer.invoke("recognition:start-worker"),
+  stopRecognitionWorker: () => ipcRenderer.invoke("recognition:stop-worker"),
+  recognizeOpponentSlots: (slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>) =>
+    ipcRenderer.invoke("recognition:recognize-slots", { slots }),
+  saveOpponentSlotImages: (slots: Array<{ slotIndex: number; imageBase64: string }>) =>
+    ipcRenderer.invoke("recognition:save-opponent-slot-images", { slots }),
 });

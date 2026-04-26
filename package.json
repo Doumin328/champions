@@ -4,7 +4,7 @@
   "description": "Electron デスクトップアプリ",
   "main": "dist/main/main.js",
   "scripts": {
-    "build": "tsc && copyfiles -u 1 \"src/renderer/*.html\" \"src/renderer/*.css\" \"src/renderer/data/*.json\" dist && copyfiles -u 1 \"src/img/*\" \"src/img/pokemon/*\" \"src/img/pokemon2/*\" \"src/img/pokemon3/*\" \"src/img/pokemon_cs/*\" \"src/img/type/*\" \"src/img/type/logos/*\" \"src/img/type/sv/*\" \"src/img/item/*\" dist/renderer",
+    "build": "tsc && copyfiles -u 1 \"src/renderer/*.html\" \"src/renderer/*.css\" \"src/renderer/data/*.json\" dist && copyfiles -u 1 \"src/img/*\" \"src/img/pokemon/*\" \"src/img/pokemon2/*\" \"src/img/pokemon3/*\" \"src/img/pokemon_cs/*\" \"src/img/pokemon_broadcast_templates/*\" \"src/img/type/*\" \"src/img/type/logos/*\" \"src/img/type/sv/*\" \"src/img/item/*\" dist/renderer && copyfiles -u 1 \"recognize/**/*\" dist/renderer/recognize",
     "start": "npm run build && electron .",
     "dev": "npm run build && electron .",
     "format-moves-info": "node scripts/format-moves-info.js",

@@ -1,10 +1,41 @@
 import { app, BrowserWindow, ipcMain, session } from "electron";
 import { ChildProcess, spawn } from "child_process";
 import * as path from "path";
+import * as fs from "fs";
+import * as readline from "readline";
 import ffmpegStatic from "ffmpeg-static";
 
 // バンドル済み FFmpeg を優先し、なければシステムの ffmpeg にフォールバック
 const FFMPEG_BIN = ffmpegStatic ?? "ffmpeg";
+const PYTHON_BIN = process.env.PYTHON_BIN ?? "python";
+const RECOGNITION_SCRIPT_PATH = path.resolve(process.cwd(), "scripts", "recognize_opponent_slots.py");
+
+type RecognitionWorkerReadyMessage = {
+  type: "ready";
+  templateCount: number;
+};
+
+type RecognitionWorkerErrorMessage = {
+  type: "error";
+  message: string;
+};
+
+type RecognitionWorkerResultMessage = {
+  type: "result";
+  requestId: string;
+  results: Array<{
+    slotIndex: number;
+    pokemonId: string | null;
+    pokemonName: string | null;
+    score: number;
+    topCandidates?: Array<{ pokemonId: string | null; pokemonName: string | null; score: number }>;
+  }>;
+};
+
+type RecognitionWorkerMessage =
+  | RecognitionWorkerReadyMessage
+  | RecognitionWorkerErrorMessage
+  | RecognitionWorkerResultMessage;
 
 function createWindow(): void {
   // キャプチャーボード（getUserMedia）の映像を許可する
@@ -40,9 +71,166 @@ function createWindow(): void {
 // ===== 配信 IPC ハンドラー =====
 let ffmpegProcess: ChildProcess | null = null;
 let streamingWindow: BrowserWindow | null = null;
+let recognitionWorker: ChildProcess | null = null;
+let recognitionWorkerReady = false;
+let recognitionWorkerReadyPromise: Promise<{ success: boolean; error?: string; templateCount?: number }> | null = null;
+let recognitionRequestCounter = 0;
+const recognitionPendingRequests = new Map<
+  string,
+  {
+    resolve: (value: { success: boolean; results?: RecognitionWorkerResultMessage["results"]; error?: string }) => void;
+    reject: (reason?: unknown) => void;
+  }
+>();
+
+function rejectRecognitionPending(reason: string): void {
+  for (const pending of recognitionPendingRequests.values()) {
+    pending.resolve({ success: false, error: reason });
+  }
+  recognitionPendingRequests.clear();
+}
+
+function stopRecognitionWorkerInternal(): { success: boolean; error?: string } {
+  if (!recognitionWorker) {
+    recognitionWorkerReady = false;
+    recognitionWorkerReadyPromise = null;
+    return { success: true };
+  }
+
+  recognitionWorker.kill();
+  recognitionWorker = null;
+  recognitionWorkerReady = false;
+  recognitionWorkerReadyPromise = null;
+  rejectRecognitionPending("Recognition worker stopped");
+  return { success: true };
+}
+
+function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; templateCount?: number }> {
+  if (recognitionWorkerReady && recognitionWorker && !recognitionWorker.killed) {
+    return Promise.resolve({ success: true });
+  }
+  if (recognitionWorkerReadyPromise) return recognitionWorkerReadyPromise;
+  if (!fs.existsSync(RECOGNITION_SCRIPT_PATH)) {
+    return Promise.resolve({ success: false, error: `Recognition script not found: ${RECOGNITION_SCRIPT_PATH}` });
+  }
+
+  recognitionWorkerReadyPromise = new Promise((resolve) => {
+    const worker = spawn(PYTHON_BIN, [RECOGNITION_SCRIPT_PATH], {
+      cwd: process.cwd(),
+      windowsHide: true,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    recognitionWorker = worker;
+    recognitionWorkerReady = false;
+
+    const rl = readline.createInterface({ input: worker.stdout! });
+
+    const finalizeReady = (result: { success: boolean; error?: string; templateCount?: number }) => {
+      if (recognitionWorkerReadyPromise) {
+        recognitionWorkerReadyPromise = null;
+      }
+      resolve(result);
+    };
+
+    rl.on("line", (line) => {
+      let message: RecognitionWorkerMessage;
+      try {
+        message = JSON.parse(line) as RecognitionWorkerMessage;
+      } catch {
+        return;
+      }
+
+      if (message.type === "ready") {
+        recognitionWorkerReady = true;
+        finalizeReady({ success: true, templateCount: message.templateCount });
+        return;
+      }
+      if (message.type === "error") {
+        if (!recognitionWorkerReady) {
+          finalizeReady({ success: false, error: message.message });
+        }
+        rejectRecognitionPending(message.message);
+        return;
+      }
+      if (message.type === "result") {
+        const pending = recognitionPendingRequests.get(message.requestId);
+        if (!pending) return;
+        recognitionPendingRequests.delete(message.requestId);
+        pending.resolve({ success: true, results: message.results });
+      }
+    });
+
+    worker.stderr?.on("data", (data: Buffer) => {
+      const message = data.toString().trim();
+      if (!message) return;
+      if (!recognitionWorkerReady && recognitionWorkerReadyPromise) {
+        finalizeReady({ success: false, error: message });
+      }
+      rejectRecognitionPending(message);
+    });
+
+    worker.on("error", (error) => {
+      recognitionWorker = null;
+      recognitionWorkerReady = false;
+      finalizeReady({ success: false, error: error.message });
+      rejectRecognitionPending(error.message);
+    });
+
+    worker.on("exit", (code, signal) => {
+      rl.close();
+      recognitionWorker = null;
+      recognitionWorkerReady = false;
+      const reason = `Recognition worker exited (${signal ?? code ?? "unknown"})`;
+      if (recognitionWorkerReadyPromise) {
+        finalizeReady({ success: false, error: reason });
+      }
+      rejectRecognitionPending(reason);
+    });
+  });
+
+  return recognitionWorkerReadyPromise;
+}
 
 // FFmpeg 起動前に届いたチャンクを一時的にバッファリング
 let streamChunkBuffer: Buffer[] = [];
+
+ipcMain.handle("recognition:start-worker", async () => ensureRecognitionWorker());
+
+ipcMain.handle("recognition:stop-worker", async () => stopRecognitionWorkerInternal());
+
+ipcMain.handle("recognition:recognize-slots", async (_event, payload: {
+  slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>;
+}) => {
+  const ready = await ensureRecognitionWorker();
+  if (!ready.success || !recognitionWorker?.stdin || recognitionWorker.stdin.destroyed) {
+    return { success: false, error: ready.error ?? "Recognition worker unavailable" };
+  }
+
+  const requestId = `req-${Date.now()}-${recognitionRequestCounter += 1}`;
+  const responsePromise = new Promise<{ success: boolean; results?: RecognitionWorkerResultMessage["results"]; error?: string }>((resolve, reject) => {
+    recognitionPendingRequests.set(requestId, { resolve, reject });
+  });
+
+  recognitionWorker.stdin.write(`${JSON.stringify({ type: "recognize", requestId, slots: payload.slots })}\n`);
+  return responsePromise;
+});
+
+ipcMain.handle("recognition:save-opponent-slot-images", async (_event, payload: {
+  slots: Array<{ slotIndex: number; imageBase64: string }>;
+}) => {
+  try {
+    const outputDir = path.resolve(process.cwd(), "outputImg");
+    fs.mkdirSync(outputDir, { recursive: true });
+    for (const slot of payload.slots) {
+      if (typeof slot.slotIndex !== "number" || !slot.imageBase64) continue;
+      const filename = `opoPoke${slot.slotIndex + 1}.png`;
+      fs.writeFileSync(path.join(outputDir, filename), Buffer.from(slot.imageBase64, "base64"));
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
 
 // レンダラーから送られる MediaRecorder チャンクを FFmpeg stdin へ流す
 ipcMain.on("stream:chunk", (_event, chunk: ArrayBuffer) => {
@@ -191,6 +379,7 @@ ipcMain.handle("stream:stop", async () => {
 app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
+  stopRecognitionWorkerInternal();
   if (process.platform !== "darwin") {
     app.quit();
   }
@@ -200,4 +389,8 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+app.on("before-quit", () => {
+  stopRecognitionWorkerInternal();
 });

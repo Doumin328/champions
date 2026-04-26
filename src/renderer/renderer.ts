@@ -497,6 +497,792 @@ function notifyStreamChanged(stream: MediaStream | null): void {
   streamChangeCallbacks.forEach((cb) => cb(stream));
 }
 
+const videoWrapEl = document.querySelector(".video-wrap") as HTMLElement | null;
+const sceneDetectionBadgeEl = document.getElementById("scene-detection-badge") as HTMLElement | null;
+const sceneDetectionTextEl = document.getElementById("scene-detection-text") as HTMLElement | null;
+const sceneDetectionEnabledEl = document.getElementById("scene-detection-enabled") as HTMLInputElement | null;
+const broadcastTeamNameEl = document.getElementById("broadcast-team-name") as HTMLElement | null;
+const broadcastRosterEl = document.getElementById("broadcast-roster") as HTMLElement | null;
+
+type SceneKind = "idle" | "selection" | "battle" | "unknown";
+
+interface NormalizedRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface BroadcastBattleIndicator {
+  id: string;
+  targetState?: Exclude<SceneKind, "unknown">;
+  rect: NormalizedRect;
+  threshold: number;
+  templateImage?: string;
+  minTemplateScore?: number;
+  templateSearchOffsetX?: number;
+  templateSearchOffsetY?: number;
+  templateSearchScale?: number;
+}
+
+interface BroadcastRecognitionConfig {
+  opponentSlotRects: NormalizedRect[];
+  spriteSubrect: NormalizedRect;
+  battleIndicators?: BroadcastBattleIndicator[];
+}
+
+interface BroadcastRecognitionMatch {
+  pokemonId: string;
+  pokemonName: string;
+  imageSrc: string;
+  score: number;
+}
+
+interface BroadcastRecognitionSlotState {
+  confirmed: BroadcastRecognitionMatch | null;
+  pending: BroadcastRecognitionMatch | null;
+  consecutiveMatches: number;
+}
+
+interface BroadcastConfirmedRosterState {
+  slots: Array<BroadcastRecognitionMatch | null>;
+  lastConfirmedAt: number;
+}
+
+interface SceneDetectionState {
+  rawScene: SceneKind;
+  displayScene: SceneKind;
+  pendingScene: SceneKind;
+  consecutiveMatches: number;
+}
+
+interface LoadedIndicatorTemplate {
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
+}
+
+const SCENE_DETECTION_INTERVAL_MS = 220;
+const SCENE_STABLE_MATCHES = 3;
+const BROADCAST_RECOGNITION_INTERVAL_MS = 350;
+const BROADCAST_RECOGNITION_STABLE_FRAMES = 2;
+const BROADCAST_TEMPLATE_SIZE = 112;
+const DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS: NormalizedRect[] = [
+  { x: 0.828, y: 0.143, width: 0.08, height: 0.105 },
+  { x: 0.828, y: 0.26, width: 0.08, height: 0.105 },
+  { x: 0.828, y: 0.377, width: 0.08, height: 0.105 },
+  { x: 0.828, y: 0.493, width: 0.08, height: 0.105 },
+  { x: 0.828, y: 0.611, width: 0.08, height: 0.103 },
+  { x: 0.828, y: 0.727, width: 0.08, height: 0.105 },
+];
+const DEFAULT_BROADCAST_SPRITE_SUBRECT: NormalizedRect = { x: 0.03, y: 0.08, width: 0.54, height: 1.0 };
+const DEFAULT_BROADCAST_BATTLE_INDICATORS: BroadcastBattleIndicator[] = [
+  {
+    id: "selection-complete",
+    targetState: "selection",
+    rect: { x: 0.1859375, y: 0.8388888888888889, width: 0.08854166666666667, height: 0.05555555555555555 },
+    threshold: 0.9,
+    templateImage: "scene/selection_complete_text.png",
+    minTemplateScore: 0.9,
+    templateSearchOffsetX: 0.02,
+    templateSearchOffsetY: 0.02,
+    templateSearchScale: 0.02,
+  },
+  {
+    id: "vs-center",
+    targetState: "battle",
+    rect: { x: 0.385, y: 0.327, width: 0.23, height: 0.345 },
+    threshold: 0.88,
+    templateImage: "scene/vs_center.png",
+    minTemplateScore: 0.88,
+    templateSearchOffsetX: 0.04,
+    templateSearchOffsetY: 0.04,
+    templateSearchScale: 0.06,
+  },
+  {
+    id: "continue-battle-button",
+    targetState: "idle",
+    rect: { x: 0.71875, y: 0.8851851851851852, width: 0.13958333333333334, height: 0.06481481481481481 },
+    threshold: 0.82,
+    templateImage: "scene/continue_battle_text.png",
+    minTemplateScore: 0.82,
+    templateSearchOffsetX: 0.1,
+    templateSearchOffsetY: 0.08,
+    templateSearchScale: 0.08,
+  },
+];
+
+let broadcastOpponentSlotRects: NormalizedRect[] = [...DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS];
+let broadcastSpriteSubrect: NormalizedRect = { ...DEFAULT_BROADCAST_SPRITE_SUBRECT };
+let broadcastBattleIndicators: BroadcastBattleIndicator[] = DEFAULT_BROADCAST_BATTLE_INDICATORS.map((indicator) => ({
+  ...indicator,
+  rect: { ...indicator.rect },
+}));
+let broadcastIndicatorsByScene = new Map<Exclude<SceneKind, "unknown">, BroadcastBattleIndicator[]>();
+let broadcastIndicatorTemplates = new Map<string, LoadedIndicatorTemplate>();
+let sceneDetectionState: SceneDetectionState = {
+  rawScene: "unknown",
+  displayScene: "idle",
+  pendingScene: "unknown",
+  consecutiveMatches: 0,
+};
+let sceneDetectionRunning = false;
+let sceneDetectionFrameHandle: number | null = null;
+let sceneDetectionLastRunAt = 0;
+let broadcastRecognitionCanvas: HTMLCanvasElement | null = null;
+let broadcastRecognitionContext: CanvasRenderingContext2D | null = null;
+let sceneTemplateCanvas: HTMLCanvasElement | null = null;
+let sceneTemplateContext: CanvasRenderingContext2D | null = null;
+let broadcastRecognitionReady = false;
+let broadcastRecognitionInFlight = false;
+let broadcastRecognitionLastRunAt = 0;
+let broadcastRecognitionStates: BroadcastRecognitionSlotState[] = Array.from({ length: 6 }, () => ({
+  confirmed: null,
+  pending: null,
+  consecutiveMatches: 0,
+}));
+let confirmedOpponentRoster: BroadcastConfirmedRosterState = {
+  slots: Array.from({ length: 6 }, () => null),
+  lastConfirmedAt: 0,
+};
+let lastSavedOpponentSlotImageSignature = "";
+let selectionSnapshotCaptured = false;
+let selectionSnapshotSlots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
+let recognitionBootstrapPromise: Promise<void> | null = null;
+
+function isValidNormalizedRect(value: unknown): value is NormalizedRect {
+  if (!value || typeof value !== "object") return false;
+  const rect = value as NormalizedRect;
+  return [rect.x, rect.y, rect.width, rect.height].every((part) => Number.isFinite(part));
+}
+
+function clampRect(rect: NormalizedRect): NormalizedRect {
+  const x = Math.min(1, Math.max(0, rect.x));
+  const y = Math.min(1, Math.max(0, rect.y));
+  const width = Math.min(1 - x, Math.max(0.0001, rect.width));
+  const height = Math.min(1 - y, Math.max(0.0001, rect.height));
+  return { x, y, width, height };
+}
+
+async function loadImageTemplate(templatePath: string): Promise<LoadedIndicatorTemplate | null> {
+  const src = `recognize/${templatePath}`;
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth || image.width;
+      canvas.height = image.naturalHeight || image.height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(image, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      resolve({
+        width: imageData.width,
+        height: imageData.height,
+        data: imageData.data,
+      });
+    };
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+}
+
+async function loadBroadcastRecognitionConfig(): Promise<void> {
+  let nextSlotRects = [...DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS];
+  let nextSpriteSubrect = { ...DEFAULT_BROADCAST_SPRITE_SUBRECT };
+  let nextIndicators = DEFAULT_BROADCAST_BATTLE_INDICATORS.map((indicator) => ({
+    ...indicator,
+    rect: { ...indicator.rect },
+  }));
+
+  try {
+    const response = await fetch("data/broadcast_recognition_config.json");
+    if (response.ok) {
+      const data = (await response.json()) as BroadcastRecognitionConfig;
+      if (Array.isArray(data.opponentSlotRects)) {
+        const rects = data.opponentSlotRects.filter((rect) => isValidNormalizedRect(rect)).map((rect) => clampRect(rect));
+        if (rects.length === 6) nextSlotRects = rects;
+      }
+      if (isValidNormalizedRect(data.spriteSubrect)) {
+        nextSpriteSubrect = clampRect(data.spriteSubrect);
+      }
+      if (Array.isArray(data.battleIndicators)) {
+        const indicators = data.battleIndicators
+          .filter((indicator) => indicator && typeof indicator.id === "string" && isValidNormalizedRect(indicator.rect))
+          .map((indicator) => {
+            const targetState: Exclude<SceneKind, "unknown"> =
+              indicator.targetState === "selection"
+                ? "selection"
+                : indicator.targetState === "idle"
+                  ? "idle"
+                  : "battle";
+            return {
+              ...indicator,
+              rect: clampRect(indicator.rect),
+              targetState,
+            };
+          });
+        if (indicators.length > 0) nextIndicators = indicators;
+      }
+    }
+  } catch {
+    // Keep defaults when config loading fails.
+  }
+
+  broadcastOpponentSlotRects = nextSlotRects;
+  broadcastSpriteSubrect = nextSpriteSubrect;
+  broadcastBattleIndicators = nextIndicators;
+  broadcastIndicatorsByScene = new Map<Exclude<SceneKind, "unknown">, BroadcastBattleIndicator[]>([
+    ["idle", broadcastBattleIndicators.filter((indicator) => indicator.targetState === "idle")],
+    ["selection", broadcastBattleIndicators.filter((indicator) => indicator.targetState === "selection")],
+    ["battle", broadcastBattleIndicators.filter((indicator) => indicator.targetState === "battle")],
+  ]);
+
+  const loadedTemplates = await Promise.all(
+    broadcastBattleIndicators.map(async (indicator) => {
+      if (!indicator.templateImage) return [indicator.id, null] as const;
+      const template = await loadImageTemplate(indicator.templateImage);
+      return [indicator.id, template] as const;
+    })
+  );
+  broadcastIndicatorTemplates = new Map(loadedTemplates.filter((entry): entry is [string, LoadedIndicatorTemplate] => !!entry[1]));
+}
+
+function ensureBroadcastRecognitionCanvas(): CanvasRenderingContext2D | null {
+  if (!broadcastRecognitionCanvas) {
+    broadcastRecognitionCanvas = document.createElement("canvas");
+  }
+  broadcastRecognitionContext = broadcastRecognitionCanvas.getContext("2d", { willReadFrequently: true });
+  return broadcastRecognitionContext;
+}
+
+function ensureSceneTemplateCanvas(width: number, height: number): CanvasRenderingContext2D | null {
+  if (!sceneTemplateCanvas) {
+    sceneTemplateCanvas = document.createElement("canvas");
+  }
+  if (sceneTemplateCanvas.width !== width) sceneTemplateCanvas.width = width;
+  if (sceneTemplateCanvas.height !== height) sceneTemplateCanvas.height = height;
+  sceneTemplateContext = sceneTemplateCanvas.getContext("2d", { willReadFrequently: true });
+  return sceneTemplateContext;
+}
+
+function cropRectFromVideo(rect: NormalizedRect, targetWidth: number, targetHeight: number): Uint8ClampedArray | null {
+  const ctx = ensureSceneTemplateCanvas(targetWidth, targetHeight);
+  if (!ctx || !sceneTemplateCanvas || !videoEl) return null;
+  const videoWidth = videoEl.videoWidth;
+  const videoHeight = videoEl.videoHeight;
+  if (videoWidth <= 0 || videoHeight <= 0) return null;
+
+  const clamped = clampRect(rect);
+  const rawSx = Math.floor(clamped.x * videoWidth);
+  const rawSy = Math.floor(clamped.y * videoHeight);
+  const rawSw = Math.max(1, Math.floor(clamped.width * videoWidth));
+  const rawSh = Math.max(1, Math.floor(clamped.height * videoHeight));
+  const sx = Math.min(Math.max(0, rawSx), Math.max(0, videoWidth - 1));
+  const sy = Math.min(Math.max(0, rawSy), Math.max(0, videoHeight - 1));
+  const sw = Math.max(1, Math.min(rawSw, videoWidth - sx));
+  const sh = Math.max(1, Math.min(rawSh, videoHeight - sy));
+
+  ctx.clearRect(0, 0, targetWidth, targetHeight);
+  ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+  return ctx.getImageData(0, 0, targetWidth, targetHeight).data;
+}
+
+function computeTemplateScore(observed: Uint8ClampedArray, template: Uint8ClampedArray): number {
+  if (observed.length !== template.length || observed.length === 0) return 0;
+  let totalDiff = 0;
+  const pixelCount = observed.length / 4;
+  for (let index = 0; index < observed.length; index += 4) {
+    const observedGray = observed[index] * 0.299 + observed[index + 1] * 0.587 + observed[index + 2] * 0.114;
+    const templateGray = template[index] * 0.299 + template[index + 1] * 0.587 + template[index + 2] * 0.114;
+    totalDiff += Math.abs(observedGray - templateGray);
+  }
+  return Math.max(0, 1 - totalDiff / (pixelCount * 255));
+}
+
+function getBestIndicatorScore(indicator: BroadcastBattleIndicator): number {
+  const template = broadcastIndicatorTemplates.get(indicator.id);
+  if (!template) return 0;
+
+  const offsetX = indicator.templateSearchOffsetX ?? 0;
+  const offsetY = indicator.templateSearchOffsetY ?? 0;
+  const scaleOffset = indicator.templateSearchScale ?? 0;
+  const dxCandidates = offsetX > 0 ? [-offsetX, 0, offsetX] : [0];
+  const dyCandidates = offsetY > 0 ? [-offsetY, 0, offsetY] : [0];
+  const scaleCandidates = scaleOffset > 0 ? [1 - scaleOffset, 1, 1 + scaleOffset] : [1];
+  let bestScore = 0;
+
+  for (const scale of scaleCandidates) {
+    const scaledRect: NormalizedRect = {
+      x: indicator.rect.x + indicator.rect.width * (1 - scale) * 0.5,
+      y: indicator.rect.y + indicator.rect.height * (1 - scale) * 0.5,
+      width: indicator.rect.width * scale,
+      height: indicator.rect.height * scale,
+    };
+    for (const dx of dxCandidates) {
+      for (const dy of dyCandidates) {
+        const candidateRect = clampRect({
+          x: scaledRect.x + indicator.rect.width * dx,
+          y: scaledRect.y + indicator.rect.height * dy,
+          width: scaledRect.width,
+          height: scaledRect.height,
+        });
+        const observed = cropRectFromVideo(candidateRect, template.width, template.height);
+        if (!observed) continue;
+        bestScore = Math.max(bestScore, computeTemplateScore(observed, template.data));
+      }
+    }
+  }
+
+  return bestScore;
+}
+
+function getExpectedNextScene(scene: SceneKind): SceneKind {
+  if (scene === "idle") return "selection";
+  if (scene === "selection") return "battle";
+  if (scene === "battle") return "idle";
+  return "unknown";
+}
+
+function getIndicatorsForSceneDetection(scene: SceneKind): BroadcastBattleIndicator[] {
+  const nextScene = getExpectedNextScene(scene);
+  if (nextScene !== "unknown") {
+    return broadcastIndicatorsByScene.get(nextScene as Exclude<SceneKind, "unknown">) ?? [];
+  }
+  return broadcastBattleIndicators;
+}
+
+function detectSceneFromVideo(): SceneKind {
+  const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
+  for (const indicator of candidateIndicators) {
+    const score = getBestIndicatorScore(indicator);
+    const threshold = indicator.minTemplateScore ?? indicator.threshold ?? 0.8;
+    if (score < threshold) continue;
+    return indicator.targetState ?? "battle";
+  }
+  return "unknown";
+}
+
+function resetRecognitionStates(): void {
+  broadcastRecognitionStates = Array.from({ length: 6 }, () => ({
+    confirmed: null,
+    pending: null,
+    consecutiveMatches: 0,
+  }));
+  confirmedOpponentRoster = {
+    slots: Array.from({ length: 6 }, () => null),
+    lastConfirmedAt: 0,
+  };
+  lastSavedOpponentSlotImageSignature = "";
+  selectionSnapshotCaptured = false;
+  selectionSnapshotSlots = [];
+}
+
+function renderBroadcastRoster(): void {
+  if (!broadcastRosterEl) return;
+  broadcastRosterEl.innerHTML = "";
+
+  const slots = sceneDetectionState.displayScene === "battle" && confirmedOpponentRoster.slots.some((slot) => !!slot)
+    ? confirmedOpponentRoster.slots
+    : broadcastRecognitionStates.map((state) => state.confirmed);
+
+  for (let index = 0; index < 6; index += 1) {
+    const slot = document.createElement("div");
+    const match = slots[index] ?? null;
+    slot.className = `broadcast-roster-slot${match ? "" : " is-empty"}${index === 0 ? " is-focus" : ""}`;
+
+    const slotIndex = document.createElement("span");
+    slotIndex.className = "broadcast-roster-slot-index";
+    slotIndex.textContent = String(index + 1);
+
+    const caption = document.createElement("span");
+    caption.className = "broadcast-roster-slot-caption";
+    caption.textContent = match ? "LOCKED" : "SCAN";
+
+    const thumb = document.createElement("img");
+    thumb.className = "broadcast-roster-thumb";
+    thumb.src = match?.imageSrc ?? "img/ball_monster.png";
+    thumb.alt = match?.pokemonName ?? "";
+    thumb.onerror = () => {
+      thumb.src = "img/ball_monster.png";
+    };
+
+    const meta = document.createElement("div");
+    meta.className = "broadcast-roster-meta";
+
+    const name = document.createElement("div");
+    name.className = "broadcast-roster-name";
+    name.textContent = match?.pokemonName ?? "Recognizing";
+
+    const detail = document.createElement("div");
+    detail.className = "broadcast-roster-detail";
+    detail.textContent = match ? `id: ${match.pokemonId}` : "No confirmed match";
+
+    meta.append(name, detail);
+    slot.append(slotIndex, caption, thumb, meta);
+    broadcastRosterEl.appendChild(slot);
+  }
+
+  if (broadcastTeamNameEl) {
+    broadcastTeamNameEl.textContent = sceneDetectionState.displayScene === "battle" ? "Opponent Locked" : "Opponent Preview";
+  }
+}
+
+function setSceneStatus(scene: SceneKind, message?: string): void {
+  if (videoWrapEl) {
+    videoWrapEl.dataset.scene = scene;
+    videoWrapEl.dataset.overlayVisible = scene === "battle" ? "true" : "false";
+  }
+
+  if (sceneDetectionBadgeEl) {
+    sceneDetectionBadgeEl.textContent = {
+      idle: "��E??��",
+      selection: "�I�o��",
+      battle: "�ΐ풆",
+      unknown: "��E??��",
+    }[scene];
+  }
+
+  if (sceneDetectionTextEl) {
+    sceneDetectionTextEl.textContent = message ?? {
+      idle: "��E??��ʂ�Ď���",
+      selection: "�I�o��ʂ�F����",
+      battle: "�ΐ��ʂ�F����",
+      unknown: "�f���F����E??��",
+    }[scene];
+  }
+
+  renderBroadcastRoster();
+}
+
+function syncReadableSceneStatus(scene: SceneKind, message?: string): void {
+  if (sceneDetectionBadgeEl) {
+    sceneDetectionBadgeEl.textContent = {
+      idle: "\u5F85\u6A5F\u4E2D",
+      selection: "\u9078\u51FA\u4E2D",
+      battle: "\u5BFE\u6226\u4E2D",
+      unknown: "\u5F85\u6A5F\u4E2D",
+    }[scene];
+  }
+
+  if (sceneDetectionTextEl) {
+    sceneDetectionTextEl.textContent = message ?? {
+      idle: "\u5F85\u6A5F\u753B\u9762\u3092\u8A8D\u8B58\u4E2D",
+      selection: "\u9078\u51FA\u753B\u9762\u3092\u8A8D\u8B58\u4E2D",
+      battle: "\u5BFE\u6226\u753B\u9762\u3092\u8A8D\u8B58\u4E2D",
+      unknown: "\u5834\u9762\u8A8D\u8B58\u3092\u5F85\u6A5F\u4E2D",
+    }[scene];
+  }
+}
+
+function isAllowedSceneTransition(from: SceneKind, to: SceneKind): boolean {
+  if (to === "unknown" || from === to) return true;
+  if (from === "idle") return to === "selection";
+  if (from === "selection") return to === "battle";
+  if (from === "battle") return to === "idle";
+  return to === "idle";
+}
+
+function advanceSceneDetectionState(rawScene: SceneKind): void {
+  sceneDetectionState.rawScene = rawScene;
+  if (rawScene === "unknown") {
+    setSceneStatus(sceneDetectionState.displayScene);
+    syncReadableSceneStatus(sceneDetectionState.displayScene);
+    return;
+  }
+
+  if (rawScene === sceneDetectionState.displayScene) {
+    sceneDetectionState.pendingScene = rawScene;
+    sceneDetectionState.consecutiveMatches = 0;
+    setSceneStatus(sceneDetectionState.displayScene);
+    syncReadableSceneStatus(sceneDetectionState.displayScene);
+    return;
+  }
+
+  if (!isAllowedSceneTransition(sceneDetectionState.displayScene, rawScene)) {
+    sceneDetectionState.pendingScene = sceneDetectionState.displayScene;
+    sceneDetectionState.consecutiveMatches = 0;
+    setSceneStatus(sceneDetectionState.displayScene);
+    syncReadableSceneStatus(sceneDetectionState.displayScene);
+    return;
+  }
+
+  if (sceneDetectionState.pendingScene === rawScene) sceneDetectionState.consecutiveMatches += 1;
+  else {
+    sceneDetectionState.pendingScene = rawScene;
+    sceneDetectionState.consecutiveMatches = 1;
+  }
+
+  if (sceneDetectionState.consecutiveMatches >= SCENE_STABLE_MATCHES) {
+    const previousScene = sceneDetectionState.displayScene;
+    sceneDetectionState.displayScene = rawScene;
+    sceneDetectionState.pendingScene = rawScene;
+    sceneDetectionState.consecutiveMatches = 0;
+    if (rawScene === "idle") resetRecognitionStates();
+    if (rawScene === "selection" && previousScene !== "selection") {
+      resetRecognitionStates();
+    }
+  }
+
+  setSceneStatus(sceneDetectionState.displayScene);
+  syncReadableSceneStatus(sceneDetectionState.displayScene);
+}
+
+function cropBroadcastSlotImage(slotRect: NormalizedRect): string | null {
+  const ctx = ensureBroadcastRecognitionCanvas();
+  if (!ctx || !broadcastRecognitionCanvas || !videoEl) return null;
+  const videoWidth = videoEl.videoWidth;
+  const videoHeight = videoEl.videoHeight;
+  if (videoWidth <= 0 || videoHeight <= 0) return null;
+
+  const clamped = clampRect(slotRect);
+  const rawSx = Math.floor(clamped.x * videoWidth);
+  const rawSy = Math.floor(clamped.y * videoHeight);
+  const rawSw = Math.max(1, Math.floor(clamped.width * videoWidth));
+  const rawSh = Math.max(1, Math.floor(clamped.height * videoHeight));
+  const sx = Math.min(Math.max(0, rawSx), Math.max(0, videoWidth - 1));
+  const sy = Math.min(Math.max(0, rawSy), Math.max(0, videoHeight - 1));
+  const sw = Math.max(1, Math.min(rawSw, videoWidth - sx));
+  const sh = Math.max(1, Math.min(rawSh, videoHeight - sy));
+
+  if (broadcastRecognitionCanvas.width !== sw) broadcastRecognitionCanvas.width = sw;
+  if (broadcastRecognitionCanvas.height !== sh) broadcastRecognitionCanvas.height = sh;
+  ctx.clearRect(0, 0, sw, sh);
+  ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, sw, sh);
+  const dataUrl = broadcastRecognitionCanvas.toDataURL("image/png");
+  const commaIndex = dataUrl.indexOf(",");
+  return commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : null;
+}
+
+function collectCurrentBroadcastSlots(): Array<{ slotIndex: number; imageBase64: string; timestamp: number }> {
+  return broadcastOpponentSlotRects
+    .map((rect, index) => {
+      const imageBase64 = cropBroadcastSlotImage(rect);
+      return imageBase64 ? { slotIndex: index, imageBase64, timestamp: Date.now() } : null;
+    })
+    .filter((slot): slot is { slotIndex: number; imageBase64: string; timestamp: number } => !!slot);
+}
+
+async function saveSelectionSlotImages(slots: Array<{ slotIndex: number; imageBase64: string }>): Promise<void> {
+  const signature = slots.map((slot) => `${slot.slotIndex}:${slot.imageBase64.length}:${slot.imageBase64.slice(0, 24)}`).join("|");
+  if (!signature || signature === lastSavedOpponentSlotImageSignature) return;
+
+  try {
+    await (window as any).electronAPI?.saveOpponentSlotImages?.(slots);
+    lastSavedOpponentSlotImageSignature = signature;
+  } catch {
+    // Ignore save failures to keep recognition running.
+  }
+}
+
+function syncConfirmedRosterFromSelection(): void {
+  const nextSlots = broadcastRecognitionStates.map((state) => (state.confirmed ? { ...state.confirmed } : null));
+  if (!nextSlots.some((slot) => !!slot)) return;
+
+  const currentSignature = confirmedOpponentRoster.slots.map((slot) => slot?.pokemonId ?? "").join("|");
+  const nextSignature = nextSlots.map((slot) => slot?.pokemonId ?? "").join("|");
+  if (currentSignature === nextSignature) return;
+
+  confirmedOpponentRoster = {
+    slots: nextSlots,
+    lastConfirmedAt: Date.now(),
+  };
+  renderBroadcastRoster();
+}
+
+function applyBroadcastRecognitionResults(
+  results: Array<{ slotIndex: number; pokemonId: string | null; pokemonName: string | null; score: number }>,
+  forceConfirm = false
+): void {
+  let changed = false;
+  for (const result of results) {
+    const state = broadcastRecognitionStates[result.slotIndex];
+    if (!state) continue;
+
+    const nextMatch = result.pokemonId && result.pokemonName
+      ? {
+          pokemonId: result.pokemonId,
+          pokemonName: result.pokemonName,
+          imageSrc: `img/pokemon_cs/${result.pokemonId}.png`,
+          score: result.score,
+        }
+      : null;
+
+    if (!nextMatch) {
+      state.pending = null;
+      state.consecutiveMatches = 0;
+      continue;
+    }
+
+    if (state.pending?.pokemonId === nextMatch.pokemonId) state.consecutiveMatches += 1;
+    else {
+      state.pending = nextMatch;
+      state.consecutiveMatches = 1;
+    }
+
+    if (forceConfirm || state.consecutiveMatches >= BROADCAST_RECOGNITION_STABLE_FRAMES) {
+      if (state.confirmed?.pokemonId !== nextMatch.pokemonId || Math.abs((state.confirmed?.score ?? 0) - nextMatch.score) > 0.03) {
+        state.confirmed = nextMatch;
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    if (sceneDetectionState.displayScene === "selection") {
+      syncConfirmedRosterFromSelection();
+    }
+    renderBroadcastRoster();
+  }
+}
+
+async function startBroadcastRecognitionWorker(): Promise<void> {
+  try {
+    const result = await (window as any).electronAPI?.startRecognitionWorker?.();
+    broadcastRecognitionReady = !!result?.success;
+  } catch {
+    broadcastRecognitionReady = false;
+  }
+}
+
+async function stopBroadcastRecognitionWorker(): Promise<void> {
+  try {
+    await (window as any).electronAPI?.stopRecognitionWorker?.();
+  } catch {
+    // Ignore stop failures.
+  }
+  broadcastRecognitionReady = false;
+}
+
+async function updateBroadcastRecognition(): Promise<void> {
+  if (sceneDetectionState.displayScene !== "selection") return;
+  if (selectionSnapshotCaptured) return;
+  if (!videoEl || videoEl.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+  const now = performance.now();
+  if (now - broadcastRecognitionLastRunAt < BROADCAST_RECOGNITION_INTERVAL_MS) return;
+  broadcastRecognitionLastRunAt = now;
+
+  const slots = collectCurrentBroadcastSlots();
+  if (slots.length === 0) return;
+
+  selectionSnapshotSlots = slots.map((slot) => ({ ...slot }));
+  await saveSelectionSlotImages(selectionSnapshotSlots.map(({ slotIndex, imageBase64 }) => ({ slotIndex, imageBase64 })));
+  selectionSnapshotCaptured = true;
+
+  if (!broadcastRecognitionReady || broadcastRecognitionInFlight) return;
+
+  broadcastRecognitionInFlight = true;
+  try {
+    const response = await (window as any).electronAPI?.recognizeOpponentSlots?.(selectionSnapshotSlots);
+    if (response?.success && Array.isArray(response.results)) {
+      applyBroadcastRecognitionResults(response.results, true);
+    }
+  } catch {
+    // Ignore recognition failures. Scene detection can continue independently.
+  } finally {
+    broadcastRecognitionInFlight = false;
+  }
+}
+
+async function ensureSceneRecognitionBootstrap(): Promise<void> {
+  if (!recognitionBootstrapPromise) {
+    recognitionBootstrapPromise = (async () => {
+      await loadBroadcastRecognitionConfig();
+      await startBroadcastRecognitionWorker();
+      renderBroadcastRoster();
+      setSceneStatus(sceneDetectionState.displayScene);
+      syncReadableSceneStatus(sceneDetectionState.displayScene);
+    })();
+  }
+  await recognitionBootstrapPromise;
+}
+
+function stopSceneRecognitionLoop(): void {
+  sceneDetectionRunning = false;
+  if (sceneDetectionFrameHandle !== null) {
+    cancelAnimationFrame(sceneDetectionFrameHandle);
+    sceneDetectionFrameHandle = null;
+  }
+  sceneDetectionLastRunAt = 0;
+  broadcastRecognitionLastRunAt = 0;
+  broadcastRecognitionInFlight = false;
+  sceneDetectionState = {
+    rawScene: "unknown",
+    displayScene: "idle",
+    pendingScene: "unknown",
+    consecutiveMatches: 0,
+  };
+  resetRecognitionStates();
+  void stopBroadcastRecognitionWorker();
+  setSceneStatus("idle", currentStream ? "��E??��" : "�f���f�o�C�X��I����Ă�������");
+  syncReadableSceneStatus("idle", currentStream ? "��E??��" : "�f���f�o�C�X��I����Ă�������");
+}
+
+function runSceneRecognitionLoop(): void {
+  if (!sceneDetectionRunning) return;
+  sceneDetectionFrameHandle = requestAnimationFrame(runSceneRecognitionLoop);
+
+  if (sceneDetectionEnabledEl && !sceneDetectionEnabledEl.checked) {
+    setSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
+    syncReadableSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
+    return;
+  }
+  if (!videoEl || videoEl.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+
+  const now = performance.now();
+  if (now - sceneDetectionLastRunAt < SCENE_DETECTION_INTERVAL_MS) return;
+  sceneDetectionLastRunAt = now;
+
+  const rawScene = detectSceneFromVideo();
+  const previousDisplayScene = sceneDetectionState.displayScene;
+  advanceSceneDetectionState(rawScene);
+  if (sceneDetectionState.displayScene === "selection" && previousDisplayScene !== "selection") {
+    broadcastRecognitionLastRunAt = 0;
+    void updateBroadcastRecognition();
+  }
+}
+
+function shouldRunSceneRecognition(): boolean {
+  return !!currentStream && !!sceneDetectionEnabledEl?.checked;
+}
+
+function startSceneRecognitionLoop(): void {
+  if (!shouldRunSceneRecognition()) return;
+  void ensureSceneRecognitionBootstrap().then(() => {
+    if (!shouldRunSceneRecognition()) return;
+    sceneDetectionRunning = true;
+    if (sceneDetectionFrameHandle === null) {
+      sceneDetectionFrameHandle = requestAnimationFrame(runSceneRecognitionLoop);
+    }
+  });
+}
+
+streamChangeCallbacks.push((stream) => {
+  if (stream && sceneDetectionEnabledEl?.checked) startSceneRecognitionLoop();
+  else stopSceneRecognitionLoop();
+});
+
+sceneDetectionEnabledEl?.addEventListener("change", () => {
+  if (!sceneDetectionEnabledEl.checked) {
+    stopSceneRecognitionLoop();
+    if (videoWrapEl) videoWrapEl.dataset.overlayVisible = "false";
+    setSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
+    syncReadableSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
+    return;
+  }
+  if (currentStream) {
+    startSceneRecognitionLoop();
+    return;
+  }
+  setSceneStatus("idle", "\u6620\u50CF\u30C7\u30D0\u30A4\u30B9\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044");
+  syncReadableSceneStatus("idle", "\u6620\u50CF\u30C7\u30D0\u30A4\u30B9\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044");
+});
+
+/** ?E??�`?E��?E?�e�`?E���͍ő�6�C?E?E*/
+
 /** 複数チーム（各チームは最大6匹） */
 let teams: TeamMember[][] = [];
 
@@ -1755,6 +2541,8 @@ function startStream(): void {
     video: {
       deviceId: { exact: videoDeviceId },
       frameRate: { ideal: 60 },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
     },
     audio: audioConstraints,
   };

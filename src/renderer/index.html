@@ -23,9 +23,49 @@
           <label for="volume-slider" class="volume-label">音量</label>
           <input type="range" id="volume-slider" min="0" max="100" value="80" aria-label="音量" />
           <button type="button" id="refresh-devices">一覧を更新</button>
+          <div class="video-scene-controls" role="group" aria-label="映像オーバーレイ制御">
+            <span class="video-scene-controls-label">オーバーレイ</span>
+            <div class="video-scene-mode-buttons">
+              <button type="button" class="video-scene-mode-btn is-active" data-overlay-mode="auto">自動</button>
+              <button type="button" class="video-scene-mode-btn" data-overlay-mode="force-on">ON</button>
+              <button type="button" class="video-scene-mode-btn" data-overlay-mode="force-off">OFF</button>
+            </div>
+            <label class="video-scene-toggle">
+              <input type="checkbox" id="scene-detection-enabled" checked />
+              <span>認識</span>
+            </label>
+            <label class="video-scene-toggle">
+              <input type="checkbox" id="scene-debug-enabled" />
+              <span>デバッグ</span>
+            </label>
+          </div>
         </div>
-        <div class="video-wrap">
+        <div class="video-wrap" data-scene="idle" data-overlay-mode="auto" data-overlay-visible="false">
           <video id="video" autoplay playsinline></video>
+          <div class="broadcast-layout" aria-hidden="true">
+            <div class="broadcast-layout-backdrop"></div>
+            <div class="broadcast-layout-headline">
+              <span class="broadcast-layout-kicker">Pokemon Champions</span>
+              <strong class="broadcast-layout-title">Battle Layout</strong>
+            </div>
+            <aside class="broadcast-side-panel">
+              <div class="broadcast-side-header">
+                <span class="broadcast-side-label">LIVE SLOT VIEW</span>
+                <strong class="broadcast-side-name" id="broadcast-team-name">Opponent Preview</strong>
+              </div>
+              <div class="broadcast-roster" id="broadcast-roster"></div>
+            </aside>
+            <div class="broadcast-bottom-bar">
+              <div class="broadcast-info-card" id="broadcast-card-attacker"></div>
+              <div class="broadcast-info-card" id="broadcast-card-item"></div>
+              <div class="broadcast-info-card" id="broadcast-card-defender"></div>
+            </div>
+          </div>
+          <div class="video-scene-status" id="scene-detection-status" aria-live="polite">
+            <span class="video-scene-status-badge" id="scene-detection-badge">待機</span>
+            <span class="video-scene-status-text" id="scene-detection-text">映像認識を初期化中</span>
+          </div>
+          <div class="video-scene-debug" id="scene-detection-debug" hidden></div>
         </div>
         <p id="video-status" class="video-status" aria-live="polite"></p>
 
