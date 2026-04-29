@@ -594,6 +594,39 @@ interface SceneSampleCache {
   samples: Map<string, Uint8ClampedArray>;
 }
 
+interface SceneDetectionWorkerTemplate {
+  id: string;
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
+}
+
+interface SceneDetectionWorkerIndicator {
+  id: string;
+  targetState: Exclude<SceneKind, "unknown">;
+  detectFromScene?: Exclude<SceneKind, "unknown">;
+  threshold: number;
+  minTemplateScore?: number;
+}
+
+interface SceneDetectionSamplePayload {
+  indicatorId: string;
+  variants: Uint8ClampedArray[];
+}
+
+interface SceneDetectionWorkerScore {
+  indicatorId: string;
+  score: number;
+  threshold: number;
+  matched: boolean;
+  detectFromScene?: Exclude<SceneKind, "unknown">;
+}
+
+interface SceneDetectionWorkerResult {
+  rawScene: SceneKind;
+  scores: SceneDetectionWorkerScore[];
+}
+
 const SCENE_DETECTION_INTERVAL_MS = 220;
 const SCENE_STABLE_MATCHES = 3;
 const BROADCAST_RECOGNITION_INTERVAL_MS = 350;
@@ -752,6 +785,17 @@ let confirmedPlayerSelection: Array<BroadcastPlayerSelectionEntry | null> = Arra
 let recognitionBootstrapPromise: Promise<void> | null = null;
 let sceneSampleCache: SceneSampleCache = { frameId: 0, samples: new Map() };
 let activeMainTabId = "tab1";
+let sceneDetectionWorker: Worker | null = null;
+let sceneDetectionWorkerReady = false;
+let sceneDetectionWorkerReadyPromise: Promise<void> | null = null;
+let sceneDetectionWorkerRequestCounter = 0;
+const sceneDetectionPendingRequests = new Map<
+  number,
+  {
+    resolve: (value: SceneDetectionWorkerResult) => void;
+    reject: (reason?: unknown) => void;
+  }
+>();
 
 function serializeConfirmedPlayerSelection(): Array<{
   displayIndex: number;
@@ -783,7 +827,12 @@ function getBroadcastRecognitionIntervalMs(): number {
     : BROADCAST_RECOGNITION_INTERVAL_MS;
 }
 
+function isSceneDebugEnabled(): boolean {
+  return !!sceneDebugEnabledEl?.checked;
+}
+
 function logConfirmedPlayerSelectionState(context: string, extra?: Record<string, unknown>): void {
+  if (!isSceneDebugEnabled()) return;
   console.debug("[broadcast-player-selection]", {
     context,
     scene: sceneDetectionState.displayScene,
@@ -925,6 +974,240 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
     })
   );
   broadcastIndicatorTemplates = new Map(loadedTemplates.filter((entry): entry is [string, LoadedIndicatorTemplate] => !!entry[1]));
+}
+
+function createSceneDetectionWorkerIndicators(): SceneDetectionWorkerIndicator[] {
+  return broadcastBattleIndicators.map((indicator) => ({
+    id: indicator.id,
+    targetState: indicator.targetState ?? "battle",
+    detectFromScene: indicator.detectFromScene,
+    threshold: indicator.threshold,
+    minTemplateScore: indicator.minTemplateScore,
+  }));
+}
+
+function createSceneDetectionWorkerTemplates(): SceneDetectionWorkerTemplate[] {
+  return Array.from(broadcastIndicatorTemplates.entries()).map(([id, template]) => ({
+    id,
+    width: template.width,
+    height: template.height,
+    data: template.data,
+  }));
+}
+
+function stopSceneDetectionWorker(): void {
+  sceneDetectionWorker?.terminate();
+  sceneDetectionWorker = null;
+  sceneDetectionWorkerReady = false;
+  sceneDetectionWorkerReadyPromise = null;
+  for (const pending of sceneDetectionPendingRequests.values()) {
+    pending.reject(new Error("Scene detection worker stopped"));
+  }
+  sceneDetectionPendingRequests.clear();
+}
+
+function ensureSceneDetectionWorker(): Promise<void> {
+  if (sceneDetectionWorkerReady && sceneDetectionWorker) {
+    return Promise.resolve();
+  }
+  if (sceneDetectionWorkerReadyPromise) return sceneDetectionWorkerReadyPromise;
+
+  sceneDetectionWorkerReadyPromise = new Promise((resolve, reject) => {
+    try {
+      const worker = new Worker("scene-detection-worker.js");
+      sceneDetectionWorker = worker;
+      sceneDetectionWorkerReady = false;
+
+      worker.onmessage = (event: MessageEvent<{
+        type: "detect-scene-result";
+        requestId: number;
+        rawScene: SceneKind;
+        scores: SceneDetectionWorkerScore[];
+      }>) => {
+        const message = event.data;
+        if (!message || message.type !== "detect-scene-result") return;
+        const pending = sceneDetectionPendingRequests.get(message.requestId);
+        if (!pending) return;
+        sceneDetectionPendingRequests.delete(message.requestId);
+        pending.resolve({
+          rawScene: message.rawScene,
+          scores: message.scores,
+        });
+      };
+
+      worker.onerror = (event) => {
+        stopSceneDetectionWorker();
+        reject(event.error ?? new Error(event.message || "Scene detection worker error"));
+      };
+
+      worker.postMessage({
+        type: "init",
+        indicators: createSceneDetectionWorkerIndicators(),
+        templates: createSceneDetectionWorkerTemplates(),
+      });
+      sceneDetectionWorkerReady = true;
+      sceneDetectionWorkerReadyPromise = null;
+      resolve();
+    } catch (error) {
+      stopSceneDetectionWorker();
+      sceneDetectionWorkerReadyPromise = null;
+      reject(error);
+    }
+  });
+
+  return sceneDetectionWorkerReadyPromise;
+}
+
+function collectSceneDetectionSamples(
+  candidateIndicators: BroadcastBattleIndicator[]
+): SceneDetectionSamplePayload[] {
+  sceneSampleCache = {
+    frameId: sceneSampleCache.frameId + 1,
+    samples: new Map(),
+  };
+
+  return candidateIndicators.map((indicator) => {
+    const template = broadcastIndicatorTemplates.get(indicator.id);
+    if (!template) {
+      return { indicatorId: indicator.id, variants: [] };
+    }
+
+    const offsetX = indicator.templateSearchOffsetX ?? 0;
+    const offsetY = indicator.templateSearchOffsetY ?? 0;
+    const scaleOffset = indicator.templateSearchScale ?? 0;
+    const dxCandidates = offsetX > 0 ? [-offsetX, 0, offsetX] : [0];
+    const dyCandidates = offsetY > 0 ? [-offsetY, 0, offsetY] : [0];
+    const scaleCandidates = scaleOffset > 0 ? [1 - scaleOffset, 1, 1 + scaleOffset] : [1];
+    const variants: Uint8ClampedArray[] = [];
+
+    for (const scale of scaleCandidates) {
+      const scaledRect: NormalizedRect = {
+        x: indicator.rect.x + indicator.rect.width * (1 - scale) * 0.5,
+        y: indicator.rect.y + indicator.rect.height * (1 - scale) * 0.5,
+        width: indicator.rect.width * scale,
+        height: indicator.rect.height * scale,
+      };
+      for (const dx of dxCandidates) {
+        for (const dy of dyCandidates) {
+          const candidateRect = clampRect({
+            x: scaledRect.x + indicator.rect.width * dx,
+            y: scaledRect.y + indicator.rect.height * dy,
+            width: scaledRect.width,
+            height: scaledRect.height,
+          });
+          const observed = cropRectFromVideo(candidateRect, template.width, template.height, sceneSampleCache);
+          if (observed) variants.push(observed);
+        }
+      }
+    }
+
+    return {
+      indicatorId: indicator.id,
+      variants,
+    };
+  });
+}
+
+function buildSceneDetectionDebugLines(
+  nextScene: SceneKind,
+  currentScene: SceneKind,
+  scores: SceneDetectionWorkerScore[]
+): string[] {
+  return [
+    `current=${currentScene} next=${nextScene}`,
+    ...scores.map(({ indicatorId, score, threshold, matched, detectFromScene }) =>
+      `${matched ? "PASS" : "FAIL"} ${indicatorId}${detectFromScene ? ` [from:${detectFromScene}]` : ""}: ${score.toFixed(4)} / ${threshold.toFixed(2)}`
+    ),
+  ];
+}
+
+function detectSceneFromVideoSync(): SceneKind {
+  const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
+  if (candidateIndicators.length === 0) {
+    updateSceneDetectionDebug([]);
+    return "unknown";
+  }
+
+  sceneSampleCache = {
+    frameId: sceneSampleCache.frameId + 1,
+    samples: new Map(),
+  };
+  const nextScene = candidateIndicators[0]?.targetState ?? "unknown";
+  const scores = candidateIndicators.map((indicator) => {
+    const score = getBestIndicatorScore(indicator, sceneSampleCache);
+    const threshold = indicator.minTemplateScore ?? indicator.threshold ?? 0.8;
+    return { indicatorId: indicator.id, score, threshold, matched: score >= threshold, detectFromScene: indicator.detectFromScene };
+  });
+
+  if (isSceneDebugEnabled() && nextScene === "idle") {
+    updateSceneDetectionDebug(buildSceneDetectionDebugLines(nextScene, sceneDetectionState.displayScene, scores));
+  } else {
+    updateSceneDetectionDebug([]);
+  }
+
+  if (nextScene === "selection") {
+    return scores.every(({ matched }) => matched) ? "selection" : "unknown";
+  }
+
+  if (nextScene === "idle") {
+    return detectIdleSceneFromScores(
+      scores.map((score) => ({
+        indicator: candidateIndicators.find((indicator) => indicator.id === score.indicatorId)!,
+        score: score.score,
+        threshold: score.threshold,
+        matched: score.matched,
+      })),
+      sceneDetectionState.displayScene
+    );
+  }
+
+  const matchedScore = scores.find(({ matched }) => matched);
+  return matchedScore ? (nextScene ?? "battle") : "unknown";
+}
+
+async function detectSceneFromVideo(): Promise<SceneKind> {
+  const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
+  if (candidateIndicators.length === 0) {
+    updateSceneDetectionDebug([]);
+    return "unknown";
+  }
+
+  try {
+    await ensureSceneDetectionWorker();
+  } catch {
+    return detectSceneFromVideoSync();
+  }
+  if (!sceneDetectionWorker) {
+    return detectSceneFromVideoSync();
+  }
+
+  const nextScene = candidateIndicators[0]?.targetState ?? "unknown";
+  const requestId = ++sceneDetectionWorkerRequestCounter;
+  const resultPromise = new Promise<SceneDetectionWorkerResult>((resolve, reject) => {
+    sceneDetectionPendingRequests.set(requestId, { resolve, reject });
+  });
+
+  sceneDetectionWorker.postMessage({
+    type: "detect-scene",
+    requestId,
+    currentScene: sceneDetectionState.displayScene,
+    indicatorIds: candidateIndicators.map((indicator) => indicator.id),
+    samples: collectSceneDetectionSamples(candidateIndicators),
+  });
+
+  try {
+    const result = await resultPromise;
+    if (isSceneDebugEnabled() && nextScene === "idle") {
+      updateSceneDetectionDebug(buildSceneDetectionDebugLines(nextScene, sceneDetectionState.displayScene, result.scores));
+    } else {
+      updateSceneDetectionDebug([]);
+    }
+    return result.rawScene;
+  } catch {
+    return detectSceneFromVideoSync();
+  } finally {
+    sceneDetectionPendingRequests.delete(requestId);
+  }
 }
 
 function ensureBroadcastRecognitionCanvas(): CanvasRenderingContext2D | null {
@@ -1101,49 +1384,6 @@ function getRequiredStableMatches(from: SceneKind, to: SceneKind): number {
   return SCENE_STABLE_MATCHES;
 }
 
-function detectSceneFromVideo(): SceneKind {
-  const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
-  if (candidateIndicators.length === 0) {
-    updateSceneDetectionDebug([]);
-    return "unknown";
-  }
-
-  sceneSampleCache = {
-    frameId: sceneSampleCache.frameId + 1,
-    samples: new Map(),
-  };
-  const nextScene = candidateIndicators[0]?.targetState ?? "unknown";
-  const scores = candidateIndicators.map((indicator) => {
-    const score = getBestIndicatorScore(indicator, sceneSampleCache);
-    const threshold = indicator.minTemplateScore ?? indicator.threshold ?? 0.8;
-    return { indicator, score, threshold, matched: score >= threshold };
-  });
-
-  if (sceneDebugEnabledEl?.checked && nextScene === "idle") {
-    const lines = [
-      `current=${sceneDetectionState.displayScene} next=${nextScene}`,
-      ...scores.map(({ indicator, score, threshold, matched }) =>
-        `${matched ? "PASS" : "FAIL"} ${indicator.id}${indicator.detectFromScene ? ` [from:${indicator.detectFromScene}]` : ""}: ${score.toFixed(4)} / ${threshold.toFixed(2)}`
-      ),
-    ];
-    updateSceneDetectionDebug(lines);
-  } else {
-    updateSceneDetectionDebug([]);
-  }
-
-  if (nextScene === "selection") {
-    const allMatched = scores.every(({ matched }) => matched);
-    return allMatched ? "selection" : "unknown";
-  }
-
-  if (nextScene === "idle") {
-    return detectIdleSceneFromScores(scores, sceneDetectionState.displayScene);
-  }
-
-  const matchedScore = scores.find(({ matched }) => matched);
-  return matchedScore ? (matchedScore.indicator.targetState ?? "battle") : "unknown";
-}
-
 function resetRecognitionStates(reason = "unspecified"): void {
   const beforeReset = serializeConfirmedPlayerSelection();
   broadcastRecognitionStates = Array.from({ length: 6 }, () => ({
@@ -1164,12 +1404,14 @@ function resetRecognitionStates(reason = "unspecified"): void {
   playerSelectionSnapshotSlots = [];
   playerSelectionSnapshotDebugSlots = [];
   confirmedPlayerSelection = Array.from({ length: 3 }, () => null);
-  console.debug("[broadcast-player-selection]", {
-    context: "resetRecognitionStates",
-    reason,
-    beforeReset,
-    afterReset: serializeConfirmedPlayerSelection(),
-  });
+  if (isSceneDebugEnabled()) {
+    console.debug("[broadcast-player-selection]", {
+      context: "resetRecognitionStates",
+      reason,
+      beforeReset,
+      afterReset: serializeConfirmedPlayerSelection(),
+    });
+  }
 }
 
 function renderBroadcastPlayerSelection(): void {
@@ -1636,30 +1878,32 @@ function applyPlayerSelectionRecognitionResults(
     }
   }
 
-  console.debug("[broadcast-player-selection]", {
-    context: "applyPlayerSelectionRecognitionResults",
-    scene: sceneDetectionState.displayScene,
-    rawResults: results,
-    nextSelection: nextSelection.map((entry, index) => ({
-      displayIndex: index + 1,
-      slotIndex: entry?.slotIndex ?? null,
-      selectionOrder: entry?.selectionOrder ?? null,
-      pokemonName: entry?.pokemonName ?? null,
-      itemName: entry?.itemName ?? null,
-      score: entry?.score ?? null,
-    })),
-  });
-  console.table(results.map((result) => ({
-    slot: result.slotIndex + 1,
-    selectedOrder: result.selectionOrder ?? "",
-    matchedPokemon: result.pokemonName ?? "",
-    matchedItem: result.itemName ?? "",
-    ocrSlot: result.debugOcrTexts?.slot.join(" / ") ?? "",
-    ocrPokemon: result.debugOcrTexts?.pokemonName.join(" / ") ?? "",
-    ocrItem: result.debugOcrTexts?.itemName.join(" / ") ?? "",
-    ocrSelectedPokemon: result.debugOcrTexts?.selectedPokemonName.join(" / ") ?? "",
-    ocrSelectedItem: result.debugOcrTexts?.selectedItemName.join(" / ") ?? "",
-  })));
+  if (isSceneDebugEnabled()) {
+    console.debug("[broadcast-player-selection]", {
+      context: "applyPlayerSelectionRecognitionResults",
+      scene: sceneDetectionState.displayScene,
+      rawResults: results,
+      nextSelection: nextSelection.map((entry, index) => ({
+        displayIndex: index + 1,
+        slotIndex: entry?.slotIndex ?? null,
+        selectionOrder: entry?.selectionOrder ?? null,
+        pokemonName: entry?.pokemonName ?? null,
+        itemName: entry?.itemName ?? null,
+        score: entry?.score ?? null,
+      })),
+    });
+    console.table(results.map((result) => ({
+      slot: result.slotIndex + 1,
+      selectedOrder: result.selectionOrder ?? "",
+      matchedPokemon: result.pokemonName ?? "",
+      matchedItem: result.itemName ?? "",
+      ocrSlot: result.debugOcrTexts?.slot.join(" / ") ?? "",
+      ocrPokemon: result.debugOcrTexts?.pokemonName.join(" / ") ?? "",
+      ocrItem: result.debugOcrTexts?.itemName.join(" / ") ?? "",
+      ocrSelectedPokemon: result.debugOcrTexts?.selectedPokemonName.join(" / ") ?? "",
+      ocrSelectedItem: result.debugOcrTexts?.selectedItemName.join(" / ") ?? "",
+    })));
+  }
   confirmedPlayerSelection = nextSelection;
   logConfirmedPlayerSelectionState("confirmedPlayerSelection-updated");
   renderBroadcastPlayerSelection();
@@ -1693,27 +1937,34 @@ async function updateBroadcastRecognition(): Promise<void> {
   const now = performance.now();
   if (now - broadcastRecognitionLastRunAt < getBroadcastRecognitionIntervalMs()) return;
   broadcastRecognitionLastRunAt = now;
-  const captureStartedAt = sceneDebugEnabledEl?.checked ? performance.now() : 0;
+  const captureStartedAt = isSceneDebugEnabled() ? performance.now() : 0;
 
   if (!selectionSnapshotCaptured) {
     const slots = await collectCurrentBroadcastSlots();
     if (slots.length > 0) {
       selectionSnapshotSlots = slots.map((slot) => ({ ...slot }));
-      await saveSelectionSlotImages(selectionSnapshotSlots.map(({ slotIndex, imageBase64 }) => ({ slotIndex, imageBase64 })));
+      if (isSceneDebugEnabled()) {
+        await saveSelectionSlotImages(selectionSnapshotSlots.map(({ slotIndex, imageBase64 }) => ({ slotIndex, imageBase64 })));
+      }
       selectionSnapshotCaptured = true;
     }
   }
   if (!playerSelectionSnapshotCaptured) {
-    const playerDebugSlots = await collectCurrentPlayerDebugSlots();
-    if (playerDebugSlots.length > 0) {
-      playerSelectionSnapshotSlots = playerDebugSlots.map(({ slotIndex, imageBase64, timestamp }) => ({ slotIndex, imageBase64, timestamp }));
-      playerSelectionSnapshotDebugSlots = playerDebugSlots.map((slot) => ({ ...slot }));
-      await savePlayerDebugImages(playerDebugSlots);
+    const playerSlots = await collectCurrentPlayerSlots();
+    if (playerSlots.length > 0) {
+      playerSelectionSnapshotSlots = playerSlots.map((slot) => ({ ...slot }));
+      if (isSceneDebugEnabled()) {
+        const playerDebugSlots = await collectCurrentPlayerDebugSlots();
+        playerSelectionSnapshotDebugSlots = playerDebugSlots.map((slot) => ({ ...slot }));
+        await savePlayerDebugImages(playerDebugSlots);
+      } else {
+        playerSelectionSnapshotDebugSlots = [];
+      }
       playerSelectionSnapshotCaptured = true;
     }
   }
 
-  if (sceneDebugEnabledEl?.checked) {
+  if (isSceneDebugEnabled()) {
     console.debug("[recognition] snapshot-capture-ms", (performance.now() - captureStartedAt).toFixed(1));
   }
 
@@ -1721,7 +1972,7 @@ async function updateBroadcastRecognition(): Promise<void> {
 
   broadcastRecognitionInFlight = true;
   try {
-    const recognitionStartedAt = sceneDebugEnabledEl?.checked ? performance.now() : 0;
+    const recognitionStartedAt = isSceneDebugEnabled() ? performance.now() : 0;
     if (!selectionSnapshotRecognized && selectionSnapshotSlots.length > 0) {
       const response = await (window as any).electronAPI?.recognizeOpponentSlots?.(selectionSnapshotSlots);
       if (response?.success && Array.isArray(response.results)) {
@@ -1745,7 +1996,9 @@ async function updateBroadcastRecognition(): Promise<void> {
       );
       if (playerResponse?.success && Array.isArray(playerResponse.results)) {
         if (hasPlayerSelectionRecognitionMatch(playerResponse.results)) {
-          await savePlayerDebugImages(playerSelectionSnapshotDebugSlots, playerResponse.results);
+          if (isSceneDebugEnabled()) {
+            await savePlayerDebugImages(playerSelectionSnapshotDebugSlots, playerResponse.results);
+          }
           applyPlayerSelectionRecognitionResults(playerResponse.results);
           playerSelectionSnapshotRecognized = true;
         } else {
@@ -1755,7 +2008,7 @@ async function updateBroadcastRecognition(): Promise<void> {
         }
       }
     }
-    if (sceneDebugEnabledEl?.checked) {
+    if (isSceneDebugEnabled()) {
       console.debug("[recognition] worker-roundtrip-ms", (performance.now() - recognitionStartedAt).toFixed(1));
     }
   } catch {
@@ -1769,6 +2022,11 @@ async function ensureSceneRecognitionBootstrap(): Promise<void> {
   if (!recognitionBootstrapPromise) {
     recognitionBootstrapPromise = (async () => {
       await loadBroadcastRecognitionConfig();
+      try {
+        await ensureSceneDetectionWorker();
+      } catch {
+        // Fall back to synchronous scene detection when worker bootstrap fails.
+      }
       await startBroadcastRecognitionWorker();
       renderBroadcastRoster();
       setSceneStatus(sceneDetectionState.displayScene);
@@ -1794,6 +2052,7 @@ function stopSceneRecognitionLoop(): void {
     consecutiveMatches: 0,
   };
   resetRecognitionStates();
+  stopSceneDetectionWorker();
   void stopBroadcastRecognitionWorker();
   setSceneStatus("idle", currentStream ? "待機中" : "映像デバイスを選択してください");
   syncReadableSceneStatus("idle", currentStream ? "待機中" : "映像デバイスを選択してください");
@@ -1817,8 +2076,8 @@ async function runSceneRecognitionLoop(): Promise<void> {
     return;
   }
   if (sceneDetectionEnabledEl && !sceneDetectionEnabledEl.checked) {
-    setSceneStatus(sceneDetectionState.displayScene, "\u5834\u9762\u8A8D\u8B58\u3092\u4E00\u6642\u505C\u6B62\u4E2D");
-    syncReadableSceneStatus(sceneDetectionState.displayScene, "\u5834\u9762\u8A8D\u8B58\u3092\u4E00\u6642\u505C\u6B62\u4E2D");
+    setSceneStatus(sceneDetectionState.displayScene, "映像認識を停止中");
+    syncReadableSceneStatus(sceneDetectionState.displayScene, "映像認識を停止中");
     scheduleSceneRecognition();
     return;
   }
@@ -1838,7 +2097,7 @@ async function runSceneRecognitionLoop(): Promise<void> {
   const startedAt = performance.now();
   sceneDetectionLastRunAt = startedAt;
 
-  const rawScene = detectSceneFromVideo();
+  const rawScene = await detectSceneFromVideo();
   const previousDisplayScene = sceneDetectionState.displayScene;
   advanceSceneDetectionState(rawScene);
   if (sceneDetectionState.displayScene === "selection" && previousDisplayScene !== "selection") {
@@ -1848,7 +2107,7 @@ async function runSceneRecognitionLoop(): Promise<void> {
     await updateBroadcastRecognition();
   }
 
-  if (sceneDebugEnabledEl?.checked) {
+  if (isSceneDebugEnabled()) {
     console.debug("[recognition] scene-detection-ms", (performance.now() - startedAt).toFixed(1));
   }
   scheduleSceneRecognition(Math.max(0, getSceneDetectionIntervalMs() - (performance.now() - startedAt)));
