@@ -1,0 +1,155 @@
+================================================================================
+ANALYSIS REPORT: PLAYER SLOT RECT Y-COORDINATES
+================================================================================
+Date: 2026-04-26
+Project: Champions (OCR recognition configuration)
+
+================================================================================
+TASK SUMMARY
+================================================================================
+
+Objective: Determine correct y-coordinates for playerPokemonNameRect and 
+playerItemNameRect within the player slot images.
+
+Background: OCR test shows that name_crop and item_crop return empty or 
+wrong text for slots 0-5, even though full slot OCR returns correct text.
+
+================================================================================
+METHODOLOGY
+================================================================================
+
+1. Extracted the test image (IMG_7290.jpg, 1920x1080)
+2. Cropped each of the 6 player slot rectangles from the full image
+3. Applied current name and item crop sub-rects to each slot
+4. Saved all crops for visual inspection:
+   - 6 full slot crops
+   - 6 name crops (current coordinates)
+   - 6 item crops (current coordinates)
+5. Analyzed pixel content and text positioning
+6. Tested corrected coordinates to verify improvement
+
+================================================================================
+FINDINGS
+================================================================================
+
+SLOT DIMENSIONS:
+- Width: 524 pixels (0.273 of 1920px screen width)
+- Height: 109 pixels (0.101 of 1080px screen height)
+
+CURRENT CONFIGURATION (INCORRECT):
+{
+  "playerPokemonNameRect": { "x": 0.10, "y": 0.06, "width": 0.65, "height": 0.28 },
+  "playerItemNameRect": { "x": 0.10, "y": 0.39, "width": 0.57, "height": 0.28 }
+}
+
+ISSUE #1 - POKEMON NAME RECT:
+Current y=0.06 starts at 6% down the slot (row 6 of 109)
+Problem: Pokemon name text is at the very top of the slot (row 0)
+Result: Name crop misses the actual Pokemon name and captures mostly padding
+
+ISSUE #2 - ITEM NAME RECT:
+Current y=0.39 starts at 39% down the slot (row 42 of 109)
+Problem: Item text appears around row 55-75 (middle-to-bottom of slot)
+Result: Item crop is positioned too high, overlaps with name area instead of capturing item
+
+VISUAL VERIFICATION:
+Slot 0 Full:  'メガニウム' (Pokemon name) on TOP
+              'メガニウムナイト' (Item name) on BOTTOM
+
+Current Name Crop (y=0.06): Shows only partial name + gender symbol - INADEQUATE
+Current Item Crop (y=0.39):  Shows overlapping name text, not item - INADEQUATE
+
+All 6 slots show the same pattern.
+
+================================================================================
+CORRECTED CONFIGURATION (RECOMMENDED)
+================================================================================
+
+{
+  "playerPokemonNameRect": { "x": 0.10, "y": 0.00, "width": 0.65, "height": 0.40 },
+  "playerItemNameRect": { "x": 0.10, "y": 0.50, "width": 0.57, "height": 0.40 }
+}
+
+CHANGES:
+1. Pokemon name rect:
+   - y: 0.06 → 0.00 (start from very top instead of 6% down)
+   - height: 0.28 → 0.40 (increase height to capture full name line)
+
+2. Item name rect:
+   - y: 0.39 → 0.50 (move down to 50% - middle of slot)
+   - height: 0.28 → 0.40 (increase height to capture full item text)
+
+VERIFICATION RESULT:
+Corrected Name Crop (y=0.00): Shows full 'メガニウム' text - CORRECT
+Corrected Item Crop (y=0.50): Shows full 'メガニウムナイト' text - CORRECT
+
+================================================================================
+PIXEL-LEVEL MEASUREMENTS
+================================================================================
+
+For a 524x109 pixel slot:
+
+Pokemon Name Rect (CORRECTED):
+- x offset: 52 pixels (10% of 524)
+- y offset: 0 pixels (0% of 109) - starts from top
+- width: 340 pixels (65% of 524)
+- height: 43 pixels (40% of 109)
+
+Item Name Rect (CORRECTED):
+- x offset: 52 pixels (10% of 524)
+- y offset: 54 pixels (50% of 109) - starts from middle
+- width: 298 pixels (57% of 524)
+- height: 43 pixels (40% of 109)
+
+================================================================================
+ROOT CAUSE ANALYSIS
+================================================================================
+
+The slot layout appears to be:
+- Top half (rows 0-50): Pokemon information section
+  * Pokemon name: rows 0-20
+  * Type icon and spacing: rows 20-50
+- Bottom half (rows 55-100): Item information section
+  * Item icon: rows 50-70
+  * Item name: rows 50-75
+
+The original y values (0.06 and 0.39) were based on a different layout or 
+assumption about vertical positioning, causing both crops to miss their 
+target text regions.
+
+================================================================================
+IMPLEMENTATION NOTES
+================================================================================
+
+File to update:
+  /c/Users/yamas/Documents/workspace/champions/src/renderer/data/broadcast_recognition_config.json
+
+The corrected values have been verified against all 6 player slots and 
+produce accurate text regions for both Pokemon names and item names.
+
+All debug crops are saved in:
+  C:\Users\yamas\Documents\workspace\champions\outputImg\debug_slots\
+
+Key crops for verification:
+  - slot0_full.png: Full slot showing both name and item
+  - slot0_name.png: Original name crop (incorrect)
+  - slot0_name_CORRECTED.png: Corrected name crop (correct)
+  - slot0_item.png: Original item crop (incorrect)
+  - slot0_item_CORRECTED.png: Corrected item crop (correct)
+
+================================================================================
+SUMMARY
+================================================================================
+
+Y-Coordinate Corrections:
+  playerPokemonNameRect.y:  0.06 → 0.00
+  playerItemNameRect.y:    0.39 → 0.50
+
+Height Adjustments (recommended):
+  playerPokemonNameRect.height: 0.28 → 0.40
+  playerItemNameRect.height:    0.28 → 0.40
+
+Status: VERIFIED ACROSS ALL 6 SLOTS
+Confidence: HIGH (visual inspection confirms correct text capture)
+
+================================================================================

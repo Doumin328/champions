@@ -32,10 +32,36 @@ type RecognitionWorkerResultMessage = {
   }>;
 };
 
+type PlayerSelectionWorkerResultMessage = {
+  type: "player-result";
+  requestId: string;
+  results: Array<{
+    slotIndex: number;
+    selectionOrder: number | null;
+    pokemonName: string | null;
+    itemName: string | null;
+    score: number;
+    debugOcrTexts?: {
+      slot: string[];
+      pokemonName: string[];
+      itemName: string[];
+      badge: string[];
+      selectedPokemonName: string[];
+      selectedItemName: string[];
+    };
+  }>;
+};
+
 type RecognitionWorkerMessage =
   | RecognitionWorkerReadyMessage
   | RecognitionWorkerErrorMessage
-  | RecognitionWorkerResultMessage;
+  | RecognitionWorkerResultMessage
+  | PlayerSelectionWorkerResultMessage;
+
+type PlayerDebugImagePayload = {
+  slots: Array<{ slotIndex: number; imageBase64: string; itemImageBase64: string }>;
+  selectedSlots: Array<{ selectionOrder: number; imageBase64: string; itemImageBase64: string }>;
+};
 
 function createWindow(): void {
   // キャプチャーボード（getUserMedia）の映像を許可する
@@ -78,7 +104,7 @@ let recognitionRequestCounter = 0;
 const recognitionPendingRequests = new Map<
   string,
   {
-    resolve: (value: { success: boolean; results?: RecognitionWorkerResultMessage["results"]; error?: string }) => void;
+    resolve: (value: { success: boolean; results?: unknown; error?: string }) => void;
     reject: (reason?: unknown) => void;
   }
 >();
@@ -118,6 +144,11 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
     const worker = spawn(PYTHON_BIN, [RECOGNITION_SCRIPT_PATH], {
       cwd: process.cwd(),
       windowsHide: true,
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: "utf-8",
+        PYTHONUTF8: "1",
+      },
       stdio: ["pipe", "pipe", "pipe"],
     });
     recognitionWorker = worker;
@@ -152,7 +183,7 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
         rejectRecognitionPending(message.message);
         return;
       }
-      if (message.type === "result") {
+      if (message.type === "result" || message.type === "player-result") {
         const pending = recognitionPendingRequests.get(message.requestId);
         if (!pending) return;
         recognitionPendingRequests.delete(message.requestId);
@@ -191,6 +222,23 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
   return recognitionWorkerReadyPromise;
 }
 
+function sendRecognitionWorkerRequest<TResults>(payload: object): Promise<{ success: boolean; results?: TResults; error?: string }> {
+  return new Promise(async (resolve) => {
+    const ready = await ensureRecognitionWorker();
+    if (!ready.success || !recognitionWorker?.stdin || recognitionWorker.stdin.destroyed) {
+      resolve({ success: false, error: ready.error ?? "Recognition worker unavailable" });
+      return;
+    }
+
+    const requestId = `req-${Date.now()}-${recognitionRequestCounter += 1}`;
+    recognitionPendingRequests.set(requestId, {
+      resolve: (value) => resolve(value as { success: boolean; results?: TResults; error?: string }),
+      reject: () => undefined,
+    });
+    recognitionWorker.stdin.write(`${JSON.stringify({ ...payload, requestId })}\n`);
+  });
+}
+
 // FFmpeg 起動前に届いたチャンクを一時的にバッファリング
 let streamChunkBuffer: Buffer[] = [];
 
@@ -201,18 +249,25 @@ ipcMain.handle("recognition:stop-worker", async () => stopRecognitionWorkerInter
 ipcMain.handle("recognition:recognize-slots", async (_event, payload: {
   slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>;
 }) => {
-  const ready = await ensureRecognitionWorker();
-  if (!ready.success || !recognitionWorker?.stdin || recognitionWorker.stdin.destroyed) {
-    return { success: false, error: ready.error ?? "Recognition worker unavailable" };
-  }
-
-  const requestId = `req-${Date.now()}-${recognitionRequestCounter += 1}`;
-  const responsePromise = new Promise<{ success: boolean; results?: RecognitionWorkerResultMessage["results"]; error?: string }>((resolve, reject) => {
-    recognitionPendingRequests.set(requestId, { resolve, reject });
+  return sendRecognitionWorkerRequest<RecognitionWorkerResultMessage["results"]>({
+    type: "recognize",
+    slots: payload.slots,
   });
+});
 
-  recognitionWorker.stdin.write(`${JSON.stringify({ type: "recognize", requestId, slots: payload.slots })}\n`);
-  return responsePromise;
+ipcMain.handle("recognition:recognize-player-selection", async (_event, payload: {
+  slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>;
+  rects: {
+    selectionBadgeRect: { x: number; y: number; width: number; height: number };
+    pokemonNameRect: { x: number; y: number; width: number; height: number };
+    itemNameRect: { x: number; y: number; width: number; height: number };
+  };
+}) => {
+  return sendRecognitionWorkerRequest<PlayerSelectionWorkerResultMessage["results"]>({
+    type: "recognize-player-selection",
+    slots: payload.slots,
+    rects: payload.rects,
+  });
 });
 
 ipcMain.handle("recognition:save-opponent-slot-images", async (_event, payload: {
@@ -232,7 +287,45 @@ ipcMain.handle("recognition:save-opponent-slot-images", async (_event, payload: 
   }
 });
 
-// レンダラーから送られる MediaRecorder チャンクを FFmpeg stdin へ流す
+ipcMain.handle("recognition:save-player-debug-images", async (_event, payload: PlayerDebugImagePayload) => {
+  try {
+    const outputDir = path.resolve(process.cwd(), "outputImg");
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    for (let index = 1; index <= 3; index += 1) {
+      for (const filename of [`myPokeSelected_${index}.png`, `myPokeSelected_item_${index}.png`]) {
+        const filepath = path.join(outputDir, filename);
+        if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+      }
+    }
+
+    for (const slot of payload.slots ?? []) {
+      if (typeof slot.slotIndex !== "number" || slot.slotIndex < 0 || slot.slotIndex > 5) continue;
+      if (slot.imageBase64) {
+        fs.writeFileSync(path.join(outputDir, `myPoke_${slot.slotIndex + 1}.png`), Buffer.from(slot.imageBase64, "base64"));
+      }
+      if (slot.itemImageBase64) {
+        fs.writeFileSync(path.join(outputDir, `myPoke_item_${slot.slotIndex + 1}.png`), Buffer.from(slot.itemImageBase64, "base64"));
+      }
+    }
+
+    for (const slot of payload.selectedSlots ?? []) {
+      if (typeof slot.selectionOrder !== "number" || slot.selectionOrder < 1 || slot.selectionOrder > 3) continue;
+      if (slot.imageBase64) {
+        fs.writeFileSync(path.join(outputDir, `myPokeSelected_${slot.selectionOrder}.png`), Buffer.from(slot.imageBase64, "base64"));
+      }
+      if (slot.itemImageBase64) {
+        fs.writeFileSync(path.join(outputDir, `myPokeSelected_item_${slot.selectionOrder}.png`), Buffer.from(slot.itemImageBase64, "base64"));
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+// MediaRecorder chunks from the renderer are forwarded to FFmpeg stdin.
 ipcMain.on("stream:chunk", (_event, chunk: ArrayBuffer) => {
   const buf = Buffer.from(chunk);
   if (ffmpegProcess?.stdin && !ffmpegProcess.stdin.destroyed) {

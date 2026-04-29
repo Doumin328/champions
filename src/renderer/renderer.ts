@@ -501,8 +501,15 @@ const videoWrapEl = document.querySelector(".video-wrap") as HTMLElement | null;
 const sceneDetectionBadgeEl = document.getElementById("scene-detection-badge") as HTMLElement | null;
 const sceneDetectionTextEl = document.getElementById("scene-detection-text") as HTMLElement | null;
 const sceneDetectionEnabledEl = document.getElementById("scene-detection-enabled") as HTMLInputElement | null;
+const sceneDebugEnabledEl = document.getElementById("scene-debug-enabled") as HTMLInputElement | null;
+const sceneDetectionDebugEl = document.getElementById("scene-detection-debug") as HTMLElement | null;
 const broadcastTeamNameEl = document.getElementById("broadcast-team-name") as HTMLElement | null;
 const broadcastRosterEl = document.getElementById("broadcast-roster") as HTMLElement | null;
+const broadcastPlayerCardEls = [
+  document.getElementById("broadcast-card-attacker") as HTMLElement | null,
+  document.getElementById("broadcast-card-item") as HTMLElement | null,
+  document.getElementById("broadcast-card-defender") as HTMLElement | null,
+];
 
 type SceneKind = "idle" | "selection" | "battle" | "unknown";
 
@@ -516,6 +523,7 @@ interface NormalizedRect {
 interface BroadcastBattleIndicator {
   id: string;
   targetState?: Exclude<SceneKind, "unknown">;
+  detectFromScene?: Exclude<SceneKind, "unknown">;
   rect: NormalizedRect;
   threshold: number;
   templateImage?: string;
@@ -527,6 +535,10 @@ interface BroadcastBattleIndicator {
 
 interface BroadcastRecognitionConfig {
   opponentSlotRects: NormalizedRect[];
+  playerSlotRects?: NormalizedRect[];
+  playerSelectionBadgeRect?: NormalizedRect;
+  playerPokemonNameRect?: NormalizedRect;
+  playerItemNameRect?: NormalizedRect;
   spriteSubrect: NormalizedRect;
   battleIndicators?: BroadcastBattleIndicator[];
 }
@@ -549,6 +561,21 @@ interface BroadcastConfirmedRosterState {
   lastConfirmedAt: number;
 }
 
+interface BroadcastPlayerDebugSlotImage {
+  slotIndex: number;
+  imageBase64: string;
+  itemImageBase64: string;
+  timestamp: number;
+}
+
+interface BroadcastPlayerSelectionEntry {
+  slotIndex: number;
+  selectionOrder: number;
+  pokemonName: string | null;
+  itemName: string | null;
+  score: number;
+}
+
 interface SceneDetectionState {
   rawScene: SceneKind;
   displayScene: SceneKind;
@@ -562,9 +589,16 @@ interface LoadedIndicatorTemplate {
   data: Uint8ClampedArray;
 }
 
+interface SceneSampleCache {
+  frameId: number;
+  samples: Map<string, Uint8ClampedArray>;
+}
+
 const SCENE_DETECTION_INTERVAL_MS = 220;
 const SCENE_STABLE_MATCHES = 3;
 const BROADCAST_RECOGNITION_INTERVAL_MS = 350;
+const SCENE_DETECTION_INTERVAL_WHILE_DAMAGE_TAB_MS = 550;
+const BROADCAST_RECOGNITION_INTERVAL_WHILE_DAMAGE_TAB_MS = 900;
 const BROADCAST_RECOGNITION_STABLE_FRAMES = 2;
 const BROADCAST_TEMPLATE_SIZE = 112;
 const DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS: NormalizedRect[] = [
@@ -575,6 +609,17 @@ const DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS: NormalizedRect[] = [
   { x: 0.828, y: 0.611, width: 0.08, height: 0.103 },
   { x: 0.828, y: 0.727, width: 0.08, height: 0.105 },
 ];
+const DEFAULT_BROADCAST_PLAYER_SLOT_RECTS: NormalizedRect[] = [
+  { x: 0.042, y: 0.146, width: 0.273, height: 0.101 },
+  { x: 0.042, y: 0.264, width: 0.273, height: 0.101 },
+  { x: 0.042, y: 0.382, width: 0.273, height: 0.101 },
+  { x: 0.042, y: 0.500, width: 0.273, height: 0.101 },
+  { x: 0.042, y: 0.619, width: 0.273, height: 0.101 },
+  { x: 0.042, y: 0.737, width: 0.273, height: 0.101 },
+];
+const DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_RECT: NormalizedRect = { x: 0.0, y: 0.10, width: 0.17, height: 0.74 };
+const DEFAULT_BROADCAST_PLAYER_POKEMON_NAME_RECT: NormalizedRect = { x: 0.18, y: 0.06, width: 0.60, height: 0.28 };
+const DEFAULT_BROADCAST_PLAYER_ITEM_NAME_RECT: NormalizedRect = { x: 0.18, y: 0.39, width: 0.52, height: 0.28 };
 const DEFAULT_BROADCAST_SPRITE_SUBRECT: NormalizedRect = { x: 0.03, y: 0.08, width: 0.54, height: 1.0 };
 const DEFAULT_BROADCAST_BATTLE_INDICATORS: BroadcastBattleIndicator[] = [
   {
@@ -611,19 +656,58 @@ const DEFAULT_BROADCAST_BATTLE_INDICATORS: BroadcastBattleIndicator[] = [
     templateSearchScale: 0.06,
   },
   {
+    id: "matching-waiting-text",
+    targetState: "idle",
+    detectFromScene: "battle",
+    rect: { x: 0.4005208333333333, y: 0.5722222222222222, width: 0.20104166666666667, height: 0.062037037037037036 },
+    threshold: 0.89,
+    templateImage: "scene/matching_waiting_text.png",
+    minTemplateScore: 0.89,
+    templateSearchOffsetX: 0.025,
+    templateSearchOffsetY: 0.025,
+    templateSearchScale: 0.03,
+  },
+  {
+    id: "matching-waiting-dialog",
+    targetState: "idle",
+    detectFromScene: "battle",
+    rect: { x: 0.3770833333333333, y: 0.3814814814814815, width: 0.2453125, height: 0.25925925925925924 },
+    threshold: 0.87,
+    templateImage: "scene/matching_waiting_dialog.png",
+    minTemplateScore: 0.87,
+    templateSearchOffsetX: 0.03,
+    templateSearchOffsetY: 0.03,
+    templateSearchScale: 0.04,
+  },
+  {
     id: "continue-battle-button",
     targetState: "idle",
-    rect: { x: 0.71875, y: 0.8851851851851852, width: 0.13958333333333334, height: 0.06481481481481481 },
-    threshold: 0.82,
-    templateImage: "scene/continue_battle_text.png",
-    minTemplateScore: 0.82,
-    templateSearchOffsetX: 0.1,
-    templateSearchOffsetY: 0.08,
-    templateSearchScale: 0.08,
+    rect: { x: 0.6567708333333333, y: 0.8712962962962963, width: 0.2791666666666667, height: 0.10555555555555556 },
+    threshold: 0.88,
+    templateImage: "scene/continue_battle_button.png",
+    minTemplateScore: 0.88,
+    templateSearchOffsetX: 0.03,
+    templateSearchOffsetY: 0.03,
+    templateSearchScale: 0.03,
+  },
+  {
+    id: "team-edit-button",
+    targetState: "idle",
+    rect: { x: 0.36770833333333336, y: 0.8712962962962963, width: 0.2791666666666667, height: 0.10555555555555556 },
+    threshold: 0.88,
+    templateImage: "scene/team_edit_button.png",
+    minTemplateScore: 0.88,
+    templateSearchOffsetX: 0.03,
+    templateSearchOffsetY: 0.03,
+    templateSearchScale: 0.03,
   },
 ];
 
 let broadcastOpponentSlotRects: NormalizedRect[] = [...DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS];
+let broadcastPlayerSlotRects: NormalizedRect[] = [...DEFAULT_BROADCAST_PLAYER_SLOT_RECTS];
+let broadcastPlayerSelectionBadgeRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_RECT };
+let broadcastPlayerPokemonNameRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_NAME_RECT };
+let broadcastPlayerItemNameRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_ITEM_NAME_RECT };
 let broadcastSpriteSubrect: NormalizedRect = { ...DEFAULT_BROADCAST_SPRITE_SUBRECT };
 let broadcastBattleIndicators: BroadcastBattleIndicator[] = DEFAULT_BROADCAST_BATTLE_INDICATORS.map((indicator) => ({
   ...indicator,
@@ -638,7 +722,7 @@ let sceneDetectionState: SceneDetectionState = {
   consecutiveMatches: 0,
 };
 let sceneDetectionRunning = false;
-let sceneDetectionFrameHandle: number | null = null;
+let sceneDetectionTimerHandle: number | null = null;
 let sceneDetectionLastRunAt = 0;
 let broadcastRecognitionCanvas: HTMLCanvasElement | null = null;
 let broadcastRecognitionContext: CanvasRenderingContext2D | null = null;
@@ -658,8 +742,59 @@ let confirmedOpponentRoster: BroadcastConfirmedRosterState = {
 };
 let lastSavedOpponentSlotImageSignature = "";
 let selectionSnapshotCaptured = false;
+let selectionSnapshotRecognized = false;
 let selectionSnapshotSlots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
+let playerSelectionSnapshotCaptured = false;
+let playerSelectionSnapshotRecognized = false;
+let playerSelectionSnapshotSlots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
+let playerSelectionSnapshotDebugSlots: BroadcastPlayerDebugSlotImage[] = [];
+let confirmedPlayerSelection: Array<BroadcastPlayerSelectionEntry | null> = Array.from({ length: 3 }, () => null);
 let recognitionBootstrapPromise: Promise<void> | null = null;
+let sceneSampleCache: SceneSampleCache = { frameId: 0, samples: new Map() };
+let activeMainTabId = "tab1";
+
+function serializeConfirmedPlayerSelection(): Array<{
+  displayIndex: number;
+  slotIndex: number | null;
+  selectionOrder: number | null;
+  pokemonName: string | null;
+  itemName: string | null;
+  score: number | null;
+}> {
+  return confirmedPlayerSelection.map((entry, index) => ({
+    displayIndex: index + 1,
+    slotIndex: entry?.slotIndex ?? null,
+    selectionOrder: entry?.selectionOrder ?? null,
+    pokemonName: entry?.pokemonName ?? null,
+    itemName: entry?.itemName ?? null,
+    score: entry?.score ?? null,
+  }));
+}
+
+function getSceneDetectionIntervalMs(): number {
+  return activeMainTabId === "tab1"
+    ? SCENE_DETECTION_INTERVAL_WHILE_DAMAGE_TAB_MS
+    : SCENE_DETECTION_INTERVAL_MS;
+}
+
+function getBroadcastRecognitionIntervalMs(): number {
+  return activeMainTabId === "tab1"
+    ? BROADCAST_RECOGNITION_INTERVAL_WHILE_DAMAGE_TAB_MS
+    : BROADCAST_RECOGNITION_INTERVAL_MS;
+}
+
+function logConfirmedPlayerSelectionState(context: string, extra?: Record<string, unknown>): void {
+  console.debug("[broadcast-player-selection]", {
+    context,
+    scene: sceneDetectionState.displayScene,
+    rawScene: sceneDetectionState.rawScene,
+    pendingScene: sceneDetectionState.pendingScene,
+    selectionSnapshotCaptured,
+    playerSelectionSnapshotCaptured,
+    confirmedPlayerSelection: serializeConfirmedPlayerSelection(),
+    ...extra,
+  });
+}
 
 function isValidNormalizedRect(value: unknown): value is NormalizedRect {
   if (!value || typeof value !== "object") return false;
@@ -703,6 +838,10 @@ async function loadImageTemplate(templatePath: string): Promise<LoadedIndicatorT
 
 async function loadBroadcastRecognitionConfig(): Promise<void> {
   let nextSlotRects = [...DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS];
+  let nextPlayerSlotRects = [...DEFAULT_BROADCAST_PLAYER_SLOT_RECTS];
+  let nextPlayerSelectionBadgeRect = { ...DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_RECT };
+  let nextPlayerPokemonNameRect = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_NAME_RECT };
+  let nextPlayerItemNameRect = { ...DEFAULT_BROADCAST_PLAYER_ITEM_NAME_RECT };
   let nextSpriteSubrect = { ...DEFAULT_BROADCAST_SPRITE_SUBRECT };
   let nextIndicators = DEFAULT_BROADCAST_BATTLE_INDICATORS.map((indicator) => ({
     ...indicator,
@@ -717,6 +856,19 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
         const rects = data.opponentSlotRects.filter((rect) => isValidNormalizedRect(rect)).map((rect) => clampRect(rect));
         if (rects.length === 6) nextSlotRects = rects;
       }
+      if (Array.isArray(data.playerSlotRects)) {
+        const rects = data.playerSlotRects.filter((rect) => isValidNormalizedRect(rect)).map((rect) => clampRect(rect));
+        if (rects.length === 6) nextPlayerSlotRects = rects;
+      }
+      if (isValidNormalizedRect(data.playerSelectionBadgeRect)) {
+        nextPlayerSelectionBadgeRect = clampRect(data.playerSelectionBadgeRect);
+      }
+      if (isValidNormalizedRect(data.playerPokemonNameRect)) {
+        nextPlayerPokemonNameRect = clampRect(data.playerPokemonNameRect);
+      }
+      if (isValidNormalizedRect(data.playerItemNameRect)) {
+        nextPlayerItemNameRect = clampRect(data.playerItemNameRect);
+      }
       if (isValidNormalizedRect(data.spriteSubrect)) {
         nextSpriteSubrect = clampRect(data.spriteSubrect);
       }
@@ -730,10 +882,19 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
                 : indicator.targetState === "idle"
                   ? "idle"
                   : "battle";
+            const detectFromScene: Exclude<SceneKind, "unknown"> | undefined =
+              indicator.detectFromScene === "idle"
+                ? "idle"
+                : indicator.detectFromScene === "selection"
+                  ? "selection"
+                  : indicator.detectFromScene === "battle"
+                    ? "battle"
+                    : undefined;
             return {
               ...indicator,
               rect: clampRect(indicator.rect),
               targetState,
+              detectFromScene,
             };
           });
         if (indicators.length > 0) nextIndicators = indicators;
@@ -744,6 +905,10 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
   }
 
   broadcastOpponentSlotRects = nextSlotRects;
+  broadcastPlayerSlotRects = nextPlayerSlotRects;
+  broadcastPlayerSelectionBadgeRect = nextPlayerSelectionBadgeRect;
+  broadcastPlayerPokemonNameRect = nextPlayerPokemonNameRect;
+  broadcastPlayerItemNameRect = nextPlayerItemNameRect;
   broadcastSpriteSubrect = nextSpriteSubrect;
   broadcastBattleIndicators = nextIndicators;
   broadcastIndicatorsByScene = new Map<Exclude<SceneKind, "unknown">, BroadcastBattleIndicator[]>([
@@ -780,7 +945,24 @@ function ensureSceneTemplateCanvas(width: number, height: number): CanvasRenderi
   return sceneTemplateContext;
 }
 
-function cropRectFromVideo(rect: NormalizedRect, targetWidth: number, targetHeight: number): Uint8ClampedArray | null {
+function getRectSampleCacheKey(
+  frameId: number,
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+  targetWidth: number,
+  targetHeight: number
+): string {
+  return `${frameId}:${sx}:${sy}:${sw}:${sh}:${targetWidth}:${targetHeight}`;
+}
+
+function cropRectFromVideo(
+  rect: NormalizedRect,
+  targetWidth: number,
+  targetHeight: number,
+  cache: SceneSampleCache | null = null
+): Uint8ClampedArray | null {
   const ctx = ensureSceneTemplateCanvas(targetWidth, targetHeight);
   if (!ctx || !sceneTemplateCanvas || !videoEl) return null;
   const videoWidth = videoEl.videoWidth;
@@ -796,10 +978,20 @@ function cropRectFromVideo(rect: NormalizedRect, targetWidth: number, targetHeig
   const sy = Math.min(Math.max(0, rawSy), Math.max(0, videoHeight - 1));
   const sw = Math.max(1, Math.min(rawSw, videoWidth - sx));
   const sh = Math.max(1, Math.min(rawSh, videoHeight - sy));
+  const cacheKey = cache
+    ? getRectSampleCacheKey(cache.frameId, sx, sy, sw, sh, targetWidth, targetHeight)
+    : null;
+
+  if (cacheKey) {
+    const cached = cache?.samples.get(cacheKey);
+    if (cached) return cached;
+  }
 
   ctx.clearRect(0, 0, targetWidth, targetHeight);
   ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
-  return ctx.getImageData(0, 0, targetWidth, targetHeight).data;
+  const data = ctx.getImageData(0, 0, targetWidth, targetHeight).data;
+  if (cacheKey) cache?.samples.set(cacheKey, data);
+  return data;
 }
 
 function computeTemplateScore(observed: Uint8ClampedArray, template: Uint8ClampedArray): number {
@@ -814,7 +1006,7 @@ function computeTemplateScore(observed: Uint8ClampedArray, template: Uint8Clampe
   return Math.max(0, 1 - totalDiff / (pixelCount * 255));
 }
 
-function getBestIndicatorScore(indicator: BroadcastBattleIndicator): number {
+function getBestIndicatorScore(indicator: BroadcastBattleIndicator, cache: SceneSampleCache | null = null): number {
   const template = broadcastIndicatorTemplates.get(indicator.id);
   if (!template) return 0;
 
@@ -841,7 +1033,7 @@ function getBestIndicatorScore(indicator: BroadcastBattleIndicator): number {
           width: scaledRect.width,
           height: scaledRect.height,
         });
-        const observed = cropRectFromVideo(candidateRect, template.width, template.height);
+        const observed = cropRectFromVideo(candidateRect, template.width, template.height, cache);
         if (!observed) continue;
         bestScore = Math.max(bestScore, computeTemplateScore(observed, template.data));
       }
@@ -861,35 +1053,99 @@ function getExpectedNextScene(scene: SceneKind): SceneKind {
 function getIndicatorsForSceneDetection(scene: SceneKind): BroadcastBattleIndicator[] {
   const nextScene = getExpectedNextScene(scene);
   if (nextScene !== "unknown") {
-    return broadcastIndicatorsByScene.get(nextScene as Exclude<SceneKind, "unknown">) ?? [];
+    const indicators = broadcastIndicatorsByScene.get(nextScene as Exclude<SceneKind, "unknown">) ?? [];
+    return indicators.filter((indicator) => !indicator.detectFromScene || indicator.detectFromScene === scene);
   }
   return broadcastBattleIndicators;
 }
 
-function detectSceneFromVideo(): SceneKind {
-  const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
-  if (candidateIndicators.length === 0) return "unknown";
-
-  const nextScene = candidateIndicators[0]?.targetState ?? "unknown";
-  if (nextScene === "selection") {
-    const allMatched = candidateIndicators.every((indicator) => {
-      const score = getBestIndicatorScore(indicator);
-      const threshold = indicator.minTemplateScore ?? indicator.threshold ?? 0.8;
-      return score >= threshold;
-    });
-    return allMatched ? "selection" : "unknown";
+function detectIdleSceneFromScores(
+  scores: Array<{
+    indicator: BroadcastBattleIndicator;
+    score: number;
+    threshold: number;
+    matched: boolean;
+  }>,
+  currentScene: SceneKind
+): SceneKind {
+  if (currentScene !== "battle") {
+    return scores.every(({ matched }) => matched) ? "idle" : "unknown";
   }
 
-  for (const indicator of candidateIndicators) {
-    const score = getBestIndicatorScore(indicator);
-    const threshold = indicator.minTemplateScore ?? indicator.threshold ?? 0.8;
-    if (score < threshold) continue;
-    return indicator.targetState ?? "battle";
+  const battleSpecificScores = scores.filter(({ indicator }) => indicator.detectFromScene === "battle");
+  if (battleSpecificScores.some(({ matched }) => matched)) {
+    return "idle";
   }
+
+  const fallbackScores = scores.filter(({ indicator }) => !indicator.detectFromScene);
+  if (fallbackScores.length > 0 && fallbackScores.every(({ matched }) => matched)) {
+    return "idle";
+  }
+
   return "unknown";
 }
 
-function resetRecognitionStates(): void {
+function updateSceneDetectionDebug(lines: string[]): void {
+  if (!sceneDetectionDebugEl) return;
+  if (!sceneDebugEnabledEl?.checked || lines.length === 0) {
+    sceneDetectionDebugEl.hidden = true;
+    sceneDetectionDebugEl.textContent = "";
+    return;
+  }
+  sceneDetectionDebugEl.hidden = false;
+  sceneDetectionDebugEl.textContent = lines.join("\n");
+}
+
+function getRequiredStableMatches(from: SceneKind, to: SceneKind): number {
+  if (from === "battle" && to === "idle") return 5;
+  return SCENE_STABLE_MATCHES;
+}
+
+function detectSceneFromVideo(): SceneKind {
+  const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
+  if (candidateIndicators.length === 0) {
+    updateSceneDetectionDebug([]);
+    return "unknown";
+  }
+
+  sceneSampleCache = {
+    frameId: sceneSampleCache.frameId + 1,
+    samples: new Map(),
+  };
+  const nextScene = candidateIndicators[0]?.targetState ?? "unknown";
+  const scores = candidateIndicators.map((indicator) => {
+    const score = getBestIndicatorScore(indicator, sceneSampleCache);
+    const threshold = indicator.minTemplateScore ?? indicator.threshold ?? 0.8;
+    return { indicator, score, threshold, matched: score >= threshold };
+  });
+
+  if (sceneDebugEnabledEl?.checked && nextScene === "idle") {
+    const lines = [
+      `current=${sceneDetectionState.displayScene} next=${nextScene}`,
+      ...scores.map(({ indicator, score, threshold, matched }) =>
+        `${matched ? "PASS" : "FAIL"} ${indicator.id}${indicator.detectFromScene ? ` [from:${indicator.detectFromScene}]` : ""}: ${score.toFixed(4)} / ${threshold.toFixed(2)}`
+      ),
+    ];
+    updateSceneDetectionDebug(lines);
+  } else {
+    updateSceneDetectionDebug([]);
+  }
+
+  if (nextScene === "selection") {
+    const allMatched = scores.every(({ matched }) => matched);
+    return allMatched ? "selection" : "unknown";
+  }
+
+  if (nextScene === "idle") {
+    return detectIdleSceneFromScores(scores, sceneDetectionState.displayScene);
+  }
+
+  const matchedScore = scores.find(({ matched }) => matched);
+  return matchedScore ? (matchedScore.indicator.targetState ?? "battle") : "unknown";
+}
+
+function resetRecognitionStates(reason = "unspecified"): void {
+  const beforeReset = serializeConfirmedPlayerSelection();
   broadcastRecognitionStates = Array.from({ length: 6 }, () => ({
     confirmed: null,
     pending: null,
@@ -901,7 +1157,67 @@ function resetRecognitionStates(): void {
   };
   lastSavedOpponentSlotImageSignature = "";
   selectionSnapshotCaptured = false;
+  selectionSnapshotRecognized = false;
   selectionSnapshotSlots = [];
+  playerSelectionSnapshotCaptured = false;
+  playerSelectionSnapshotRecognized = false;
+  playerSelectionSnapshotSlots = [];
+  playerSelectionSnapshotDebugSlots = [];
+  confirmedPlayerSelection = Array.from({ length: 3 }, () => null);
+  console.debug("[broadcast-player-selection]", {
+    context: "resetRecognitionStates",
+    reason,
+    beforeReset,
+    afterReset: serializeConfirmedPlayerSelection(),
+  });
+}
+
+function renderBroadcastPlayerSelection(): void {
+  for (let index = 0; index < broadcastPlayerCardEls.length; index += 1) {
+    const cardEl = broadcastPlayerCardEls[index];
+    if (!cardEl) continue;
+    const entry = confirmedPlayerSelection[index];
+    cardEl.classList.toggle("broadcast-info-card--accent", index === 1);
+    cardEl.innerHTML = "";
+
+    const art = document.createElement("div");
+    art.className = "broadcast-info-art";
+    art.textContent = entry ? String(entry.selectionOrder) : String(index + 1);
+
+    const body = document.createElement("div");
+    body.className = "broadcast-info-body";
+
+    const label = document.createElement("div");
+    label.className = "broadcast-info-label";
+    label.textContent = `${index + 1}番手`;
+
+    const title = document.createElement("div");
+    title.className = "broadcast-info-title";
+    title.textContent = entry?.pokemonName ?? "Unknown";
+
+    const subtitle = document.createElement("div");
+    subtitle.className = "broadcast-info-subtitle";
+    subtitle.textContent = `持ち物: ${entry?.itemName ?? "Unknown"}`;
+
+    const chips = document.createElement("div");
+    chips.className = "broadcast-info-chip-row";
+
+    if (entry) {
+      const slotChip = document.createElement("span");
+      slotChip.className = "broadcast-info-chip";
+      slotChip.textContent = `選出枠 ${entry.slotIndex + 1}`;
+      chips.append(slotChip);
+    } else {
+      const waitingChip = document.createElement("span");
+      waitingChip.className = "broadcast-info-chip";
+      waitingChip.textContent = "認識待ち";
+      chips.append(waitingChip);
+    }
+
+    body.append(label, title, subtitle);
+    if (chips.childElementCount > 0) body.append(chips);
+    cardEl.append(art, body);
+  }
 }
 
 function renderBroadcastRoster(): void {
@@ -952,6 +1268,7 @@ function renderBroadcastRoster(): void {
   if (broadcastTeamNameEl) {
     broadcastTeamNameEl.textContent = sceneDetectionState.displayScene === "battle" ? "Opponent Locked" : "Opponent Preview";
   }
+  renderBroadcastPlayerSelection();
 }
 
 function setSceneStatus(scene: SceneKind, message?: string): void {
@@ -962,19 +1279,19 @@ function setSceneStatus(scene: SceneKind, message?: string): void {
 
   if (sceneDetectionBadgeEl) {
     sceneDetectionBadgeEl.textContent = {
-      idle: "��E??��",
-      selection: "�I�o��",
-      battle: "�ΐ풆",
-      unknown: "��E??��",
+      idle: "待機中",
+      selection: "選出中",
+      battle: "対戦中",
+      unknown: "待機中",
     }[scene];
   }
 
   if (sceneDetectionTextEl) {
     sceneDetectionTextEl.textContent = message ?? {
-      idle: "��E??��ʂ�Ď���",
-      selection: "�I�o��ʂ�F����",
-      battle: "�ΐ��ʂ�F����",
-      unknown: "�f���F����E??��",
+      idle: "待機画面を認識中",
+      selection: "選出画面を認識中",
+      battle: "対戦画面を認識中",
+      unknown: "場面認識を待機中",
     }[scene];
   }
 
@@ -1010,6 +1327,7 @@ function isAllowedSceneTransition(from: SceneKind, to: SceneKind): boolean {
 }
 
 function advanceSceneDetectionState(rawScene: SceneKind): void {
+  const previousDisplayScene = sceneDetectionState.displayScene;
   sceneDetectionState.rawScene = rawScene;
   if (rawScene === "unknown") {
     setSceneStatus(sceneDetectionState.displayScene);
@@ -1039,14 +1357,17 @@ function advanceSceneDetectionState(rawScene: SceneKind): void {
     sceneDetectionState.consecutiveMatches = 1;
   }
 
-  if (sceneDetectionState.consecutiveMatches >= SCENE_STABLE_MATCHES) {
-    const previousScene = sceneDetectionState.displayScene;
+  if (sceneDetectionState.consecutiveMatches >= getRequiredStableMatches(previousDisplayScene, rawScene)) {
     sceneDetectionState.displayScene = rawScene;
     sceneDetectionState.pendingScene = rawScene;
     sceneDetectionState.consecutiveMatches = 0;
-    if (rawScene === "idle") resetRecognitionStates();
-    if (rawScene === "selection" && previousScene !== "selection") {
-      resetRecognitionStates();
+    logConfirmedPlayerSelectionState("scene-transition-committed", {
+      previousScene: previousDisplayScene,
+      nextScene: rawScene,
+    });
+    if (rawScene === "idle") resetRecognitionStates("scene-transition-to-idle");
+    if (rawScene === "selection" && previousDisplayScene !== "selection") {
+      resetRecognitionStates("scene-transition-to-selection");
     }
   }
 
@@ -1054,7 +1375,30 @@ function advanceSceneDetectionState(rawScene: SceneKind): void {
   syncReadableSceneStatus(sceneDetectionState.displayScene);
 }
 
-function cropBroadcastSlotImage(slotRect: NormalizedRect): string | null {
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      const commaIndex = result.indexOf(",");
+      if (commaIndex >= 0) {
+        resolve(result.slice(commaIndex + 1));
+        return;
+      }
+      reject(new Error("Failed to encode blob to base64"));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read blob"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/png");
+  });
+}
+
+async function cropBroadcastSlotImage(slotRect: NormalizedRect): Promise<string | null> {
   const ctx = ensureBroadcastRecognitionCanvas();
   if (!ctx || !broadcastRecognitionCanvas || !videoEl) return null;
   const videoWidth = videoEl.videoWidth;
@@ -1075,18 +1419,55 @@ function cropBroadcastSlotImage(slotRect: NormalizedRect): string | null {
   if (broadcastRecognitionCanvas.height !== sh) broadcastRecognitionCanvas.height = sh;
   ctx.clearRect(0, 0, sw, sh);
   ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, sw, sh);
-  const dataUrl = broadcastRecognitionCanvas.toDataURL("image/png");
-  const commaIndex = dataUrl.indexOf(",");
-  return commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : null;
+  const blob = await canvasToPngBlob(broadcastRecognitionCanvas);
+  if (!blob) return null;
+  try {
+    return await blobToBase64(blob);
+  } catch {
+    return null;
+  }
 }
 
-function collectCurrentBroadcastSlots(): Array<{ slotIndex: number; imageBase64: string; timestamp: number }> {
-  return broadcastOpponentSlotRects
-    .map((rect, index) => {
-      const imageBase64 = cropBroadcastSlotImage(rect);
-      return imageBase64 ? { slotIndex: index, imageBase64, timestamp: Date.now() } : null;
-    })
-    .filter((slot): slot is { slotIndex: number; imageBase64: string; timestamp: number } => !!slot);
+async function collectCurrentBroadcastSlots(): Promise<Array<{ slotIndex: number; imageBase64: string; timestamp: number }>> {
+  const capturedAt = Date.now();
+  const slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
+  for (const [index, rect] of broadcastOpponentSlotRects.entries()) {
+    const imageBase64 = await cropBroadcastSlotImage(rect);
+    if (imageBase64) slots.push({ slotIndex: index, imageBase64, timestamp: capturedAt });
+  }
+  return slots;
+}
+
+async function collectCurrentPlayerSlots(): Promise<Array<{ slotIndex: number; imageBase64: string; timestamp: number }>> {
+  const capturedAt = Date.now();
+  const slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
+  for (const [index, rect] of broadcastPlayerSlotRects.entries()) {
+    const imageBase64 = await cropBroadcastSlotImage(rect);
+    if (imageBase64) slots.push({ slotIndex: index, imageBase64, timestamp: capturedAt });
+  }
+  return slots;
+}
+
+function getNestedBroadcastRect(parentRect: NormalizedRect, childRect: NormalizedRect): NormalizedRect {
+  return clampRect({
+    x: parentRect.x + childRect.x * parentRect.width,
+    y: parentRect.y + childRect.y * parentRect.height,
+    width: childRect.width * parentRect.width,
+    height: childRect.height * parentRect.height,
+  });
+}
+
+async function collectCurrentPlayerDebugSlots(): Promise<BroadcastPlayerDebugSlotImage[]> {
+  const capturedAt = Date.now();
+  const slots: BroadcastPlayerDebugSlotImage[] = [];
+  for (const [index, rect] of broadcastPlayerSlotRects.entries()) {
+    const imageBase64 = await cropBroadcastSlotImage(rect);
+    const itemImageBase64 = await cropBroadcastSlotImage(getNestedBroadcastRect(rect, broadcastPlayerItemNameRect));
+    if (imageBase64) {
+      slots.push({ slotIndex: index, imageBase64, itemImageBase64: itemImageBase64 ?? "", timestamp: capturedAt });
+    }
+  }
+  return slots;
 }
 
 async function saveSelectionSlotImages(slots: Array<{ slotIndex: number; imageBase64: string }>): Promise<void> {
@@ -1098,6 +1479,38 @@ async function saveSelectionSlotImages(slots: Array<{ slotIndex: number; imageBa
     lastSavedOpponentSlotImageSignature = signature;
   } catch {
     // Ignore save failures to keep recognition running.
+  }
+}
+
+async function savePlayerDebugImages(
+  slots: BroadcastPlayerDebugSlotImage[],
+  results: Array<{ slotIndex: number; selectionOrder: number | null }> = []
+): Promise<void> {
+  if (slots.length === 0) return;
+
+  const slotsByIndex = new Map(slots.map((slot) => [slot.slotIndex, slot]));
+  const selectedSlots: Array<{ selectionOrder: number; imageBase64: string; itemImageBase64: string }> = [];
+  const usedOrders = new Set<number>();
+  for (const result of results) {
+    const selectionOrder = result.selectionOrder;
+    if (!selectionOrder || selectionOrder < 1 || selectionOrder > 3 || usedOrders.has(selectionOrder)) continue;
+    const slot = slotsByIndex.get(result.slotIndex);
+    if (!slot) continue;
+    usedOrders.add(selectionOrder);
+    selectedSlots.push({
+      selectionOrder,
+      imageBase64: slot.imageBase64,
+      itemImageBase64: slot.itemImageBase64,
+    });
+  }
+
+  try {
+    await (window as any).electronAPI?.savePlayerDebugImages?.({
+      slots: slots.map(({ slotIndex, imageBase64, itemImageBase64 }) => ({ slotIndex, imageBase64, itemImageBase64 })),
+      selectedSlots,
+    });
+  } catch {
+    // Debug image save failures should not affect recognition.
   }
 }
 
@@ -1162,6 +1575,96 @@ function applyBroadcastRecognitionResults(
   }
 }
 
+function hasOpponentRecognitionMatch(
+  results: Array<{ pokemonId: string | null; pokemonName: string | null }>
+): boolean {
+  return results.some((result) => !!result.pokemonId && !!result.pokemonName);
+}
+
+function hasPlayerSelectionRecognitionMatch(
+  results: Array<{ selectionOrder: number | null; pokemonName: string | null; itemName: string | null }>
+): boolean {
+  return results.some((result) => !!result.pokemonName || !!result.itemName || (!!result.selectionOrder && result.selectionOrder >= 1 && result.selectionOrder <= 3));
+}
+
+function applyPlayerSelectionRecognitionResults(
+  results: Array<{
+    slotIndex: number;
+    selectionOrder: number | null;
+    pokemonName: string | null;
+    itemName: string | null;
+    score: number;
+    debugOcrTexts?: {
+      slot: string[];
+      pokemonName: string[];
+      itemName: string[];
+      badge: string[];
+      selectedPokemonName: string[];
+      selectedItemName: string[];
+    };
+  }>
+): void {
+  const nextSelection: Array<BroadcastPlayerSelectionEntry | null> = Array.from({ length: 3 }, () => null);
+
+  // 1パス目: selectionOrder が確定している結果を正位置に配置
+  for (const result of results) {
+    if (!result || !result.selectionOrder || result.selectionOrder < 1 || result.selectionOrder > 3) continue;
+    nextSelection[result.selectionOrder - 1] = {
+      slotIndex: result.slotIndex,
+      selectionOrder: result.selectionOrder,
+      pokemonName: result.pokemonName,
+      itemName: result.itemName,
+      score: result.score,
+    };
+  }
+
+  // 2パス目: selectionOrder が不明でも pokemonName があれば空き枠に slotIndex 昇順で埋める
+  const unordered = results
+    .filter((r) => r && r.pokemonName && (!r.selectionOrder || r.selectionOrder < 1 || r.selectionOrder > 3))
+    .sort((a, b) => a.slotIndex - b.slotIndex);
+  let fillIdx = 0;
+  for (let i = 0; i < 3 && fillIdx < unordered.length; i++) {
+    if (!nextSelection[i]) {
+      const result = unordered[fillIdx++];
+      nextSelection[i] = {
+        slotIndex: result.slotIndex,
+        selectionOrder: i + 1,
+        pokemonName: result.pokemonName,
+        itemName: result.itemName,
+        score: result.score,
+      };
+    }
+  }
+
+  console.debug("[broadcast-player-selection]", {
+    context: "applyPlayerSelectionRecognitionResults",
+    scene: sceneDetectionState.displayScene,
+    rawResults: results,
+    nextSelection: nextSelection.map((entry, index) => ({
+      displayIndex: index + 1,
+      slotIndex: entry?.slotIndex ?? null,
+      selectionOrder: entry?.selectionOrder ?? null,
+      pokemonName: entry?.pokemonName ?? null,
+      itemName: entry?.itemName ?? null,
+      score: entry?.score ?? null,
+    })),
+  });
+  console.table(results.map((result) => ({
+    slot: result.slotIndex + 1,
+    selectedOrder: result.selectionOrder ?? "",
+    matchedPokemon: result.pokemonName ?? "",
+    matchedItem: result.itemName ?? "",
+    ocrSlot: result.debugOcrTexts?.slot.join(" / ") ?? "",
+    ocrPokemon: result.debugOcrTexts?.pokemonName.join(" / ") ?? "",
+    ocrItem: result.debugOcrTexts?.itemName.join(" / ") ?? "",
+    ocrSelectedPokemon: result.debugOcrTexts?.selectedPokemonName.join(" / ") ?? "",
+    ocrSelectedItem: result.debugOcrTexts?.selectedItemName.join(" / ") ?? "",
+  })));
+  confirmedPlayerSelection = nextSelection;
+  logConfirmedPlayerSelectionState("confirmedPlayerSelection-updated");
+  renderBroadcastPlayerSelection();
+}
+
 async function startBroadcastRecognitionWorker(): Promise<void> {
   try {
     const result = await (window as any).electronAPI?.startRecognitionWorker?.();
@@ -1182,26 +1685,78 @@ async function stopBroadcastRecognitionWorker(): Promise<void> {
 
 async function updateBroadcastRecognition(): Promise<void> {
   if (sceneDetectionState.displayScene !== "selection") return;
-  if (selectionSnapshotCaptured) return;
-  if (!videoEl || videoEl.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+  if (selectionSnapshotRecognized && playerSelectionSnapshotRecognized) return;
+  if (!videoEl || videoEl.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+    scheduleSceneRecognition();
+    return;
+  }
   const now = performance.now();
-  if (now - broadcastRecognitionLastRunAt < BROADCAST_RECOGNITION_INTERVAL_MS) return;
+  if (now - broadcastRecognitionLastRunAt < getBroadcastRecognitionIntervalMs()) return;
   broadcastRecognitionLastRunAt = now;
+  const captureStartedAt = sceneDebugEnabledEl?.checked ? performance.now() : 0;
 
-  const slots = collectCurrentBroadcastSlots();
-  if (slots.length === 0) return;
+  if (!selectionSnapshotCaptured) {
+    const slots = await collectCurrentBroadcastSlots();
+    if (slots.length > 0) {
+      selectionSnapshotSlots = slots.map((slot) => ({ ...slot }));
+      await saveSelectionSlotImages(selectionSnapshotSlots.map(({ slotIndex, imageBase64 }) => ({ slotIndex, imageBase64 })));
+      selectionSnapshotCaptured = true;
+    }
+  }
+  if (!playerSelectionSnapshotCaptured) {
+    const playerDebugSlots = await collectCurrentPlayerDebugSlots();
+    if (playerDebugSlots.length > 0) {
+      playerSelectionSnapshotSlots = playerDebugSlots.map(({ slotIndex, imageBase64, timestamp }) => ({ slotIndex, imageBase64, timestamp }));
+      playerSelectionSnapshotDebugSlots = playerDebugSlots.map((slot) => ({ ...slot }));
+      await savePlayerDebugImages(playerDebugSlots);
+      playerSelectionSnapshotCaptured = true;
+    }
+  }
 
-  selectionSnapshotSlots = slots.map((slot) => ({ ...slot }));
-  await saveSelectionSlotImages(selectionSnapshotSlots.map(({ slotIndex, imageBase64 }) => ({ slotIndex, imageBase64 })));
-  selectionSnapshotCaptured = true;
+  if (sceneDebugEnabledEl?.checked) {
+    console.debug("[recognition] snapshot-capture-ms", (performance.now() - captureStartedAt).toFixed(1));
+  }
 
   if (!broadcastRecognitionReady || broadcastRecognitionInFlight) return;
 
   broadcastRecognitionInFlight = true;
   try {
-    const response = await (window as any).electronAPI?.recognizeOpponentSlots?.(selectionSnapshotSlots);
-    if (response?.success && Array.isArray(response.results)) {
-      applyBroadcastRecognitionResults(response.results, true);
+    const recognitionStartedAt = sceneDebugEnabledEl?.checked ? performance.now() : 0;
+    if (!selectionSnapshotRecognized && selectionSnapshotSlots.length > 0) {
+      const response = await (window as any).electronAPI?.recognizeOpponentSlots?.(selectionSnapshotSlots);
+      if (response?.success && Array.isArray(response.results)) {
+        if (hasOpponentRecognitionMatch(response.results)) {
+          applyBroadcastRecognitionResults(response.results, true);
+          selectionSnapshotRecognized = true;
+        } else {
+          selectionSnapshotCaptured = false;
+          selectionSnapshotSlots = [];
+        }
+      }
+    }
+    if (!playerSelectionSnapshotRecognized && playerSelectionSnapshotSlots.length > 0) {
+      const playerResponse = await (window as any).electronAPI?.recognizePlayerSelection?.(
+        playerSelectionSnapshotSlots,
+        {
+          selectionBadgeRect: broadcastPlayerSelectionBadgeRect,
+          pokemonNameRect: broadcastPlayerPokemonNameRect,
+          itemNameRect: broadcastPlayerItemNameRect,
+        }
+      );
+      if (playerResponse?.success && Array.isArray(playerResponse.results)) {
+        if (hasPlayerSelectionRecognitionMatch(playerResponse.results)) {
+          await savePlayerDebugImages(playerSelectionSnapshotDebugSlots, playerResponse.results);
+          applyPlayerSelectionRecognitionResults(playerResponse.results);
+          playerSelectionSnapshotRecognized = true;
+        } else {
+          playerSelectionSnapshotCaptured = false;
+          playerSelectionSnapshotSlots = [];
+          playerSelectionSnapshotDebugSlots = [];
+        }
+      }
+    }
+    if (sceneDebugEnabledEl?.checked) {
+      console.debug("[recognition] worker-roundtrip-ms", (performance.now() - recognitionStartedAt).toFixed(1));
     }
   } catch {
     // Ignore recognition failures. Scene detection can continue independently.
@@ -1225,9 +1780,9 @@ async function ensureSceneRecognitionBootstrap(): Promise<void> {
 
 function stopSceneRecognitionLoop(): void {
   sceneDetectionRunning = false;
-  if (sceneDetectionFrameHandle !== null) {
-    cancelAnimationFrame(sceneDetectionFrameHandle);
-    sceneDetectionFrameHandle = null;
+  if (sceneDetectionTimerHandle !== null) {
+    window.clearTimeout(sceneDetectionTimerHandle);
+    sceneDetectionTimerHandle = null;
   }
   sceneDetectionLastRunAt = 0;
   broadcastRecognitionLastRunAt = 0;
@@ -1240,32 +1795,63 @@ function stopSceneRecognitionLoop(): void {
   };
   resetRecognitionStates();
   void stopBroadcastRecognitionWorker();
-  setSceneStatus("idle", currentStream ? "��E??��" : "�f���f�o�C�X��I����Ă�������");
-  syncReadableSceneStatus("idle", currentStream ? "��E??��" : "�f���f�o�C�X��I����Ă�������");
+  setSceneStatus("idle", currentStream ? "待機中" : "映像デバイスを選択してください");
+  syncReadableSceneStatus("idle", currentStream ? "待機中" : "映像デバイスを選択してください");
 }
 
-function runSceneRecognitionLoop(): void {
+function scheduleSceneRecognition(delayMs = getSceneDetectionIntervalMs()): void {
   if (!sceneDetectionRunning) return;
-  sceneDetectionFrameHandle = requestAnimationFrame(runSceneRecognitionLoop);
+  if (sceneDetectionTimerHandle !== null) {
+    window.clearTimeout(sceneDetectionTimerHandle);
+  }
+  sceneDetectionTimerHandle = window.setTimeout(() => {
+    sceneDetectionTimerHandle = null;
+    void runSceneRecognitionLoop();
+  }, Math.max(0, delayMs));
+}
 
+async function runSceneRecognitionLoop(): Promise<void> {
+  if (!sceneDetectionRunning) return;
+  if (!videoEl || videoEl.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+    scheduleSceneRecognition();
+    return;
+  }
   if (sceneDetectionEnabledEl && !sceneDetectionEnabledEl.checked) {
-    setSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
-    syncReadableSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
+    setSceneStatus(sceneDetectionState.displayScene, "\u5834\u9762\u8A8D\u8B58\u3092\u4E00\u6642\u505C\u6B62\u4E2D");
+    syncReadableSceneStatus(sceneDetectionState.displayScene, "\u5834\u9762\u8A8D\u8B58\u3092\u4E00\u6642\u505C\u6B62\u4E2D");
+    scheduleSceneRecognition();
+    return;
+  }
+  if (sceneDetectionEnabledEl && !sceneDetectionEnabledEl.checked) {
+    setSceneStatus(sceneDetectionState.displayScene, "譏蜒剰ｪ崎ｭ倥ｒ蛛懈ｭ｢荳ｭ");
+    syncReadableSceneStatus(sceneDetectionState.displayScene, "譏蜒剰ｪ崎ｭ倥ｒ蛛懈ｭ｢荳ｭ");
+    scheduleSceneRecognition();
+    return;
+  }
+  if (sceneDetectionEnabledEl && !sceneDetectionEnabledEl.checked) {
+    setSceneStatus(sceneDetectionState.displayScene, "映像認識を停止中");
+    syncReadableSceneStatus(sceneDetectionState.displayScene, "映像認識を停止中");
     return;
   }
   if (!videoEl || videoEl.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
 
-  const now = performance.now();
-  if (now - sceneDetectionLastRunAt < SCENE_DETECTION_INTERVAL_MS) return;
-  sceneDetectionLastRunAt = now;
+  const startedAt = performance.now();
+  sceneDetectionLastRunAt = startedAt;
 
   const rawScene = detectSceneFromVideo();
   const previousDisplayScene = sceneDetectionState.displayScene;
   advanceSceneDetectionState(rawScene);
   if (sceneDetectionState.displayScene === "selection" && previousDisplayScene !== "selection") {
     broadcastRecognitionLastRunAt = 0;
-    void updateBroadcastRecognition();
+    await updateBroadcastRecognition();
+  } else if (sceneDetectionState.displayScene === "selection") {
+    await updateBroadcastRecognition();
   }
+
+  if (sceneDebugEnabledEl?.checked) {
+    console.debug("[recognition] scene-detection-ms", (performance.now() - startedAt).toFixed(1));
+  }
+  scheduleSceneRecognition(Math.max(0, getSceneDetectionIntervalMs() - (performance.now() - startedAt)));
 }
 
 function shouldRunSceneRecognition(): boolean {
@@ -1277,8 +1863,8 @@ function startSceneRecognitionLoop(): void {
   void ensureSceneRecognitionBootstrap().then(() => {
     if (!shouldRunSceneRecognition()) return;
     sceneDetectionRunning = true;
-    if (sceneDetectionFrameHandle === null) {
-      sceneDetectionFrameHandle = requestAnimationFrame(runSceneRecognitionLoop);
+    if (sceneDetectionTimerHandle === null) {
+      scheduleSceneRecognition(0);
     }
   });
 }
@@ -1292,8 +1878,8 @@ sceneDetectionEnabledEl?.addEventListener("change", () => {
   if (!sceneDetectionEnabledEl.checked) {
     stopSceneRecognitionLoop();
     if (videoWrapEl) videoWrapEl.dataset.overlayVisible = "false";
-    setSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
-    syncReadableSceneStatus(sceneDetectionState.displayScene, "�f���F��?E��~��");
+    setSceneStatus(sceneDetectionState.displayScene, "映像認識を停止中");
+    syncReadableSceneStatus(sceneDetectionState.displayScene, "映像認識を停止中");
     return;
   }
   if (currentStream) {
@@ -1303,8 +1889,6 @@ sceneDetectionEnabledEl?.addEventListener("change", () => {
   setSceneStatus("idle", "\u6620\u50CF\u30C7\u30D0\u30A4\u30B9\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044");
   syncReadableSceneStatus("idle", "\u6620\u50CF\u30C7\u30D0\u30A4\u30B9\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044");
 });
-
-/** ?E??�`?E��?E?�e�`?E���͍ő�6�C?E?E*/
 
 /** 複数チーム（各チームは最大6匹） */
 let teams: TeamMember[][] = [];
@@ -1335,6 +1919,55 @@ let attackPokemon: Pokemon | null = null;
 
 /** タブ1: 攻撃を受ける側ポケモン */
 let defendPokemon: Pokemon | null = null;
+
+interface DamagePokemonState {
+  pokemon: Pokemon | null;
+  heldItem: string;
+  ability: string;
+  abilityActive: boolean;
+  moves: number[];
+  atkEV: number;
+  atkNature: number;
+  spAtkEV: number;
+  spAtkNature: number;
+  atkRank: number;
+  spAtkRank: number;
+  isBurned: boolean;
+  hpEV: number;
+  defEV: number;
+  defNature: number;
+  spDefEV: number;
+  spDefNature: number;
+  defRank: number;
+  spDefRank: number;
+}
+
+function createDefaultDamagePokemonState(): DamagePokemonState {
+  return {
+    pokemon: null,
+    heldItem: "",
+    ability: "",
+    abilityActive: true,
+    moves: [],
+    atkEV: 0,
+    atkNature: 1.0,
+    spAtkEV: 0,
+    spAtkNature: 1.0,
+    atkRank: 0,
+    spAtkRank: 0,
+    isBurned: false,
+    hpEV: 0,
+    defEV: 0,
+    defNature: 1.0,
+    spDefEV: 0,
+    spDefNature: 1.0,
+    defRank: 0,
+    spDefRank: 0,
+  };
+}
+
+let attackerState: DamagePokemonState = createDefaultDamagePokemonState();
+let defenderState: DamagePokemonState = createDefaultDamagePokemonState();
 
 /** タブ1: 単体選択モーダルで選択対象（'attack' | 'defend' | 'box'） */
 let tab1SelectTarget: "attack" | "defend" | "box" | null = null;
@@ -1445,6 +2078,99 @@ interface Move {
 }
 
 let movesData: Move[] = [];
+let movesDataById = new Map<number, Move>();
+
+function rebuildMovesDataIndex(): void {
+  movesDataById = new Map(movesData.map((move) => [move.id, move]));
+}
+
+function syncLegacyStateFromDamageStates(): void {
+  attackPokemon = attackerState.pokemon;
+  defendPokemon = defenderState.pokemon;
+  attackerAbility = attackerState.ability;
+  defenderAbility = defenderState.ability;
+  attackerAbilityActive = attackerState.abilityActive;
+  defenderAbilityActive = defenderState.abilityActive;
+  selectedMoves = [...attackerState.moves];
+  attackerAtkEV = attackerState.atkEV;
+  attackerAtkNature = attackerState.atkNature;
+  attackerSpAtkEV = attackerState.spAtkEV;
+  attackerSpAtkNature = attackerState.spAtkNature;
+  attackerAtkRank = attackerState.atkRank;
+  attackerSpAtkRank = attackerState.spAtkRank;
+  attackerIsBurned = attackerState.isBurned;
+  defenderHpEV = defenderState.hpEV;
+  defenderDefEV = defenderState.defEV;
+  defenderDefNature = defenderState.defNature;
+  defenderSpDefEV = defenderState.spDefEV;
+  defenderSpDefNature = defenderState.spDefNature;
+  defenderDefRank = defenderState.defRank;
+  defenderSpDefRank = defenderState.spDefRank;
+  tab1AttackerItem = attackerState.heldItem;
+  tab1DefenderItem = defenderState.heldItem;
+}
+
+function syncDamageStatesFromLegacyState(): void {
+  attackerState = {
+    ...attackerState,
+    pokemon: attackPokemon,
+    heldItem: tab1AttackerItem,
+    ability: attackerAbility,
+    abilityActive: attackerAbilityActive,
+    moves: [...selectedMoves],
+    atkEV: attackerAtkEV,
+    atkNature: attackerAtkNature,
+    spAtkEV: attackerSpAtkEV,
+    spAtkNature: attackerSpAtkNature,
+    atkRank: attackerAtkRank,
+    spAtkRank: attackerSpAtkRank,
+    isBurned: attackerIsBurned,
+  };
+  defenderState = {
+    ...defenderState,
+    pokemon: defendPokemon,
+    heldItem: tab1DefenderItem,
+    ability: defenderAbility,
+    abilityActive: defenderAbilityActive,
+    hpEV: defenderHpEV,
+    defEV: defenderDefEV,
+    defNature: defenderDefNature,
+    spDefEV: defenderSpDefEV,
+    spDefNature: defenderSpDefNature,
+    defRank: defenderDefRank,
+    spDefRank: defenderSpDefRank,
+  };
+}
+
+function createDamageStateForPokemon(pokemon: Pokemon): DamagePokemonState {
+  return {
+    ...createDefaultDamagePokemonState(),
+    pokemon,
+    ability: pokemon.abilities?.[0] ?? "",
+    moves: getDefaultMoves(pokemon),
+  };
+}
+
+function createDamageStateFromBoxEntry(entry: BoxEntry): DamagePokemonState {
+  const pokemon = entry.pokemon;
+  const nat = NATURES.find((n) => n.name === entry.natureName);
+  return {
+    ...createDefaultDamagePokemonState(),
+    pokemon,
+    heldItem: entry.heldItem,
+    ability: entry.ability || (pokemon.abilities?.[0] ?? ""),
+    moves: [...entry.moves, 0, 0, 0, 0].slice(0, 4),
+    atkEV: entry.ev.atk,
+    atkNature: nat?.atk ?? 1.0,
+    spAtkEV: entry.ev.spAtk,
+    spAtkNature: nat?.spAtk ?? 1.0,
+    hpEV: entry.ev.hp,
+    defEV: entry.ev.def,
+    defNature: nat?.def ?? 1.0,
+    spDefEV: entry.ev.spDef,
+    spDefNature: nat?.spDef ?? 1.0,
+  };
+}
 
 // ========== タブ3: BOX ==========
 
@@ -3605,8 +4331,9 @@ function toggleAegislashForm(slot: "attacker" | "defender"): void {
   const currentPokemon = slot === "attacker" ? attackPokemon : defendPokemon;
   const alternateForm = getAegislashAlternateForm(currentPokemon);
   if (!alternateForm) return;
-  if (slot === "attacker") attackPokemon = alternateForm;
-  else defendPokemon = alternateForm;
+  if (slot === "attacker") attackerState = { ...attackerState, pokemon: alternateForm };
+  else defenderState = { ...defenderState, pokemon: alternateForm };
+  syncLegacyStateFromDamageStates();
   syncStatsInputsFromState();
   renderTab1DamageDisplay();
 }
@@ -3679,8 +4406,9 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
   noneNameEl.textContent = "なし";
   noneBtn.appendChild(noneNameEl);
   noneBtn.addEventListener("click", () => {
-    if (slot === "attacker") tab1AttackerItem = "";
-    else tab1DefenderItem = "";
+    if (slot === "attacker") attackerState = { ...attackerState, heldItem: "" };
+    else defenderState = { ...defenderState, heldItem: "" };
+    syncLegacyStateFromDamageStates();
     renderTab1ItemDisplay(slot);
     closeTab1ItemPicker(slot);
     renderTab1DamageDisplay();
@@ -3703,8 +4431,9 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
     effectEl.textContent = item.effect;
     btn.append(img, nameEl, effectEl);
     btn.addEventListener("click", () => {
-      if (slot === "attacker") tab1AttackerItem = item.id;
-      else tab1DefenderItem = item.id;
+      if (slot === "attacker") attackerState = { ...attackerState, heldItem: item.id };
+      else defenderState = { ...defenderState, heldItem: item.id };
+      syncLegacyStateFromDamageStates();
       renderTab1ItemDisplay(slot);
       closeTab1ItemPicker(slot);
       renderTab1DamageDisplay();
@@ -3716,12 +4445,21 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
 // ---------- タブ1: ダメージ計算 ----------
 
 function swapAttackerDefender(): void {
+  syncDamageStatesFromLegacyState();
+  [attackerState, defenderState] = [defenderState, attackerState];
+  syncLegacyStateFromDamageStates();
+  editingMoveSlotIndex = null;
+  syncStatsInputsFromState();
+  renderTab1DamageDisplay();
+  return;
   [attackPokemon, defendPokemon] = [defendPokemon, attackPokemon];
   [attackerAbility, defenderAbility] = [defenderAbility, attackerAbility];
   [attackerAbilityActive, defenderAbilityActive] = [defenderAbilityActive, attackerAbilityActive];
   [tab1AttackerItem, tab1DefenderItem] = [tab1DefenderItem, tab1AttackerItem];
   // EVs・性格・ランクはスロットごとに保持（リセットしない）
-  selectedMoves = attackPokemon ? getDefaultMoves(attackPokemon) : [];
+  syncDamageStatesFromLegacyState();
+  [attackerState, defenderState] = [defenderState, attackerState];
+  syncLegacyStateFromDamageStates();
   editingMoveSlotIndex = null;
   syncStatsInputsFromState();
   renderTab1DamageDisplay();
@@ -3749,14 +4487,18 @@ function renderTab1DamageDisplay(): void {
       if (src !== DUMMY_POKEMON_IMAGE) defenderImg.src = src;
       defenderImg.alt = defendPokemon.name;
       defenderImg.onerror = () => { defenderImg.src = BALL_MONSTER_IMAGE; };
-      if (defenderName) defenderName.textContent = defendPokemon.name;
+      if (defenderName) renderDamageSlotName(defenderName, defendPokemon);
       if (defenderTypes) defenderTypes.innerHTML = typeBadgesHtml(defendPokemon.types);
       const defDisplayBtn = document.getElementById("damage-defender-item-display") as HTMLButtonElement | null;
       if (defDisplayBtn) {
         const isMega = defendPokemon.id.includes("Mega");
         defDisplayBtn.disabled = isMega;
         defDisplayBtn.hidden = false;
-        if (isMega) { tab1DefenderItem = ""; closeTab1ItemPicker("defender"); }
+        if (isMega) {
+          defenderState = { ...defenderState, heldItem: "" };
+          syncLegacyStateFromDamageStates();
+          closeTab1ItemPicker("defender");
+        }
       }
       renderTab1ItemDisplay("defender");
     } else {
@@ -3774,14 +4516,18 @@ function renderTab1DamageDisplay(): void {
       if (src !== DUMMY_POKEMON_IMAGE) attackerImg.src = src;
       attackerImg.alt = attackPokemon.name;
       attackerImg.onerror = () => { attackerImg.src = BALL_MONSTER_IMAGE; };
-      if (attackerName) attackerName.textContent = attackPokemon.name;
+      if (attackerName) renderDamageSlotName(attackerName, attackPokemon);
       if (attackerTypes) attackerTypes.innerHTML = typeBadgesHtml(attackPokemon.types);
       const atkDisplayBtn = document.getElementById("damage-attacker-item-display") as HTMLButtonElement | null;
       if (atkDisplayBtn) {
         const isMega = attackPokemon.id.includes("Mega");
         atkDisplayBtn.disabled = isMega;
         atkDisplayBtn.hidden = false;
-        if (isMega) { tab1AttackerItem = ""; closeTab1ItemPicker("attacker"); }
+        if (isMega) {
+          attackerState = { ...attackerState, heldItem: "" };
+          syncLegacyStateFromDamageStates();
+          closeTab1ItemPicker("attacker");
+        }
       }
       renderTab1ItemDisplay("attacker");
     } else {
@@ -3862,6 +4608,7 @@ function syncAbilityDropdowns(): void {
 }
 
 function syncStatsInputsFromState(): void {
+  syncLegacyStateFromDamageStates();
   const hpEv = document.getElementById("stats-hp-ev") as HTMLInputElement | null;
   const defEv = document.getElementById("stats-def-ev") as HTMLInputElement | null;
   const defNat = document.getElementById("stats-def-nature") as HTMLSelectElement | null;
@@ -3949,6 +4696,7 @@ function readStatsInputsToState(): void {
   attackerAtkNature = clampNature(Number(atkNat?.value) || 1);
   attackerSpAtkEV = clampDamageTabEv(Number(spatkEv?.value) || 0);
   attackerSpAtkNature = clampNature(Number(spatkNat?.value) || 1);
+  syncDamageStatesFromLegacyState();
 }
 
 const DAMAGE_TAB_EV_MAX = 32;
@@ -4204,69 +4952,31 @@ function closeTab1PokemonSelect(): void {
 }
 
 function applyTab1BoxEntrySelection(target: "attack" | "defend", entry: BoxEntry): void {
-  const pokemon = entry.pokemon;
-  const nat = NATURES.find((n) => n.name === entry.natureName);
+  const nextState = createDamageStateFromBoxEntry(entry);
   if (target === "attack") {
-    attackPokemon = pokemon;
-    attackerAbility = entry.ability || (pokemon.abilities?.[0] ?? "");
-    attackerAbilityActive = true;
+    attackerState = nextState;
     editingMoveSlotIndex = null;
     damageMovesTypeFilter = null;
-    attackerAtkRank = 0;
-    attackerSpAtkRank = 0;
-    selectedMoves = [...entry.moves, 0, 0, 0, 0].slice(0, 4);
-    attackerAtkEV = entry.ev.atk;
-    attackerSpAtkEV = entry.ev.spAtk;
-    attackerAtkNature = nat?.atk ?? 1.0;
-    attackerSpAtkNature = nat?.spAtk ?? 1.0;
-    tab1AttackerItem = entry.heldItem;
+    syncLegacyStateFromDamageStates();
     return;
   }
-  defendPokemon = pokemon;
-  defenderAbility = entry.ability || (pokemon.abilities?.[0] ?? "");
-  defenderAbilityActive = true;
-  defenderDefRank = 0;
-  defenderSpDefRank = 0;
-  defenderHpEV = entry.ev.hp;
-  defenderDefEV = entry.ev.def;
-  defenderSpDefEV = entry.ev.spDef;
-  defenderDefNature = nat?.def ?? 1.0;
-  defenderSpDefNature = nat?.spDef ?? 1.0;
-  tab1DefenderItem = entry.heldItem;
+  defenderState = nextState;
+  syncLegacyStateFromDamageStates();
 }
 
 function onTab1PokemonSelected(pokemon: Pokemon): void {
   if (tab1SelectTarget === "attack") {
-    attackPokemon = pokemon;
-    attackerAbility = pokemon.abilities?.[0] ?? "";
-    attackerAbilityActive = true;
+    attackerState = createDamageStateForPokemon(pokemon);
     editingMoveSlotIndex = null;
     damageMovesTypeFilter = null;
-    attackerAtkRank = 0;
-    attackerSpAtkRank = 0;
-    selectedMoves = getDefaultMoves(pokemon);
-    attackerAtkEV = 0;
-    attackerAtkNature = 1.0;
-    attackerSpAtkEV = 0;
-    attackerSpAtkNature = 1.0;
-    tab1AttackerItem = "";
   } else if (tab1SelectTarget === "defend") {
-    defendPokemon = pokemon;
-    defenderAbility = pokemon.abilities?.[0] ?? "";
-    defenderAbilityActive = true;
-    defenderDefRank = 0;
-    defenderSpDefRank = 0;
-    defenderHpEV = 0;
-    defenderDefEV = 0;
-    defenderDefNature = 1.0;
-    defenderSpDefEV = 0;
-    defenderSpDefNature = 1.0;
-    tab1DefenderItem = "";
+    defenderState = createDamageStateForPokemon(pokemon);
   } else if (tab1SelectTarget === "box") {
     closeTab1PokemonSelect();
     openBoxDetailModal(pokemon);
     return;
   }
+  syncLegacyStateFromDamageStates();
   syncStatsInputsFromState();
   closeTab1PokemonSelect();
   renderTab1DamageDisplay();
@@ -4278,9 +4988,8 @@ function getDefaultMoves(pokemon: Pokemon): number[] {
   const baseStats = pokemon.baseStats;
   if (!learnset || learnset.length === 0) return [];
 
-  const moveMap = new Map(movesData.map((m) => [m.id, m]));
   const candidateMoves = learnset
-    .map((id) => moveMap.get(id))
+    .map((id) => movesDataById.get(id))
     .filter((m): m is Move => m != null)
     .filter((m) => m.category !== "変化")
     .filter((m) => m.power != null && m.power > 0);
@@ -4327,18 +5036,27 @@ function getBaseStats(pokemon: Pokemon): {
   };
 }
 
+function renderDamageSlotName(nameEl: HTMLElement, pokemon: Pokemon | null): void {
+  if (!pokemon) {
+    nameEl.textContent = "";
+    return;
+  }
+  const stats = getBaseStats(pokemon);
+  const statsText = [stats.hp, stats.attack, stats.defense, stats.spAttack, stats.spDefense, stats.speed].join(" - ");
+  nameEl.innerHTML = `<span class="damage-slot-name-main">${escapeHtml(pokemon.name)}</span><span class="damage-slot-base-stats">${statsText}</span>`;
+}
+
 function renderTab1MovesSlots(): void {
   const slotsEl = document.getElementById("damage-moves-slots");
   if (!slotsEl || !attackPokemon) return;
 
   slotsEl.innerHTML = "";
-  const moveMap = new Map(movesData.map((m) => [m.id, m]));
   const attackerStats = getBaseStats(attackPokemon);
   const defenderStats = defendPokemon ? getBaseStats(defendPokemon) : null;
 
   for (let i = 0; i < 4; i++) {
     const moveId = selectedMoves[i];
-    const move = moveId != null ? moveMap.get(moveId) : null;
+    const move = moveId != null ? movesDataById.get(moveId) : null;
 
     const slot = document.createElement("div");
     slot.className =
@@ -4350,7 +5068,7 @@ function renderTab1MovesSlots(): void {
     btn.className = "damage-move-slot-btn";
     btn.addEventListener("click", () => {
       editingMoveSlotIndex = editingMoveSlotIndex === i ? null : i;
-      renderTab1DamageDisplay();
+      renderTab1MovesArea();
     });
 
     if (move) {
@@ -4501,9 +5219,8 @@ function renderTab1MovesList(): void {
     return;
   }
 
-  const moveMap = new Map(movesData.map((m) => [m.id, m]));
   let moves = learnset
-    .map((id) => moveMap.get(id))
+    .map((id) => movesDataById.get(id))
     .filter((m): m is Move => m != null)
     .filter((m) => m.category !== "変化");
 
@@ -4523,6 +5240,7 @@ function renderTab1MovesList(): void {
       if (editingMoveSlotIndex !== null) {
         selectedMoves[editingMoveSlotIndex] = move.id;
         editingMoveSlotIndex = null;
+        syncDamageStatesFromLegacyState();
       }
       renderTab1DamageDisplay();
     });
@@ -4571,11 +5289,14 @@ function renderTab1MovesArea(): void {
 function initTabs(): void {
   const buttons = document.querySelectorAll<HTMLButtonElement>(".tab-btn");
   const panels = document.querySelectorAll<HTMLElement>(".tab-panel");
+  const activeBtn = Array.from(buttons).find((btn) => btn.classList.contains("is-active"));
+  activeMainTabId = activeBtn?.getAttribute("data-tab") ?? "tab1";
 
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const tabId = btn.getAttribute("data-tab");
       if (!tabId) return;
+      activeMainTabId = tabId;
 
       buttons.forEach((b) => b.classList.remove("is-active"));
       panels.forEach((p) => {
@@ -4615,10 +5336,12 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((res) => (res.ok ? res.json() : []))
     .then((data: Move[]) => {
       movesData = Array.isArray(data) ? data : [];
+      rebuildMovesDataIndex();
       renderTab1DamageDisplay();
     })
     .catch(() => {
       movesData = [];
+      rebuildMovesDataIndex();
       renderTab1DamageDisplay();
     });
 
@@ -4643,19 +5366,23 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("damage-attacker-ability-select")?.addEventListener("change", (e) => {
     attackerAbility = (e.target as HTMLSelectElement).value;
     attackerAbilityActive = true;
+    syncDamageStatesFromLegacyState();
     renderTab1DamageDisplay();
   });
   document.getElementById("damage-defender-ability-select")?.addEventListener("change", (e) => {
     defenderAbility = (e.target as HTMLSelectElement).value;
     defenderAbilityActive = true;
+    syncDamageStatesFromLegacyState();
     renderTab1DamageDisplay();
   });
   document.getElementById("damage-attacker-ability-toggle")?.addEventListener("click", () => {
     attackerAbilityActive = !attackerAbilityActive;
+    syncDamageStatesFromLegacyState();
     renderTab1DamageDisplay();
   });
   document.getElementById("damage-defender-ability-toggle")?.addEventListener("click", () => {
     defenderAbilityActive = !defenderAbilityActive;
+    syncDamageStatesFromLegacyState();
     renderTab1DamageDisplay();
   });
 
@@ -4699,6 +5426,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (id === "spatk-rank-up" || id === "spatk-rank-down") attackerSpAtkRank = Math.max(-6, Math.min(6, attackerSpAtkRank + delta));
     else if (id === "def-rank-up" || id === "def-rank-down") defenderDefRank = Math.max(-6, Math.min(6, defenderDefRank + delta));
     else if (id === "spdef-rank-up" || id === "spdef-rank-down") defenderSpDefRank = Math.max(-6, Math.min(6, defenderSpDefRank + delta));
+    syncDamageStatesFromLegacyState();
     updateRankDisplays();
     readStatsInputsToState();
     renderTab1MovesSlots();
@@ -4822,6 +5550,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("damage-burn-toggle")?.addEventListener("click", () => {
     attackerIsBurned = !attackerIsBurned;
+    syncDamageStatesFromLegacyState();
     renderTab1DamageDisplay();
   });
   document.getElementById("tab1-pokemon-select-list")?.addEventListener("click", (e) => {

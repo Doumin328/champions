@@ -7,6 +7,17 @@
     { "x": 0.828, "y": 0.611, "width": 0.08, "height": 0.103 },
     { "x": 0.828, "y": 0.727, "width": 0.08, "height": 0.105 }
   ],
+  "playerSlotRects": [
+    { "x": 0.042, "y": 0.146, "width": 0.273, "height": 0.101 },
+    { "x": 0.042, "y": 0.264, "width": 0.273, "height": 0.101 },
+    { "x": 0.042, "y": 0.382, "width": 0.273, "height": 0.101 },
+    { "x": 0.042, "y": 0.500, "width": 0.273, "height": 0.101 },
+    { "x": 0.042, "y": 0.619, "width": 0.273, "height": 0.101 },
+    { "x": 0.042, "y": 0.737, "width": 0.273, "height": 0.101 }
+  ],
+  "playerSelectionBadgeRect": { "x": 0.0, "y": 0.10, "width": 0.17, "height": 0.74 },
+  "playerPokemonNameRect": { "x": 0.10, "y": 0.00, "width": 0.65, "height": 0.40 },
+  "playerItemNameRect": { "x": 0.10, "y": 0.50, "width": 0.57, "height": 0.40 },
   "spriteSubrect": { "x": 0.03, "y": 0.08, "width": 0.54, "height": 1.00 },
   "battleIndicators": [
     {
@@ -43,15 +54,50 @@
       "templateSearchScale": 0.06
     },
     {
+      "id": "matching-waiting-text",
+      "targetState": "idle",
+      "detectFromScene": "battle",
+      "rect": { "x": 0.4005208333333333, "y": 0.5722222222222222, "width": 0.20104166666666667, "height": 0.062037037037037036 },
+      "threshold": 0.89,
+      "templateImage": "scene/matching_waiting_text.png",
+      "minTemplateScore": 0.89,
+      "templateSearchOffsetX": 0.025,
+      "templateSearchOffsetY": 0.025,
+      "templateSearchScale": 0.03
+    },
+    {
+      "id": "matching-waiting-dialog",
+      "targetState": "idle",
+      "detectFromScene": "battle",
+      "rect": { "x": 0.3770833333333333, "y": 0.3814814814814815, "width": 0.2453125, "height": 0.25925925925925924 },
+      "threshold": 0.87,
+      "templateImage": "scene/matching_waiting_dialog.png",
+      "minTemplateScore": 0.87,
+      "templateSearchOffsetX": 0.03,
+      "templateSearchOffsetY": 0.03,
+      "templateSearchScale": 0.04
+    },
+    {
       "id": "continue-battle-button",
       "targetState": "idle",
-      "rect": { "x": 0.71875, "y": 0.8851851851851852, "width": 0.13958333333333334, "height": 0.06481481481481481 },
-      "threshold": 0.82,
-      "templateImage": "scene/continue_battle_text.png",
-      "minTemplateScore": 0.82,
-      "templateSearchOffsetX": 0.1,
-      "templateSearchOffsetY": 0.08,
-      "templateSearchScale": 0.08
+      "rect": { "x": 0.6567708333333333, "y": 0.8712962962962963, "width": 0.2791666666666667, "height": 0.10555555555555556 },
+      "threshold": 0.88,
+      "templateImage": "scene/continue_battle_button.png",
+      "minTemplateScore": 0.88,
+      "templateSearchOffsetX": 0.03,
+      "templateSearchOffsetY": 0.03,
+      "templateSearchScale": 0.03
+    },
+    {
+      "id": "team-edit-button",
+      "targetState": "idle",
+      "rect": { "x": 0.36770833333333336, "y": 0.8712962962962963, "width": 0.2791666666666667, "height": 0.10555555555555556 },
+      "threshold": 0.88,
+      "templateImage": "scene/team_edit_button.png",
+      "minTemplateScore": 0.88,
+      "templateSearchOffsetX": 0.03,
+      "templateSearchOffsetY": 0.03,
+      "templateSearchScale": 0.03
     }
   ]
 }

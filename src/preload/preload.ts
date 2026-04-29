@@ -34,6 +34,18 @@ contextBridge.exposeInMainWorld("electronAPI", {
   stopRecognitionWorker: () => ipcRenderer.invoke("recognition:stop-worker"),
   recognizeOpponentSlots: (slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>) =>
     ipcRenderer.invoke("recognition:recognize-slots", { slots }),
+  recognizePlayerSelection: (
+    slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>,
+    rects: {
+      selectionBadgeRect: { x: number; y: number; width: number; height: number };
+      pokemonNameRect: { x: number; y: number; width: number; height: number };
+      itemNameRect: { x: number; y: number; width: number; height: number };
+    }
+  ) => ipcRenderer.invoke("recognition:recognize-player-selection", { slots, rects }),
   saveOpponentSlotImages: (slots: Array<{ slotIndex: number; imageBase64: string }>) =>
     ipcRenderer.invoke("recognition:save-opponent-slot-images", { slots }),
+  savePlayerDebugImages: (payload: {
+    slots: Array<{ slotIndex: number; imageBase64: string; itemImageBase64: string }>;
+    selectedSlots: Array<{ selectionOrder: number; imageBase64: string; itemImageBase64: string }>;
+  }) => ipcRenderer.invoke("recognition:save-player-debug-images", payload),
 });
