@@ -1,8 +1,8 @@
 import hashlib
 import json
 import re
-import shutil
 import subprocess
+import tempfile
 import unicodedata
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -15,11 +15,9 @@ from opponent_recognition_core import POKEMON_DATA_DIR, POKEMON_REGION_FILES, RO
 
 
 ITEM_DATA_FILE = POKEMON_DATA_DIR / "item.json"
-OCR_TEMP_DIR = ROOT_DIR / "outputImg"
 BADGE_TEMPLATE_DIR = ROOT_DIR / "recognize" / "player_selection_badges"
 
-NORMALIZED_TEXT_PATTERN = re.compile(r"[^0-9A-Za-zぁ-んァ-ヶ一-龠ー♂♀]+")
-NORMALIZED_TEXT_PATTERN = re.compile(r"[^0-9A-Za-zぁ-んァ-ヶ一-龯ー]+")
+NORMALIZED_TEXT_PATTERN = re.compile(r"[^0-9A-Za-zぁ-んァ-ヶ一-龯ー♂♀]+")
 DIGIT_PATTERN = re.compile(r"[123]")
 WINDOWS_OCR_TIMEOUT_SECONDS = 20
 
@@ -52,6 +50,12 @@ def load_player_pokemon_names() -> list[str]:
 def load_player_item_names() -> list[str]:
     names: list[str] = []
     seen: set[str] = set()
+
+    def add_name(value: Any) -> None:
+        if isinstance(value, str) and value and value not in seen:
+            seen.add(value)
+            names.append(value)
+
     if ITEM_DATA_FILE.exists():
         try:
             data = json.loads(ITEM_DATA_FILE.read_text(encoding="utf-8"))
@@ -61,11 +65,11 @@ def load_player_item_names() -> list[str]:
             for entry in data:
                 if not isinstance(entry, dict):
                     continue
-                for key in ("nameJa", "id"):
-                    value = entry.get(key)
-                    if isinstance(value, str) and value and value not in seen:
-                        seen.add(value)
-                        names.append(value)
+                name_ja = entry.get("nameJa")
+                item_id = entry.get("id")
+                add_name(name_ja)
+                if item_id == name_ja:
+                    add_name(item_id)
     return names
 
 
@@ -143,26 +147,6 @@ def run_windows_ocr_batch(images: list[tuple[str, np.ndarray]]) -> dict[str, str
     if not images:
         return {}
 
-    OCR_TEMP_DIR.mkdir(parents=True, exist_ok=True)
-    tmp_dir = OCR_TEMP_DIR / "player_ocr_tmp"
-    tmp_dir.mkdir(parents=True, exist_ok=True)
-    for child in tmp_dir.iterdir():
-        try:
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
-        except OSError:
-            pass
-    manifest_path = tmp_dir / "manifest.json"
-    script_path = tmp_dir / "windows_ocr.ps1"
-    manifest: list[dict[str, str]] = []
-    for image_id, image in images:
-        image_path = tmp_dir / f"{image_id}.png"
-        cv2.imwrite(str(image_path), image)
-        manifest.append({"id": image_id, "path": str(image_path)})
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
-
     ps_script = r"""
 param([string]$ManifestPath)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -191,29 +175,40 @@ foreach ($item in $items) {
 }
 $results | ConvertTo-Json -Compress
 """
-    script_path.write_text(ps_script, encoding="utf-8")
-    command = [
-        "powershell",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        str(script_path),
-        "-ManifestPath",
-        str(manifest_path),
-    ]
-    try:
-        completed = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=WINDOWS_OCR_TIMEOUT_SECONDS,
-            check=False,
-        )
-    except subprocess.TimeoutExpired:
-        return {}
+
+    with tempfile.TemporaryDirectory(prefix="champions-player-ocr-") as tmp_root:
+        tmp_dir = Path(tmp_root)
+        manifest_path = tmp_dir / "manifest.json"
+        script_path = tmp_dir / "windows_ocr.ps1"
+        manifest: list[dict[str, str]] = []
+        for image_id, image in images:
+            image_path = tmp_dir / f"{image_id}.png"
+            cv2.imwrite(str(image_path), image)
+            manifest.append({"id": image_id, "path": str(image_path)})
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+        script_path.write_text(ps_script, encoding="utf-8")
+        command = [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(script_path),
+            "-ManifestPath",
+            str(manifest_path),
+        ]
+        try:
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=WINDOWS_OCR_TIMEOUT_SECONDS,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return {}
     if completed.returncode != 0:
         return {}
     stdout = (completed.stdout or "").strip()
@@ -297,9 +292,15 @@ def score_candidate(ocr_text: str, candidate: str) -> float:
     if normalized_ocr == normalized_candidate:
         return 1.0
     if normalized_candidate in normalized_ocr:
-        return max(0.95, len(normalized_candidate) / max(1, len(normalized_ocr)))
+        containment_score = len(normalized_candidate) / max(1, len(normalized_ocr))
+        if len(normalized_candidate) <= 3:
+            return min(0.72, containment_score)
+        return max(0.95, containment_score)
     if normalized_ocr in normalized_candidate:
-        return max(0.75, len(normalized_ocr) / max(1, len(normalized_candidate)))
+        containment_score = len(normalized_ocr) / max(1, len(normalized_candidate))
+        if len(normalized_ocr) <= 3:
+            return min(0.72, containment_score)
+        return max(0.75, containment_score)
     ratio = SequenceMatcher(None, normalized_ocr, normalized_candidate).ratio()
     plain_ocr = strip_kana_diacritics(normalized_ocr)
     plain_candidate = strip_kana_diacritics(normalized_candidate)
@@ -307,14 +308,47 @@ def score_candidate(ocr_text: str, candidate: str) -> float:
         if plain_ocr == plain_candidate:
             ratio = max(ratio, 0.97)
         elif plain_candidate in plain_ocr:
-            ratio = max(ratio, 0.93)
+            if len(plain_candidate) <= 3:
+                ratio = max(ratio, min(0.70, len(plain_candidate) / max(1, len(plain_ocr))))
+            else:
+                ratio = max(ratio, 0.93)
         elif plain_ocr in plain_candidate:
-            ratio = max(ratio, min(0.88, len(plain_ocr) / max(1, len(plain_candidate))))
+            if len(plain_ocr) <= 3:
+                ratio = max(ratio, min(0.70, len(plain_ocr) / max(1, len(plain_candidate))))
+            else:
+                ratio = max(ratio, min(0.88, len(plain_ocr) / max(1, len(plain_candidate))))
         else:
             plain_ratio = SequenceMatcher(None, plain_ocr, plain_candidate).ratio()
             if plain_ratio >= 0.82:
                 ratio = max(ratio, plain_ratio * 0.96)
     return ratio
+
+
+def is_low_confidence_short_candidate(name: str | None, score: float) -> bool:
+    if not name:
+        return False
+    normalized = normalize_text(name)
+    return len(normalized) <= 3 and score < 0.86
+
+
+def infer_mega_stone_name(pokemon_name: str | None, texts: list[str]) -> tuple[str | None, float]:
+    if not pokemon_name:
+        return None, 0.0
+    normalized_text = normalize_text(" ".join(texts))
+    if "ナイト" not in normalized_text:
+        return None, 0.0
+
+    normalized_pokemon = normalize_text(pokemon_name)
+    if normalized_pokemon and normalized_pokemon in normalized_text:
+        return f"{pokemon_name}ナイト", 0.98
+
+    if pokemon_name.startswith("メガ") and len(pokemon_name) > len("メガ"):
+        base_name = pokemon_name[len("メガ"):]
+        normalized_base = normalize_text(base_name)
+        if normalized_base and normalized_base in normalized_text:
+            return f"{base_name}ナイト", 0.96
+
+    return f"{pokemon_name}ナイト", 0.88
 
 
 def best_dictionary_match(texts: list[str], dictionary: list[str]) -> tuple[str | None, float]:
@@ -434,12 +468,16 @@ def recognize_player_selection_slots(
         else:
             pokemon_name, pokemon_score = crop_pokemon_name, crop_pokemon_score
 
-        item_texts = item_crop_texts + full_texts
-        item_name, item_score = best_dictionary_match(item_texts, item_names)
-        normalized_slot_text = normalize_text(" ".join(full_texts))
-        if (not item_name or item_score < 0.34) and pokemon_name and "ナイト" in normalized_slot_text:
-            item_name = f"{pokemon_name}ナイト"
-            item_score = max(item_score, 0.88)
+        # Use only the OCR variants that read text reliably. Binary/inverted full-slot variants
+        # often pick up neighboring slot noise and can overpower the actual item crop.
+        item_texts = item_crop_texts + full_texts_name
+        mega_stone_name, mega_stone_score = infer_mega_stone_name(pokemon_name, item_texts)
+        if mega_stone_name:
+            item_name, item_score = mega_stone_name, mega_stone_score
+        else:
+            item_name, item_score = best_dictionary_match(item_texts, item_names)
+            if is_low_confidence_short_candidate(item_name, item_score):
+                item_name, item_score = None, 0.0
 
         overall_score = (badge_score + pokemon_score + item_score) / 3
         results.append({

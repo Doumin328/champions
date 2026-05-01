@@ -123,6 +123,11 @@
               <!-- ② 防御側 -->
               <section class="damage-slot damage-slot-defender" aria-labelledby="damage-defender-label">
                 <h2 id="damage-defender-label" class="damage-slot-label">防御側</h2>
+                <div class="damage-roster-bar" aria-label="Opponent roster">
+                  <span class="damage-roster-label" id="damage-defender-roster-label">Opponent</span>
+                  <select id="damage-defender-team-select" class="damage-team-select" aria-label="My Team" hidden></select>
+                  <div class="damage-roster-slots" id="damage-defender-roster"></div>
+                </div>
                 <div class="damage-slot-body">
                   <div class="damage-slot-img-wrap">
                     <img id="damage-defender-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
@@ -217,6 +222,11 @@
               <!-- ① 攻撃側 -->
               <section class="damage-slot damage-slot-attacker" aria-labelledby="damage-attacker-label">
                 <h2 id="damage-attacker-label" class="damage-slot-label">攻撃側</h2>
+                <div class="damage-roster-bar damage-roster-bar--team" aria-label="My team roster">
+                  <label class="damage-roster-label" id="damage-attacker-roster-label" for="damage-attacker-team-select">My Team</label>
+                  <select id="damage-attacker-team-select" class="damage-team-select" aria-label="My Team"></select>
+                  <div class="damage-roster-slots" id="damage-attacker-roster"></div>
+                </div>
                 <div class="damage-slot-body">
                   <div class="damage-slot-img-wrap">
                     <img id="damage-attacker-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
@@ -288,6 +298,7 @@
                     </div>
                     <div class="damage-attacker-status-row">
                       <button type="button" id="damage-burn-toggle" class="damage-status-btn">やけど</button>
+                      <button type="button" id="damage-type-boost-toggle" class="damage-status-btn">タイプ強化</button>
                     </div>
                     <div class="damage-item-picker" id="damage-attacker-item-picker" hidden>
                       <input type="text" class="damage-item-picker-search" id="tab1-attacker-item-search" placeholder="アイテム名で検索…" />
@@ -316,6 +327,14 @@
                     <button type="button" class="damage-condition-option" data-terrain="グラスフィールド">グラス</button>
                     <button type="button" class="damage-condition-option" data-terrain="サイコフィールド">サイコ</button>
                     <button type="button" class="damage-condition-option" data-terrain="ミストフィールド">ミスト</button>
+                  </div>
+                </div>
+                <div class="damage-condition-group">
+                  <span class="damage-weather-label">壁</span>
+                  <div class="damage-condition-options" role="group" aria-label="壁">
+                    <button type="button" class="damage-condition-option is-active" data-wall="">なし</button>
+                    <button type="button" class="damage-condition-option" data-wall="ひかりのかべ">ひかりのかべ</button>
+                    <button type="button" class="damage-condition-option" data-wall="リフレクター">リフレクター</button>
                   </div>
                 </div>
               </section>

@@ -2,7 +2,7 @@ import sys
 
 sys.path.insert(0, "scripts")
 
-from player_selection_recognition import normalize_text, score_candidate
+from player_selection_recognition import load_player_item_names, normalize_text, score_candidate
 
 
 def main() -> None:
@@ -24,6 +24,16 @@ def main() -> None:
     female = normalize_text("ニドラン♀")
     assert male != female, "ニドラン♂ と ニドラン♀ should remain distinct"
     assert score_candidate("ニドラン♂", "ニドラン♀") < 1.0, "ニドラン♂ and ニドラン♀ should not be treated as identical"
+
+    assert score_candidate("ル カ リ オ ナ イ ト", "ルカリオナイト") == 1.0
+    assert score_candidate("ル カ リ オ ナ イ ト", "ルカリオナイト") > score_candidate("ル カ リ オ ナ イ ト", "イトケ")
+    assert score_candidate("オ ボ ン の み", "オボンのみ") == 1.0
+    assert score_candidate("た べ の こ し", "たべのこし") == 1.0
+
+    item_names = load_player_item_names()
+    assert "イトケ" not in item_names, "Short internal berry ids should not be OCR candidates"
+    assert "イトケのみ" in item_names
+    assert "ルカリオナイト" in item_names
 
     print("Normalization checks passed.")
 
