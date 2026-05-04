@@ -27,7 +27,7 @@
   { "name": "マルチスケイル", "desc": "HPが満タン時にダメージを半減（満タン時にONにしてください）", "side": "defender", "damageMult": 0.5, "conditional": true },
   { "name": "ファントムガード","desc": "HPが満タン時にダメージを半減（満タン時にONにしてください）", "side": "defender", "damageMult": 0.5, "conditional": true },
   { "name": "テクニシャン",   "desc": "威力60以下の技の威力が1.5倍になる",                                       "side": "attacker", "powerMult": 1.5,  "powerMultMaxPower": 60 },
-  { "name": "おやこあい",     "desc": "おやこあい補正を独立段で適用する",                                         "side": "attacker" },
+  { "name": "おやこあい",     "desc": "おやこあい補正を独立段で適用する",                                         "side": "attacker", "parentalBondMult": 1.25 },
   { "name": "メガソーラー",   "desc": "技使用時に天候を無視してはれ扱いにする",                               "side": "attacker", "forceWeather": "はれ" },
   { "name": "すなのちから",   "desc": "すなあらし時に岩・鋼・じめん技が1.3倍になる（すなあらし選択時に自動適用）", "side": "attacker", "powerMult": 1.3,  "powerMultTypes": ["いわ", "はがね", "じめん"], "weatherCondition": "すなあらし" },
   { "name": "こんじょう",     "desc": "状態異常時に攻撃が1.5倍になる（状態異常時にONにしてください）",             "side": "attacker", "atkStatMult": 1.5, "moveCategory": "物理", "conditional": true },

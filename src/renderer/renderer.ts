@@ -40,6 +40,11 @@ function calcStat(base: number, isHP: boolean): number {
   return Math.floor(Math.floor((2 * base + 31) * DMG_LEVEL / 100) + 5);
 }
 
+function roundHalfDown(value: number): number {
+  const floored = Math.floor(value);
+  return value - floored > 0.5 ? floored + 1 : floored;
+}
+
 /** Lv50・能力ポイント・性格補正込みの実数値（非HP）。IV=31固定、cp=能力ポイント(0〜32) */
 function calcStatWithEV(base: number, ev: number, nature: number): number {
   const raw = Math.floor((Math.floor((2 * base + 31 + ev * 2) * DMG_LEVEL / 100) + 5) * nature);
@@ -222,13 +227,22 @@ function calculateDamage(input: {
     || (wall === "リフレクター" && moveCategory === "物理")
     ? 0.5 : 1;
 
-  const otherMult = weatherMult * terrainMult * attackerDamageMult * defenderDamageReduceMult
-    * attackerAbTypeMult * defAbTypeMult * superEffAbMult * defDamageMult * burnMult * wallMult;
+  const parentalBondMult = atkAb?.parentalBondMult ?? 1;
+  const mMult = terrainMult * attackerDamageMult * defenderDamageReduceMult
+    * attackerAbTypeMult * defAbTypeMult * superEffAbMult * defDamageMult * wallMult;
   const applyRoll = (r: number): number => {
-    let d = Math.floor(base * r / 100);   // ×乱数 → 切り捨て
-    d = Math.round(d * stab);             // ×タイプ一致補正 → 五捨五超入
-    d = Math.floor(d * typeEff);          // ×相性補正 → 切り捨て
-    return Math.max(1, Math.floor(d * otherMult));
+    let d = base;
+    d = roundHalfDown(d * 1);                  // ×範囲補正 → 五捨五超入
+    d = roundHalfDown(d * parentalBondMult);   // ×おやこあい補正 → 五捨五超入
+    d = roundHalfDown(d * weatherMult);        // ×天気補正 → 五捨五超入
+    d = roundHalfDown(d * 1);                  // ×急所補正 → 五捨五超入
+    d = Math.floor(d * r / 100);               // ×乱数 → 切り捨て
+    d = roundHalfDown(d * stab);               // ×タイプ一致補正 → 五捨五超入
+    d = Math.floor(d * typeEff);               // ×相性補正 → 切り捨て
+    d = roundHalfDown(d * burnMult);           // ×やけど補正 → 五捨五超入
+    d = roundHalfDown(d * mMult);              // ×M → 五捨五超入
+    d = roundHalfDown(d * 1);                  // ×Mprotect → 五捨五超入
+    return Math.max(1, d);
   };
   const rolls = Array.from({ length: 16 }, (_, i) => applyRoll(85 + i));
   const damageMin = rolls[0];
@@ -473,6 +487,7 @@ interface AbilityDef {
   weatherCondition?: string;
   powerMultTypes?: string[];
   powerMultMaxPower?: number;
+  parentalBondMult?: number;
   requiresFlag?: "contact" | "pulse" | "bite" | "punch" | "slicing";
   normalTypeChange?: string;
   scrappy?: boolean;
@@ -4161,6 +4176,13 @@ function getMegaToggleTarget(pokemon: Pokemon | null | undefined): Pokemon | nul
   return getMegaFormCandidates(pokemon)[0] ?? null;
 }
 
+function getMegaFormSuffixLabel(pokemonId: string): string {
+  const megaIndex = pokemonId.indexOf("Mega");
+  if (megaIndex < 0) return "";
+  const suffix = pokemonId.slice(megaIndex + 4);
+  return suffix ? ` - ${suffix}` : "";
+}
+
 function getMegaStoneItemByPokemonId(pokemonId: string, pokemonName?: string): CompetitiveItem | null {
   const itemId = getMegaStoneItemId(pokemonId);
   if (!itemId) return null;
@@ -4945,9 +4967,9 @@ function toggleAegislashForm(slot: "attacker" | "defender"): void {
   renderTab1DamageDisplay();
 }
 
-function toggleMegaForm(slot: "attacker" | "defender"): void {
+function toggleMegaForm(slot: "attacker" | "defender", targetPokemon?: Pokemon): void {
   const currentPokemon = slot === "attacker" ? attackPokemon : defendPokemon;
-  const nextPokemon = getMegaToggleTarget(currentPokemon);
+  const nextPokemon = targetPokemon ?? getMegaToggleTarget(currentPokemon);
   if (!nextPokemon) return;
   const currentState = slot === "attacker" ? attackerState : defenderState;
   const nextAbility = nextPokemon.abilities?.includes(currentState.ability)
@@ -4976,15 +4998,24 @@ function renderTab1FormChangeRow(slot: "attacker" | "defender"): void {
   if (pokemon && megaToggleTarget) {
     row.hidden = false;
     row.innerHTML = "";
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "form-change-btn form-change-btn-mega";
-    btn.textContent = isMegaPokemonId(pokemon.id) ? "メガシンカ解除" : "メガシンカ";
-    btn.setAttribute("aria-pressed", isMegaPokemonId(pokemon.id) ? "true" : "false");
-    btn.addEventListener("click", () => {
-      toggleMegaForm(slot);
+    const megaButtons = isMegaPokemonId(pokemon.id)
+      ? [megaToggleTarget]
+      : getMegaFormCandidates(pokemon);
+    megaButtons.forEach((target) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = isMegaPokemonId(pokemon.id)
+        ? "form-change-btn form-change-btn-mega-revert"
+        : "form-change-btn form-change-btn-mega";
+      btn.textContent = isMegaPokemonId(pokemon.id)
+        ? "メガシンカ解除"
+        : `メガシンカ${getMegaFormSuffixLabel(target.id)}`;
+      btn.setAttribute("aria-pressed", isMegaPokemonId(pokemon.id) ? "true" : "false");
+      btn.addEventListener("click", () => {
+        toggleMegaForm(slot, target);
+      });
+      row.appendChild(btn);
     });
-    row.appendChild(btn);
     if (!isAegislashForm(pokemon)) return;
   }
   if (!pokemon || !isAegislashForm(pokemon)) {
@@ -6001,8 +6032,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   fetch("data/abilities.json")
     .then((res) => (res.ok ? res.json() : []))
-    .then((data: AbilityDef[]) => { abilitiesData = Array.isArray(data) ? data : []; })
-    .catch(() => { abilitiesData = []; });
+    .then((data: AbilityDef[]) => {
+      abilitiesData = Array.isArray(data) ? data : [];
+      renderTab1DamageDisplay();
+    })
+    .catch(() => {
+      abilitiesData = [];
+      renderTab1DamageDisplay();
+    });
 
   fetch("data/item.json")
     .then((res) => (res.ok ? res.json() : []))

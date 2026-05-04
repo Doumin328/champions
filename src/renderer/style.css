@@ -970,6 +970,11 @@ body {
   color: #fff;
 }
 
+.form-change-btn-mega-revert {
+  background: #2563eb;
+  color: #fff;
+}
+
 .form-change-btn-revert {
   background: #555;
   color: #fff;
