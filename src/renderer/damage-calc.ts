@@ -80,13 +80,8 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
 };
 
 const LEVEL = 50;
-const FREEZE_DRY_MOVE_NAME = "フリーズドライ";
 
-function getTypeMultiplier(moveType: string, defenderType: string, moveName?: string): number {
-  if (moveName === FREEZE_DRY_MOVE_NAME && moveType === "こおり" && defenderType === "みず") {
-    return 2;
-  }
-
+function getTypeMultiplier(moveType: string, defenderType: string): number {
   const row = TYPE_CHART[moveType];
   if (!row) return 1;
   return row[defenderType] ?? 1;
@@ -103,7 +98,6 @@ export interface BaseStats {
 
 export interface DamageInput {
   movePower: number | null;
-  moveName?: string;
   moveType: string;
   moveCategory: string;
   attackerTypes: string[];
@@ -130,10 +124,10 @@ export interface DamageResult {
 }
 
 /** タイプ相性倍率（複数タイプは乗算） */
-function getTypeEffectiveness(moveType: string, defenderTypes: string[], moveName?: string): number {
+function getTypeEffectiveness(moveType: string, defenderTypes: string[]): number {
   let mult = 1;
   for (const t of defenderTypes) {
-    mult *= getTypeMultiplier(moveType, t, moveName);
+    mult *= getTypeMultiplier(moveType, t);
   }
   return mult;
 }
@@ -163,7 +157,6 @@ function roundHalfDown(value: number): number {
 export function calculateDamage(input: DamageInput): DamageResult {
   const {
     movePower,
-    moveName,
     moveType,
     moveCategory,
     attackerTypes,
@@ -188,7 +181,7 @@ export function calculateDamage(input: DamageInput): DamageResult {
     };
   }
 
-  const typeEff = getTypeEffectiveness(moveType, defenderTypes, moveName);
+  const typeEff = getTypeEffectiveness(moveType, defenderTypes);
   if (typeEff === 0) {
     return {
       damageMin: 0,
