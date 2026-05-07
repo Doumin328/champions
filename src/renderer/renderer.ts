@@ -32,17 +32,11 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
   フェアリー: { ノーマル: 1, かくとう: 2, ひこう: 1, どく: 0.5, じめん: 1, いわ: 1, むし: 1, ゴースト: 1, はがね: 0.5, ほのお: 0.5, みず: 1, くさ: 1, でんき: 1, エスパー: 1, こおり: 1, ドラゴン: 2, あく: 2, フェアリー: 1 },
 };
 const DMG_LEVEL = 50;
-const FREEZE_DRY_MOVE_NAME = "フリーズドライ";
-
-function getTypeEff(moveType: string, defenderTypes: string[], moveName?: string): number {
+function getTypeEff(moveType: string, defenderTypes: string[]): number {
   const row = TYPE_CHART[moveType];
   if (!row) return 1;
   let mult = 1;
-  for (const t of defenderTypes) {
-    mult *= moveName === FREEZE_DRY_MOVE_NAME && moveType === "こおり" && t === "みず"
-      ? 2
-      : row[t] ?? 1;
-  }
+  for (const t of defenderTypes) mult *= row[t] ?? 1;
   return mult;
 }
 /** カタカナをひらがなに変換（検索の表記ゆれ吸収用） */
@@ -100,7 +94,6 @@ const TYPE_BERRY_MAP: Record<string, string> = {
 
 function calculateDamage(input: {
   movePower: number | null;
-  moveName?: string;
   moveType: string;
   moveCategory: string;
   attackerTypes: string[];
@@ -127,7 +120,7 @@ function calculateDamage(input: {
   wall?: string;
   moveFlags?: { contact?: boolean; pulse?: boolean; bite?: boolean; punch?: boolean; slicing?: boolean };
 }): DamageResult {
-  const { movePower, moveName, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain, attackerItem, defenderItem, wall } = input;
+  const { movePower, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain, attackerItem, defenderItem, wall } = input;
   const defenderHP = input.defenderHpOverride ?? calcStat(defenderBaseStats.hp, true);
   if (moveCategory === "変化" || movePower == null || movePower <= 0) {
     return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: true, isImmune: false, koChance: 0 };
@@ -146,7 +139,7 @@ function calculateDamage(input: {
 
   const typeEff = atkAb?.scrappy && (effectiveMoveType === "ノーマル" || effectiveMoveType === "かくとう") && defenderTypes.includes("ゴースト")
     ? defenderTypes.reduce((mult, t) => mult * (t === "ゴースト" ? 1 : (TYPE_CHART[effectiveMoveType]?.[t] ?? 1)), 1)
-    : getTypeEff(effectiveMoveType, defenderTypes, moveName);
+    : getTypeEff(effectiveMoveType, defenderTypes);
   if (typeEff === 0) {
     return { damageMin: 0, damageMax: 0, percentMin: 0, percentMax: 0, defenderHP, remainingHPMin: defenderHP, remainingHPMax: defenderHP, isStatusMove: false, isImmune: true, koChance: 0 };
   }
@@ -329,7 +322,6 @@ function calculateMoveDamageResult(
   };
   const defenderHpWithEV = Math.floor((2 * defenderStats.hp + 31 + defenderHpEV * 2) * 50 / 100) + 60;
   const baseInput = {
-    moveName: move.name,
     moveType: move.type,
     moveCategory: move.category,
     attackerTypes: attackPokemon!.types,
