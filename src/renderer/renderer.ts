@@ -33,6 +33,7 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
 };
 const DMG_LEVEL = 50;
 const FREEZE_DRY_MOVE_NAME = "フリーズドライ";
+const TYPE_OVERRIDE_ABILITIES = new Set(["へんげんじざい", "リベロ"]);
 
 function getTypeEff(moveType: string, defenderTypes: string[], moveName?: string): number {
   const row = TYPE_CHART[moveType];
@@ -332,9 +333,9 @@ function calculateMoveDamageResult(
     moveName: move.name,
     moveType: move.type,
     moveCategory: move.category,
-    attackerTypes: attackPokemon!.types,
+    attackerTypes: getEffectiveDamageTypes("attacker"),
     attackerBaseStats: attackerStats,
-    defenderTypes: defendPokemon!.types,
+    defenderTypes: getEffectiveDamageTypes("defender"),
     defenderBaseStats: defenderStats,
     attackerStatOverride: atkOverride,
     defenderStatOverride: defOverride,
@@ -2354,6 +2355,7 @@ interface DamagePokemonState {
   heldItem: string;
   ability: string;
   abilityActive: boolean;
+  abilityOverrideType: string;
   moves: number[];
   atkEV: number;
   atkNature: number;
@@ -2377,6 +2379,7 @@ function createDefaultDamagePokemonState(): DamagePokemonState {
     heldItem: "",
     ability: "",
     abilityActive: true,
+    abilityOverrideType: "",
     moves: [],
     atkEV: 0,
     atkNature: 1.0,
@@ -2623,6 +2626,127 @@ function getSelectedDamageTeam(): TeamMember[] | null {
 
 type DamageSide = "attacker" | "defender";
 type DamageRosterSource = "opponent" | "team";
+let openAbilityTypeDropdownSide: DamageSide | null = null;
+
+function isTypeOverrideAbility(ability: string | null | undefined): boolean {
+  return !!ability && TYPE_OVERRIDE_ABILITIES.has(ability);
+}
+
+function getTypeOverrideOptions(): string[] {
+  return Object.keys(TYPE_NAME_TO_SV);
+}
+
+function getDamageSideState(side: DamageSide): DamagePokemonState {
+  return side === "attacker" ? attackerState : defenderState;
+}
+
+function setDamageSideState(side: DamageSide, state: DamagePokemonState): void {
+  if (side === "attacker") attackerState = state;
+  else defenderState = state;
+}
+
+function getEffectiveDamageTypes(side: DamageSide): string[] {
+  const state = getDamageSideState(side);
+  const pokemon = state.pokemon;
+  if (!pokemon) return [];
+  if (!isTypeOverrideAbility(state.ability)) return pokemon.types;
+
+  const options = getTypeOverrideOptions();
+  const fallbackType = pokemon.types[0] ?? options[0] ?? "";
+  const overrideType = options.includes(state.abilityOverrideType)
+    ? state.abilityOverrideType
+    : fallbackType;
+  return overrideType ? [overrideType] : pokemon.types;
+}
+
+function normalizeTypeOverrideForState(state: DamagePokemonState): DamagePokemonState {
+  const pokemon = state.pokemon;
+  if (!pokemon || !isTypeOverrideAbility(state.ability)) {
+    return state.abilityOverrideType ? { ...state, abilityOverrideType: "" } : state;
+  }
+
+  const options = getTypeOverrideOptions();
+  const fallbackType = pokemon.types[0] ?? options[0] ?? "";
+  const nextType = options.includes(state.abilityOverrideType)
+    ? state.abilityOverrideType
+    : fallbackType;
+  return nextType !== state.abilityOverrideType
+    ? { ...state, abilityOverrideType: nextType }
+    : state;
+}
+
+function closeAbilityTypeDropdowns(): void {
+  if (openAbilityTypeDropdownSide === null) return;
+  openAbilityTypeDropdownSide = null;
+  renderAbilityTypeDropdown("attacker");
+  renderAbilityTypeDropdown("defender");
+}
+
+function renderAbilityTypeDropdown(side: DamageSide): void {
+  const root = document.getElementById(`damage-${side}-ability-type-dropdown`);
+  if (!root) return;
+
+  const state = normalizeTypeOverrideForState(getDamageSideState(side));
+  setDamageSideState(side, state);
+  const pokemon = state.pokemon;
+  const shouldShow = !!pokemon && isTypeOverrideAbility(state.ability);
+  root.hidden = !shouldShow;
+  root.innerHTML = "";
+  if (!shouldShow || !pokemon) {
+    if (openAbilityTypeDropdownSide === side) openAbilityTypeDropdownSide = null;
+    return;
+  }
+
+  const options = getTypeOverrideOptions();
+  const currentType = getEffectiveDamageTypes(side)[0] ?? pokemon.types[0] ?? options[0] ?? "";
+  const isOpen = openAbilityTypeDropdownSide === side;
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "ability-type-trigger";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  trigger.setAttribute("aria-label", "へんげんじざい／リベロのタイプ");
+  trigger.innerHTML = `
+    <img src="${typeSvSrc(currentType)}" alt="${escapeHtml(currentType)}" />
+    <span class="ability-type-name">${escapeHtml(currentType)}</span>
+    <span class="ability-type-arrow" aria-hidden="true">▼</span>
+  `;
+  trigger.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openAbilityTypeDropdownSide = isOpen ? null : side;
+    renderAbilityTypeDropdown("attacker");
+    renderAbilityTypeDropdown("defender");
+  });
+  root.appendChild(trigger);
+
+  if (!isOpen) return;
+
+  const menu = document.createElement("div");
+  menu.className = "ability-type-menu";
+  menu.setAttribute("role", "listbox");
+  menu.addEventListener("click", (event) => event.stopPropagation());
+  for (const type of options) {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "ability-type-option" + (type === currentType ? " is-active" : "");
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", type === currentType ? "true" : "false");
+    option.innerHTML = `
+      <img src="${typeSvSrc(type)}" alt="${escapeHtml(type)}" />
+      <span class="ability-type-name">${escapeHtml(type)}</span>
+    `;
+    option.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setDamageSideState(side, { ...getDamageSideState(side), abilityOverrideType: type });
+      openAbilityTypeDropdownSide = null;
+      syncLegacyStateFromDamageStates();
+      renderTab1DamageDisplay();
+    });
+    menu.appendChild(option);
+  }
+  root.appendChild(menu);
+}
 
 function getDamageRosterSource(side: DamageSide): DamageRosterSource {
   if (side === "defender") return damageRostersSwapped ? "team" : "opponent";
@@ -2744,6 +2868,7 @@ function renderDamageRosterSlots(): void {
 }
 
 function applyDamageRosterSlot(side: DamageSide, slotIndex: number): void {
+  closeAbilityTypeDropdowns();
   const source = getDamageRosterSource(side);
   if (source === "team") {
     const member = getSelectedDamageTeam()?.[slotIndex];
@@ -4981,8 +5106,8 @@ function toggleAegislashForm(slot: "attacker" | "defender"): void {
   const currentPokemon = slot === "attacker" ? attackPokemon : defendPokemon;
   const alternateForm = getAegislashAlternateForm(currentPokemon);
   if (!alternateForm) return;
-  if (slot === "attacker") attackerState = { ...attackerState, pokemon: alternateForm };
-  else defenderState = { ...defenderState, pokemon: alternateForm };
+  if (slot === "attacker") attackerState = { ...attackerState, pokemon: alternateForm, abilityOverrideType: "" };
+  else defenderState = { ...defenderState, pokemon: alternateForm, abilityOverrideType: "" };
   syncLegacyStateFromDamageStates();
   syncStatsInputsFromState();
   renderTab1DamageDisplay();
@@ -5001,6 +5126,7 @@ function toggleMegaForm(slot: "attacker" | "defender", targetPokemon?: Pokemon):
     pokemon: nextPokemon,
     ability: nextAbility,
     abilityActive: true,
+    abilityOverrideType: "",
   };
   if (slot === "attacker") attackerState = nextState;
   else defenderState = nextState;
@@ -5141,6 +5267,7 @@ function renderTab1ItemGrid(slot: "attacker" | "defender"): void {
 // ---------- タブ1: ダメージ計算 ----------
 
 function swapAttackerDefender(): void {
+  closeAbilityTypeDropdowns();
   syncDamageStatesFromLegacyState();
   [attackerState, defenderState] = [defenderState, attackerState];
   damageRostersSwapped = !damageRostersSwapped;
@@ -5190,7 +5317,7 @@ function renderTab1DamageDisplay(): void {
       defenderImg.alt = defendPokemon.name;
       defenderImg.onerror = () => { defenderImg.src = BALL_MONSTER_IMAGE; };
       if (defenderName) renderDamageSlotName(defenderName, defendPokemon);
-      if (defenderTypes) defenderTypes.innerHTML = typeBadgesHtml(defendPokemon.types);
+      if (defenderTypes) defenderTypes.innerHTML = typeBadgesHtml(getEffectiveDamageTypes("defender"));
       const defDisplayBtn = document.getElementById("damage-defender-item-display") as HTMLButtonElement | null;
       if (defDisplayBtn) {
         const isMega = isMegaPokemonId(defendPokemon.id);
@@ -5217,7 +5344,7 @@ function renderTab1DamageDisplay(): void {
       attackerImg.alt = attackPokemon.name;
       attackerImg.onerror = () => { attackerImg.src = BALL_MONSTER_IMAGE; };
       if (attackerName) renderDamageSlotName(attackerName, attackPokemon);
-      if (attackerTypes) attackerTypes.innerHTML = typeBadgesHtml(attackPokemon.types);
+      if (attackerTypes) attackerTypes.innerHTML = typeBadgesHtml(getEffectiveDamageTypes("attacker"));
       const atkDisplayBtn = document.getElementById("damage-attacker-item-display") as HTMLButtonElement | null;
       if (atkDisplayBtn) {
         const isMega = isMegaPokemonId(attackPokemon.id);
@@ -5260,6 +5387,8 @@ function renderTab1DamageDisplay(): void {
 }
 
 function syncAbilityDropdowns(): void {
+  attackerState = normalizeTypeOverrideForState(attackerState);
+  defenderState = normalizeTypeOverrideForState(defenderState);
   const slots = [
     { key: "attacker", pokemon: attackPokemon, current: attackerAbility, active: attackerAbilityActive },
     { key: "defender", pokemon: defendPokemon, current: defenderAbility, active: defenderAbilityActive },
@@ -5273,7 +5402,10 @@ function syncAbilityDropdowns(): void {
 
     const abilities = pokemon?.abilities ?? [];
     if (row) row.hidden = abilities.length === 0;
-    if (abilities.length === 0) continue;
+    if (abilities.length === 0) {
+      renderAbilityTypeDropdown(key);
+      continue;
+    }
 
     const isMultiple = abilities.length > 1;
     sel.hidden = !isMultiple;
@@ -5293,6 +5425,7 @@ function syncAbilityDropdowns(): void {
 
     // 条件付き特性のみトグルボタンを表示
     const displayedAbility = isMultiple ? (sel.value || abilities[0]) : abilities[0];
+    renderAbilityTypeDropdown(key);
     if (toggleBtn) {
       const selectedDef = displayedAbility ? abilitiesData.find(a => a.name === displayedAbility) : undefined;
       if (selectedDef?.conditional) {
@@ -5615,6 +5748,7 @@ function renderTab1SelectList(): void {
 }
 
 function openTab1PokemonSelect(target: "attack" | "defend" | "box"): void {
+  closeAbilityTypeDropdowns();
   tab1SelectTarget = target;
   tab1SelectTypeFilter = null;
   tab1NameSearchText = "";
@@ -6082,12 +6216,16 @@ document.addEventListener("DOMContentLoaded", () => {
     attackerAbility = (e.target as HTMLSelectElement).value;
     attackerAbilityActive = true;
     syncDamageStatesFromLegacyState();
+    attackerState = normalizeTypeOverrideForState(attackerState);
+    closeAbilityTypeDropdowns();
     renderTab1DamageDisplay();
   });
   document.getElementById("damage-defender-ability-select")?.addEventListener("change", (e) => {
     defenderAbility = (e.target as HTMLSelectElement).value;
     defenderAbilityActive = true;
     syncDamageStatesFromLegacyState();
+    defenderState = normalizeTypeOverrideForState(defenderState);
+    closeAbilityTypeDropdowns();
     renderTab1DamageDisplay();
   });
   document.getElementById("damage-attacker-ability-toggle")?.addEventListener("click", () => {
@@ -6099,6 +6237,10 @@ document.addEventListener("DOMContentLoaded", () => {
     defenderAbilityActive = !defenderAbilityActive;
     syncDamageStatesFromLegacyState();
     renderTab1DamageDisplay();
+  });
+  document.addEventListener("click", closeAbilityTypeDropdowns);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAbilityTypeDropdowns();
   });
 
   document.getElementById("damage-defender-select")?.addEventListener("click", () => openTab1PokemonSelect("defend"));
