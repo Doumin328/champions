@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session } from "electron";
+import { app, BrowserWindow, ipcMain, screen, session } from "electron";
 import { ChildProcess, spawn } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
@@ -75,15 +75,23 @@ function createWindow(): void {
     }
   );
 
+  const primaryDisplayWorkArea = screen.getPrimaryDisplay().workArea;
   const mainWindow = new BrowserWindow({
-    width: 1920,
-    height: 1080,
-    fullscreen: true,
+    x: primaryDisplayWorkArea.x,
+    y: primaryDisplayWorkArea.y,
+    width: primaryDisplayWorkArea.width,
+    height: primaryDisplayWorkArea.height,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "../preload/preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.maximize();
+    mainWindow.show();
   });
 
   if (process.env.NODE_ENV === "development") {

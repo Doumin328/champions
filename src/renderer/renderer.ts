@@ -1,5 +1,14 @@
 // レンダラープロセス用: 映像ソースをプルダウンで選択して表示
 
+const APP_DESIGN_WIDTH = 2640;
+const APP_DESIGN_HEIGHT = 1280;
+
+function updateAppScale(): void {
+  const scale = Math.min(window.innerWidth / APP_DESIGN_WIDTH, window.innerHeight / APP_DESIGN_HEIGHT);
+
+  document.documentElement.style.setProperty("--app-scale", String(scale));
+}
+
 // ========== ダメージ計算（damage-calc をインライン化。Electron nodeIntegration:false のため require 不可） ==========
 /** 技タイプ → 防御側タイプ → 倍率 */
 const TYPE_CHART: Record<string, Record<string, number>> = {
@@ -555,6 +564,10 @@ function typeSvSrc(type: string): string {
 
 function typeBadgesHtml(types: string[]): string {
   return types.map(t => `<img class="type-img" src="img/type/${t}.png" alt="${t}" />`).join("");
+}
+
+function typeBadgesSvHtml(types: string[]): string {
+  return types.map(t => `<img class="type-img type-img-sv" src="${typeSvSrc(t)}" alt="${escapeHtml(t)}" />`).join("");
 }
 
 /** ポケモン画像のパス（img/pokemon/ 配下の {id}.png に統一。id がなければ DUMMY） */
@@ -3109,7 +3122,7 @@ function openBoxDetailModal(pokemon: Pokemon): void {
     img.src = getPokemonImageSrc(pokemon);
     img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
   }
-  if (typesEl) typesEl.innerHTML = typeBadgesHtml(pokemon.types);
+  if (typesEl) typesEl.innerHTML = typeBadgesSvHtml(pokemon.types);
   // 詳細確認非表示 / 編集フォーム表示
   const viewEl = document.getElementById("box-detail-view");
   const editEl = document.getElementById("box-detail-edit");
@@ -3227,7 +3240,7 @@ function openBoxDetailView(index: number): void {
     img.src = getPokemonImageSrc(entry.pokemon);
     img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
   }
-  if (typesEl) typesEl.innerHTML = typeBadgesHtml(entry.pokemon.types);
+  if (typesEl) typesEl.innerHTML = typeBadgesSvHtml(entry.pokemon.types);
 
   // 詳細ビュー表示 / 編集フォーム非表示
   const viewEl = document.getElementById("box-detail-view");
@@ -3261,7 +3274,7 @@ function openTeamMemberDetailView(teamIndex: number, slotIndex: number, startInE
     img.src = getPokemonImageSrc(member.pokemon);
     img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
   }
-  if (typesEl) typesEl.innerHTML = typeBadgesHtml(member.pokemon.types);
+  if (typesEl) typesEl.innerHTML = typeBadgesSvHtml(member.pokemon.types);
   const viewEl = document.getElementById("box-detail-view");
   const editEl = document.getElementById("box-detail-edit");
   if (viewEl) viewEl.hidden = startInEditMode;
@@ -3300,7 +3313,7 @@ function renderBoxDetailView(entry: BoxEntry): void {
         if (!m) return "";
         const powerStr = m.power != null ? String(m.power) : "—";
         return `<div class="box-view-move">
-          <img class="type-img" src="img/type/${escapeHtml(m.type)}.png" alt="${escapeHtml(m.type)}" />
+          <img class="type-img type-img-sv" src="${typeSvSrc(m.type)}" alt="${escapeHtml(m.type)}" />
           <span>${escapeHtml(m.name)}</span>
           <span class="box-view-move-meta">${escapeHtml(m.category)}・威力${powerStr}</span>
         </div>`;
@@ -3715,7 +3728,7 @@ function renderBoxMoveList(): void {
     btn.type = "button";
     btn.className = "damage-move-btn" + (isSelected ? " is-selected" : "");
     const powerStr = move.power != null ? String(move.power) : "—";
-    btn.innerHTML = `<img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" /> ${escapeHtml(move.name)}（${escapeHtml(move.category)}・威力${powerStr}）`;
+    btn.innerHTML = `<img class="type-img type-img-sv" src="${typeSvSrc(move.type)}" alt="${escapeHtml(move.type)}" /> ${escapeHtml(move.name)}（${escapeHtml(move.category)}・威力${powerStr}）`;
     btn.addEventListener("click", () => {
       if (boxEditingMoveSlot !== null) {
         boxSelectedMoves[boxEditingMoveSlot] = move.id;
@@ -4919,7 +4932,7 @@ function handlePokemonPicked(member: TeamMember): void {
       img.src = getPokemonImageSrc(member.pokemon);
       img.onerror = () => { img.src = BALL_MONSTER_IMAGE; };
     }
-    if (typesEl) typesEl.innerHTML = typeBadgesHtml(member.pokemon.types);
+    if (typesEl) typesEl.innerHTML = typeBadgesSvHtml(member.pokemon.types);
     initBoxEditForm(member.pokemon, teamMemberToBoxEntry(member));
     closePokemonPicker();
     return;
@@ -5919,7 +5932,7 @@ function renderTab1MovesList(): void {
     btn.type = "button";
     btn.className = "damage-move-btn";
     const powerStr = move.power != null ? String(move.power) : "—";
-    btn.innerHTML = `<img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" /> ${escapeHtml(move.name)}（${escapeHtml(move.category)}・威力${powerStr}）`;
+    btn.innerHTML = `<img class="type-img" src="${typeSvSrc(move.type)}" alt="${escapeHtml(move.type)}" /> ${escapeHtml(move.name)}（${escapeHtml(move.category)}・威力${powerStr}）`;
     btn.dataset.moveId = String(move.id);
     btn.addEventListener("click", () => {
       if (editingMoveSlotIndex !== null) {
@@ -5996,6 +6009,9 @@ function initTabs(): void {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  updateAppScale();
+  window.addEventListener("resize", updateAppScale);
+
   initTabs();
 
   // チーム編成（タブ2）
