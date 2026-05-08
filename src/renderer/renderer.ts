@@ -33,6 +33,13 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
 };
 const DMG_LEVEL = 50;
 const FREEZE_DRY_MOVE_NAME = "フリーズドライ";
+const WEATHER_BALL_MOVE_NAME = "ウェザーボール";
+const WEATHER_BALL_TYPE_BY_WEATHER: Record<string, string> = {
+  はれ: "ほのお",
+  あめ: "みず",
+  ゆき: "こおり",
+  すなあらし: "いわ",
+};
 const TYPE_OVERRIDE_ABILITIES = new Set(["へんげんじざい", "リベロ"]);
 
 function getTypeEff(moveType: string, defenderTypes: string[], moveName?: string): number {
@@ -141,9 +148,15 @@ function calculateDamage(input: {
   const defAb = defAbActive && input.defenderAbility ? abilitiesData.find(a => a.name === input.defenderAbility) : undefined;
   const ignoreDefAb = atkAb?.ignoreDefenderAbility ?? false;
 
-  // スキン系：ノーマル技を別タイプに変換
-  const isNormalTypeMove = moveType === "ノーマル";
-  const effectiveMoveType = (atkAb?.normalTypeChange && isNormalTypeMove) ? atkAb.normalTypeChange : moveType;
+  // 天候：メガソーラー等の強制天候は、ノーてんき / エアロックより優先する
+  const effectiveWeather = atkAb?.forceWeather ?? ((atkAb?.ignoreWeather || defAb?.ignoreWeather) ? "" : (weather ?? ""));
+
+  const weatherBallType = moveName === WEATHER_BALL_MOVE_NAME ? WEATHER_BALL_TYPE_BY_WEATHER[effectiveWeather] : undefined;
+
+  // ウェザーボールが天候でタイプ変化しない場合のみ、スキン系でノーマル技を別タイプに変換
+  const baseMoveType = weatherBallType ?? moveType;
+  const isNormalTypeMove = baseMoveType === "ノーマル";
+  const effectiveMoveType = (atkAb?.normalTypeChange && isNormalTypeMove) ? atkAb.normalTypeChange : baseMoveType;
 
   const typeEff = atkAb?.scrappy && (effectiveMoveType === "ノーマル" || effectiveMoveType === "かくとう") && defenderTypes.includes("ゴースト")
     ? defenderTypes.reduce((mult, t) => mult * (t === "ゴースト" ? 1 : (TYPE_CHART[effectiveMoveType]?.[t] ?? 1)), 1)
@@ -172,9 +185,6 @@ function calculateDamage(input: {
     ? (defenderItem === "eviolite" ? 1.5 : 1)
     : (defenderItem === "assault-vest" || defenderItem === "eviolite" ? 1.5 : 1);
 
-  // 天候：ノーてんき / エアロック で無効化（weatherCondition チェックより前に計算）
-  const effectiveWeather = (atkAb?.ignoreWeather || defAb?.ignoreWeather) ? "" : (weather ?? "");
-
   // 攻撃側特性：ステータス倍率（ちからもち / はりきり / メガソーラー等）
   const atkAbStatCondMet = !atkAb?.weatherCondition || effectiveWeather === atkAb.weatherCondition;
   const atkAbMult = (atkAb?.atkStatMult != null && atkAbStatCondMet && (!atkAb.moveCategory || atkAb.moveCategory === moveCategory)) ? atkAb.atkStatMult : 1;
@@ -186,7 +196,8 @@ function calculateDamage(input: {
   const defStat = Math.max(1, Math.floor(Math.floor(defBase * rankMult(defRank)) * defItemMult * defAbMult * snowDefenseMult));
 
   // 威力倍率（テクニシャン / かたいツメ / すなのちから / アナライズ等の条件チェック）
-  const boostedMovePower = input.typeBoostActive ? Math.floor(movePower * 1.2) : movePower;
+  const baseMovePower = weatherBallType ? 100 : movePower;
+  const boostedMovePower = input.typeBoostActive ? Math.floor(baseMovePower * 1.2) : baseMovePower;
   const powerMultCondMet =
     (!atkAb?.powerMultMaxPower || boostedMovePower <= atkAb.powerMultMaxPower) &&
     (!atkAb?.powerMultTypes   || atkAb.powerMultTypes.includes(effectiveMoveType)) &&
@@ -497,6 +508,7 @@ interface AbilityDef {
   typeDamageMult?: { type: string; mult: number };
   ignoreDefenderAbility?: boolean;
   ignoreWeather?: boolean;
+  forceWeather?: string;
   defStatMult?: number;
   superEffMult?: number;
   damageMult?: number;

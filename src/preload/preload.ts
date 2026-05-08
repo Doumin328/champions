@@ -40,8 +40,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
       selectionBadgeRect: { x: number; y: number; width: number; height: number };
       pokemonNameRect: { x: number; y: number; width: number; height: number };
       itemNameRect: { x: number; y: number; width: number; height: number };
+    },
+    trackedSelections?: Array<{ slotIndex: number; selectionOrder: number }>
+  ) => ipcRenderer.invoke("recognition:recognize-player-selection", { slots, rects, trackedSelections }),
+  detectPlayerSelectionBadges: (
+    slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>,
+    rects: {
+      selectionBadgeRect: { x: number; y: number; width: number; height: number };
     }
-  ) => ipcRenderer.invoke("recognition:recognize-player-selection", { slots, rects }),
+  ) => ipcRenderer.invoke("recognition:detect-player-selection-badges", { slots, rects }),
   saveOpponentSlotImages: (slots: Array<{ slotIndex: number; imageBase64: string }>) =>
     ipcRenderer.invoke("recognition:save-opponent-slot-images", { slots }),
   savePlayerDebugImages: (payload: {
