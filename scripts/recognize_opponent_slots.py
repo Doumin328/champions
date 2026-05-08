@@ -11,6 +11,7 @@ from opponent_recognition_core import (
     recognize_slot_bytes,
 )
 from player_selection_recognition import (
+    detect_player_selection_badges,
     load_player_item_names,
     load_player_pokemon_names,
     recognize_player_selection_slots,
@@ -51,7 +52,10 @@ for raw_line in sys.stdin:
     message_type = message.get("type")
     slots = message.get("slots", [])
     if not isinstance(slots, list):
-        result_type = "player-result" if message_type == "recognize-player-selection" else "result"
+        if message_type == "detect-player-selection-badges":
+            result_type = "player-badge-result"
+        else:
+            result_type = "player-result" if message_type == "recognize-player-selection" else "result"
         emit({"type": result_type, "requestId": request_id, "results": []})
         continue
 
@@ -111,13 +115,33 @@ for raw_line in sys.stdin:
         if not isinstance(rects, dict):
             emit({"type": "player-result", "requestId": request_id, "results": []})
             continue
+        tracked_orders: dict[int, int] = {}
+        tracked_selections = message.get("trackedSelections", [])
+        if isinstance(tracked_selections, list):
+            for entry in tracked_selections:
+                if not isinstance(entry, dict):
+                    continue
+                slot_index = int(entry.get("slotIndex", -1))
+                selection_order = int(entry.get("selectionOrder", -1))
+                if 0 <= slot_index <= 5 and 1 <= selection_order <= 3:
+                    tracked_orders[slot_index] = selection_order
         results = recognize_player_selection_slots(
             slots,
             rects,
             player_pokemon_names,
             player_item_names,
+            tracked_orders,
         )
         emit({"type": "player-result", "requestId": request_id, "results": results})
+        continue
+
+    if message_type == "detect-player-selection-badges":
+        rects = message.get("rects", {})
+        if not isinstance(rects, dict) or not isinstance(rects.get("selectionBadgeRect"), dict):
+            emit({"type": "player-badge-result", "requestId": request_id, "results": []})
+            continue
+        results = detect_player_selection_badges(slots, rects["selectionBadgeRect"])
+        emit({"type": "player-badge-result", "requestId": request_id, "results": results})
         continue
 
     emit({"type": "error", "message": f"Unsupported message type: {message_type}"})
