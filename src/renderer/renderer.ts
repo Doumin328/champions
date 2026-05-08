@@ -678,6 +678,22 @@ interface BroadcastPlayerSelectionEntry {
   score: number;
 }
 
+interface BroadcastPlayerSelectionTrackerSlot {
+  selectionOrder: number | null;
+  consecutiveSelectedFrames: number;
+  confidence: number;
+  lastUpdatedAt: number;
+}
+
+interface PlayerSelectionBadgeDetection {
+  slotIndex: number;
+  isSelected: boolean;
+  confidence: number;
+  selectionOrder: number | null;
+  selectionOrderScore: number;
+  debugFeatures?: Record<string, number | null>;
+}
+
 interface SceneDetectionState {
   rawScene: SceneKind;
   displayScene: SceneKind;
@@ -735,6 +751,8 @@ const BROADCAST_RECOGNITION_INTERVAL_MS = 350;
 const SCENE_DETECTION_INTERVAL_WHILE_DAMAGE_TAB_MS = 550;
 const BROADCAST_RECOGNITION_INTERVAL_WHILE_DAMAGE_TAB_MS = 900;
 const BROADCAST_RECOGNITION_STABLE_FRAMES = 2;
+const PLAYER_SELECTION_TRACK_STABLE_FRAMES = 2;
+const PLAYER_SELECTION_TRACK_MIN_CONFIDENCE = 0.48;
 const BROADCAST_TEMPLATE_SIZE = 112;
 const DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS: NormalizedRect[] = [
   { x: 0.828, y: 0.143, width: 0.08, height: 0.105 },
@@ -884,6 +902,13 @@ let playerSelectionSnapshotRecognized = false;
 let playerSelectionSnapshotSlots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
 let playerSelectionSnapshotDebugSlots: BroadcastPlayerDebugSlotImage[] = [];
 let confirmedPlayerSelection: Array<BroadcastPlayerSelectionEntry | null> = Array.from({ length: 3 }, () => null);
+let playerSelectionTrackingSlots: BroadcastPlayerSelectionTrackerSlot[] = Array.from({ length: 6 }, () => ({
+  selectionOrder: null,
+  consecutiveSelectedFrames: 0,
+  confidence: 0,
+  lastUpdatedAt: 0,
+}));
+let playerSelectionTrackingNextOrder = 1;
 let recognitionBootstrapPromise: Promise<void> | null = null;
 let sceneSampleCache: SceneSampleCache = { frameId: 0, samples: new Map() };
 let activeMainTabId = "tab1";
@@ -915,6 +940,90 @@ function serializeConfirmedPlayerSelection(): Array<{
     itemName: entry?.itemName ?? null,
     score: entry?.score ?? null,
   }));
+}
+
+function resetPlayerSelectionTracking(): void {
+  playerSelectionTrackingSlots = Array.from({ length: 6 }, () => ({
+    selectionOrder: null,
+    consecutiveSelectedFrames: 0,
+    confidence: 0,
+    lastUpdatedAt: 0,
+  }));
+  playerSelectionTrackingNextOrder = 1;
+}
+
+function getTrackedPlayerSelectionSlots(): Array<{ slotIndex: number; selectionOrder: number }> {
+  return playerSelectionTrackingSlots
+    .map((slot, slotIndex) => ({
+      slotIndex,
+      selectionOrder: slot.selectionOrder,
+    }))
+    .filter((slot): slot is { slotIndex: number; selectionOrder: number } => slot.selectionOrder !== null)
+    .sort((a, b) => a.selectionOrder - b.selectionOrder);
+}
+
+function applyPlayerSelectionBadgeDetections(results: PlayerSelectionBadgeDetection[]): boolean {
+  let newlyConfirmed = false;
+  const now = Date.now();
+
+  for (const result of results) {
+    if (!result || result.slotIndex < 0 || result.slotIndex >= playerSelectionTrackingSlots.length) continue;
+    const state = playerSelectionTrackingSlots[result.slotIndex];
+    if (state.selectionOrder !== null) {
+      state.confidence = Math.max(state.confidence, result.confidence ?? 0);
+      state.lastUpdatedAt = now;
+      continue;
+    }
+
+    if (result.isSelected && result.confidence >= PLAYER_SELECTION_TRACK_MIN_CONFIDENCE) {
+      state.consecutiveSelectedFrames += 1;
+      state.confidence = result.confidence;
+    } else {
+      state.consecutiveSelectedFrames = 0;
+      state.confidence = result.confidence ?? 0;
+    }
+    state.lastUpdatedAt = now;
+  }
+
+  const candidates = results
+    .filter((result) => {
+      const state = playerSelectionTrackingSlots[result.slotIndex];
+      return !!state
+        && state.selectionOrder === null
+        && state.consecutiveSelectedFrames >= PLAYER_SELECTION_TRACK_STABLE_FRAMES
+        && result.isSelected
+        && result.confidence >= PLAYER_SELECTION_TRACK_MIN_CONFIDENCE;
+    })
+    .sort((a, b) => {
+      const orderDiff = (a.selectionOrder ?? 99) - (b.selectionOrder ?? 99);
+      if (orderDiff !== 0) return orderDiff;
+      return a.slotIndex - b.slotIndex;
+    });
+
+  for (const result of candidates) {
+    if (playerSelectionTrackingNextOrder > 3) break;
+    const state = playerSelectionTrackingSlots[result.slotIndex];
+    if (!state || state.selectionOrder !== null) continue;
+    state.selectionOrder = playerSelectionTrackingNextOrder;
+    state.confidence = result.confidence;
+    state.lastUpdatedAt = now;
+    playerSelectionTrackingNextOrder += 1;
+    newlyConfirmed = true;
+  }
+
+  if (isSceneDebugEnabled()) {
+    console.debug("[broadcast-player-selection-tracking]", {
+      rawResults: results,
+      tracked: playerSelectionTrackingSlots.map((slot, slotIndex) => ({
+        slotIndex,
+        selectionOrder: slot.selectionOrder,
+        consecutiveSelectedFrames: slot.consecutiveSelectedFrames,
+        confidence: slot.confidence,
+      })),
+    });
+  }
+
+  return newlyConfirmed;
 }
 
 function getSceneDetectionIntervalMs(): number {
@@ -1512,6 +1621,7 @@ function resetRecognitionStates(reason = "unspecified", options: { preserveOppon
   playerSelectionSnapshotSlots = [];
   playerSelectionSnapshotDebugSlots = [];
   confirmedPlayerSelection = Array.from({ length: 3 }, () => null);
+  resetPlayerSelectionTracking();
   if (isSceneDebugEnabled()) {
     console.debug("[broadcast-player-selection]", {
       context: "resetRecognitionStates",
@@ -1961,7 +2071,7 @@ function hasOpponentRecognitionMatch(
 function hasPlayerSelectionRecognitionMatch(
   results: Array<{ selectionOrder: number | null; pokemonName: string | null; itemName: string | null }>
 ): boolean {
-  return results.some((result) => !!result.pokemonName || !!result.itemName || (!!result.selectionOrder && result.selectionOrder >= 1 && result.selectionOrder <= 3));
+  return results.some((result) => !!result.selectionOrder && result.selectionOrder >= 1 && result.selectionOrder <= 3);
 }
 
 function hasPendingBroadcastRecognition(): boolean {
@@ -2002,24 +2112,6 @@ function applyPlayerSelectionRecognitionResults(
       itemName: result.itemName,
       score: result.score,
     };
-  }
-
-  // 2パス目: selectionOrder が不明でも pokemonName があれば空き枠に slotIndex 昇順で埋める
-  const unordered = results
-    .filter((r) => r && r.pokemonName && (!r.selectionOrder || r.selectionOrder < 1 || r.selectionOrder > 3))
-    .sort((a, b) => a.slotIndex - b.slotIndex);
-  let fillIdx = 0;
-  for (let i = 0; i < 3 && fillIdx < unordered.length; i++) {
-    if (!nextSelection[i]) {
-      const result = unordered[fillIdx++];
-      nextSelection[i] = {
-        slotIndex: result.slotIndex,
-        selectionOrder: i + 1,
-        pokemonName: result.pokemonName,
-        itemName: result.itemName,
-        score: result.score,
-      };
-    }
   }
 
   if (isSceneDebugEnabled()) {
@@ -2095,7 +2187,7 @@ async function updateBroadcastRecognition(): Promise<void> {
       selectionSnapshotCaptured = true;
     }
   }
-  if (canCaptureSelectionSnapshot && !playerSelectionSnapshotCaptured) {
+  if (canCaptureSelectionSnapshot && !playerSelectionSnapshotRecognized) {
     const playerSlots = await collectCurrentPlayerSlots();
     if (playerSlots.length > 0) {
       playerSelectionSnapshotSlots = playerSlots.map((slot) => ({ ...slot }));
@@ -2142,31 +2234,58 @@ async function updateBroadcastRecognition(): Promise<void> {
       }
     }
     if (!playerSelectionSnapshotRecognized && playerSelectionSnapshotSlots.length > 0) {
-      const playerResponse = await (window as any).electronAPI?.recognizePlayerSelection?.(
-        playerSelectionSnapshotSlots,
-        {
-          selectionBadgeRect: broadcastPlayerSelectionBadgeRect,
-          pokemonNameRect: broadcastPlayerPokemonNameRect,
-          itemNameRect: broadcastPlayerItemNameRect,
+      let trackingChanged = false;
+      if (canCaptureSelectionSnapshot) {
+        const badgeResponse = await (window as any).electronAPI?.detectPlayerSelectionBadges?.(
+          playerSelectionSnapshotSlots,
+          {
+            selectionBadgeRect: broadcastPlayerSelectionBadgeRect,
+          }
+        );
+        if (badgeResponse?.success && Array.isArray(badgeResponse.results)) {
+          trackingChanged = applyPlayerSelectionBadgeDetections(badgeResponse.results);
         }
-      );
-      if (playerResponse?.success && Array.isArray(playerResponse.results)) {
+      }
+
+      const trackedSelections = getTrackedPlayerSelectionSlots();
+      const shouldRecognizePlayerSelection = trackingChanged
+        || trackedSelections.length >= 3
+        || playerSelectionSnapshotCaptured;
+
+      if (shouldRecognizePlayerSelection) {
+        const playerResponse = await (window as any).electronAPI?.recognizePlayerSelection?.(
+          playerSelectionSnapshotSlots,
+          {
+            selectionBadgeRect: broadcastPlayerSelectionBadgeRect,
+            pokemonNameRect: broadcastPlayerPokemonNameRect,
+            itemNameRect: broadcastPlayerItemNameRect,
+          },
+          trackedSelections
+        );
+        if (!playerResponse?.success || !Array.isArray(playerResponse.results)) {
+          return;
+        }
+
         const hasMatch = hasPlayerSelectionRecognitionMatch(playerResponse.results);
         if (isSceneDebugEnabled()) {
           console.debug("[recognition] player-selection-result", {
             scene: sceneDetectionState.displayScene,
             hasMatch,
+            trackedSelections,
             captured: playerSelectionSnapshotCaptured,
             recognized: playerSelectionSnapshotRecognized,
             resultCount: playerResponse.results.length,
           });
         }
-        if (hasMatch) {
+        if (hasMatch || trackedSelections.length > 0) {
           if (isSceneDebugEnabled()) {
             await savePlayerDebugImages(playerSelectionSnapshotDebugSlots, playerResponse.results);
           }
           applyPlayerSelectionRecognitionResults(playerResponse.results);
-          playerSelectionSnapshotRecognized = true;
+          playerSelectionSnapshotRecognized = trackedSelections.length >= 3
+            || playerResponse.results.filter((result: { selectionOrder: number | null }) =>
+              !!result.selectionOrder && result.selectionOrder >= 1 && result.selectionOrder <= 3
+            ).length >= 3;
         } else if (canCaptureSelectionSnapshot) {
           playerSelectionSnapshotCaptured = false;
           playerSelectionSnapshotSlots = [];
@@ -2271,9 +2390,9 @@ async function runSceneRecognitionLoop(): Promise<void> {
   }
   if (sceneDetectionState.displayScene === "selection" && previousDisplayScene !== "selection") {
     broadcastRecognitionLastRunAt = 0;
-    await updateBroadcastRecognition();
+    void updateBroadcastRecognition();
   } else if (shouldRunBroadcastRecognitionForScene()) {
-    await updateBroadcastRecognition();
+    void updateBroadcastRecognition();
   }
 
   if (isSceneDebugEnabled()) {

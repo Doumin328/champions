@@ -284,6 +284,91 @@ def detect_selection_order_from_badge_image(image: np.ndarray) -> tuple[int | No
     return best_digit, best_score
 
 
+def detect_selection_badge_presence(image: np.ndarray) -> tuple[bool, float, dict[str, float | int | None]]:
+    if image is None or image.size == 0:
+        return False, 0.0, {
+            "templateOrder": None,
+            "templateScore": 0.0,
+            "mean": 0.0,
+            "std": 0.0,
+            "brightRatio": 0.0,
+            "edgeRatio": 0.0,
+        }
+
+    selection_order, template_score = detect_selection_order_from_badge_image(image)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    mean_value = float(np.mean(gray))
+    std_value = float(np.std(gray))
+    bright_ratio = float(np.count_nonzero(gray > 185) / max(1, gray.size))
+    edges = cv2.Canny(gray, 50, 140)
+    edge_ratio = float(np.count_nonzero(edges) / max(1, edges.size))
+
+    mean_score = max(0.0, min(1.0, (mean_value - 145.0) / 55.0))
+    contrast_score = max(0.0, min(1.0, (std_value - 38.0) / 30.0))
+    bright_score = max(0.0, min(1.0, (bright_ratio - 0.18) / 0.28))
+    edge_score = max(0.0, min(1.0, (edge_ratio - 0.08) / 0.10))
+    template_presence_score = max(0.0, min(1.0, template_score / 0.45))
+    confidence = (
+        mean_score * 0.28
+        + contrast_score * 0.34
+        + bright_score * 0.18
+        + edge_score * 0.08
+        + template_presence_score * 0.12
+    )
+    confidence = max(confidence, template_presence_score * 0.86)
+
+    return confidence >= 0.48, round(float(confidence), 4), {
+        "templateOrder": selection_order,
+        "templateScore": round(float(template_score), 4),
+        "mean": round(mean_value, 2),
+        "std": round(std_value, 2),
+        "brightRatio": round(bright_ratio, 4),
+        "edgeRatio": round(edge_ratio, 4),
+    }
+
+
+def detect_player_selection_badges(
+    slots: list[dict[str, Any]],
+    selection_badge_rect: dict[str, float],
+) -> list[dict[str, Any]]:
+    import base64 as _base64
+
+    results: list[dict[str, Any]] = []
+    for slot in slots:
+        slot_index = int(slot.get("slotIndex", -1))
+        image_base64 = slot.get("imageBase64", "")
+        if slot_index < 0 or not isinstance(image_base64, str):
+            continue
+        try:
+            decoded = _base64.b64decode(image_base64)
+            encoded = np.frombuffer(decoded, dtype=np.uint8)
+            image = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
+        except Exception:
+            image = None
+        if image is None:
+            results.append({
+                "slotIndex": slot_index,
+                "isSelected": False,
+                "confidence": 0.0,
+                "selectionOrder": None,
+                "selectionOrderScore": 0.0,
+                "debugFeatures": {},
+            })
+            continue
+
+        badge_crop = crop_normalized_rect(image, selection_badge_rect)
+        is_selected, confidence, features = detect_selection_badge_presence(badge_crop)
+        results.append({
+            "slotIndex": slot_index,
+            "isSelected": is_selected,
+            "confidence": confidence,
+            "selectionOrder": features["templateOrder"],
+            "selectionOrderScore": features["templateScore"],
+            "debugFeatures": features,
+        })
+    return results
+
+
 def score_candidate(ocr_text: str, candidate: str) -> float:
     normalized_ocr = normalize_text(ocr_text)
     normalized_candidate = normalize_text(candidate)
@@ -368,6 +453,7 @@ def recognize_player_selection_slots(
     rects: dict[str, dict[str, float]],
     pokemon_names: list[str],
     item_names: list[str],
+    tracked_orders: dict[int, int] | None = None,
 ) -> list[dict[str, Any]]:
     import base64 as _base64
 
@@ -453,13 +539,19 @@ def recognize_player_selection_slots(
         item_crop_texts = collect_texts("item_crop", max_variants=2)
         badge_crop_texts = collect_texts("badge_crop")
 
-        selection_order = pick_selection_order(full_texts)
+        tracked_selection_order = tracked_orders.get(slot_index) if tracked_orders else None
+        selection_order = tracked_selection_order if tracked_selection_order is not None else None
+        if selection_order is None:
+            selection_order = pick_selection_order(full_texts)
         badge_score = 0.72 if selection_order is not None else 0.0
         if selection_order is None:
             selection_order, badge_score = detect_selection_order_from_badge_image(sd["badge_crop"])
         if selection_order is None:
             selection_order = pick_selection_order(badge_crop_texts)
             badge_score = 0.4 if selection_order is not None else 0.0
+        if tracked_selection_order is None and tracked_orders and selection_order in set(tracked_orders.values()):
+            selection_order = None
+            badge_score = 0.0
 
         slot_pokemon_name, slot_pokemon_score = best_dictionary_match(full_texts_name, pokemon_names)
         crop_pokemon_name, crop_pokemon_score = best_dictionary_match(name_crop_texts, pokemon_names)
@@ -479,12 +571,15 @@ def recognize_player_selection_slots(
             if is_low_confidence_short_candidate(item_name, item_score):
                 item_name, item_score = None, 0.0
 
-        overall_score = (badge_score + pokemon_score + item_score) / 3
+        has_selection_order = selection_order is not None and 1 <= selection_order <= 3
+        recognized_pokemon_name = pokemon_name if has_selection_order and pokemon_score >= 0.42 else None
+        recognized_item_name = item_name if has_selection_order and item_score >= 0.34 else None
+        overall_score = (badge_score + pokemon_score + item_score) / 3 if has_selection_order else 0.0
         results.append({
             "slotIndex": slot_index,
             "selectionOrder": selection_order,
-            "pokemonName": pokemon_name if pokemon_score >= 0.42 else None,
-            "itemName": item_name if item_score >= 0.34 else None,
+            "pokemonName": recognized_pokemon_name,
+            "itemName": recognized_item_name,
             "score": round(float(overall_score), 4),
             "debugOcrTexts": {
                 "slot": full_texts,

@@ -52,11 +52,25 @@ type PlayerSelectionWorkerResultMessage = {
   }>;
 };
 
+type PlayerSelectionBadgeWorkerResultMessage = {
+  type: "player-badge-result";
+  requestId: string;
+  results: Array<{
+    slotIndex: number;
+    isSelected: boolean;
+    confidence: number;
+    selectionOrder: number | null;
+    selectionOrderScore: number;
+    debugFeatures?: Record<string, number | null>;
+  }>;
+};
+
 type RecognitionWorkerMessage =
   | RecognitionWorkerReadyMessage
   | RecognitionWorkerErrorMessage
   | RecognitionWorkerResultMessage
-  | PlayerSelectionWorkerResultMessage;
+  | PlayerSelectionWorkerResultMessage
+  | PlayerSelectionBadgeWorkerResultMessage;
 
 type PlayerDebugImagePayload = {
   slots: Array<{ slotIndex: number; imageBase64: string; itemImageBase64: string }>;
@@ -191,7 +205,7 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
         rejectRecognitionPending(message.message);
         return;
       }
-      if (message.type === "result" || message.type === "player-result") {
+      if (message.type === "result" || message.type === "player-result" || message.type === "player-badge-result") {
         const pending = recognitionPendingRequests.get(message.requestId);
         if (!pending) return;
         recognitionPendingRequests.delete(message.requestId);
@@ -270,9 +284,24 @@ ipcMain.handle("recognition:recognize-player-selection", async (_event, payload:
     pokemonNameRect: { x: number; y: number; width: number; height: number };
     itemNameRect: { x: number; y: number; width: number; height: number };
   };
+  trackedSelections?: Array<{ slotIndex: number; selectionOrder: number }>;
 }) => {
   return sendRecognitionWorkerRequest<PlayerSelectionWorkerResultMessage["results"]>({
     type: "recognize-player-selection",
+    slots: payload.slots,
+    rects: payload.rects,
+    trackedSelections: payload.trackedSelections ?? [],
+  });
+});
+
+ipcMain.handle("recognition:detect-player-selection-badges", async (_event, payload: {
+  slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>;
+  rects: {
+    selectionBadgeRect: { x: number; y: number; width: number; height: number };
+  };
+}) => {
+  return sendRecognitionWorkerRequest<PlayerSelectionBadgeWorkerResultMessage["results"]>({
+    type: "detect-player-selection-badges",
     slots: payload.slots,
     rects: payload.rects,
   });
