@@ -7,3 +7,5 @@ Thumbs.db
 .env.local
 outputImg/player_ocr_tmp/
 outputImg/champions-player-ocr-*/
+outputImg/*
+recognize/*
