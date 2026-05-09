@@ -87,6 +87,10 @@ interface DamageResult {
   isUnsupportedMove?: boolean;
   unsupportedReason?: string;
 }
+
+interface MoveDamageResult extends DamageResult {
+  criticalResult?: DamageResult;
+}
 /** タイプ強化アイテム → 対応タイプ */
 const TYPE_BOOSTER_ITEM_MAP: Record<string, string> = {
   "もくたん": "ほのお", "しんぴのしずく": "みず", "きせきのタネ": "くさ",
@@ -133,6 +137,7 @@ function calculateDamage(input: {
   isBurned?: boolean;
   typeBoostActive?: boolean;
   wall?: string;
+  isCritical?: boolean;
   moveFlags?: { contact?: boolean; pulse?: boolean; bite?: boolean; punch?: boolean; slicing?: boolean };
 }): DamageResult {
   const { movePower, moveName, moveType, moveCategory, attackerTypes, attackerBaseStats, defenderTypes, defenderBaseStats, attackerStatOverride, defenderStatOverride, weather, terrain, attackerItem, defenderItem, wall } = input;
@@ -174,8 +179,11 @@ function calculateDamage(input: {
   const defBase = moveCategory === "物理"
     ? (defenderStatOverride?.defense ?? calcStat(defenderBaseStats.defense, false))
     : (defenderStatOverride?.spDefense ?? calcStat(defenderBaseStats.spDefense, false));
-  const atkRank = moveCategory === "物理" ? (input.attackerAtkRank ?? 0) : (input.attackerSpAtkRank ?? 0);
-  const defRank = moveCategory === "物理" ? (input.defenderDefRank ?? 0) : (input.defenderSpDefRank ?? 0);
+  const isCritical = input.isCritical === true;
+  const rawAtkRank = moveCategory === "物理" ? (input.attackerAtkRank ?? 0) : (input.attackerSpAtkRank ?? 0);
+  const rawDefRank = moveCategory === "物理" ? (input.defenderDefRank ?? 0) : (input.defenderSpDefRank ?? 0);
+  const atkRank = isCritical && rawAtkRank < 0 ? 0 : rawAtkRank;
+  const defRank = isCritical && rawDefRank > 0 ? 0 : rawDefRank;
 
   // 攻撃側持ち物：ステータス補正
   const atkItemMult = (attackerItem === "choice-band" && moveCategory === "物理") ? 1.5
@@ -251,11 +259,12 @@ function calculateDamage(input: {
   let defDamageMult = 1;
   if (!ignoreDefAb && defAb?.damageMult != null) defDamageMult = defAb.damageMult;
   const burnMult = input.isBurned && moveCategory === "物理" ? 0.5 : 1;
-  const wallMult = (wall === "ひかりのかべ" && moveCategory === "特殊")
-    || (wall === "リフレクター" && moveCategory === "物理")
-    ? 0.5 : 1;
+  const wallApplies = (wall === "ひかりのかべ" && moveCategory === "特殊")
+    || (wall === "リフレクター" && moveCategory === "物理");
+  const wallMult = !isCritical && wallApplies ? 0.5 : 1;
 
   const parentalBondMult = atkAb?.parentalBondMult ?? 1;
+  const criticalMult = isCritical ? 1.5 : 1;
   const mMult = terrainMult * attackerDamageMult * defenderDamageReduceMult
     * attackerAbTypeMult * defAbTypeMult * superEffAbMult * defDamageMult * wallMult;
   const applyRoll = (r: number): number => {
@@ -263,7 +272,7 @@ function calculateDamage(input: {
     d = roundHalfDown(d * 1);                  // ×範囲補正 → 五捨五超入
     d = roundHalfDown(d * parentalBondMult);   // ×おやこあい補正 → 五捨五超入
     d = roundHalfDown(d * weatherMult);        // ×天気補正 → 五捨五超入
-    d = roundHalfDown(d * 1);                  // ×急所補正 → 五捨五超入
+    d = roundHalfDown(d * criticalMult);       // ×急所補正 → 五捨五超入
     d = Math.floor(d * r / 100);               // ×乱数 → 切り捨て
     d = roundHalfDown(d * stab);               // ×タイプ一致補正 → 五捨五超入
     d = Math.floor(d * typeEff);               // ×相性補正 → 切り捨て
@@ -326,11 +335,29 @@ function createUnsupportedMoveResult(defenderHP: number, reason: string): Damage
   };
 }
 
+function combineDamageResults(hitResults: DamageResult[], defenderHpFallback: number): DamageResult {
+  const totalMin = hitResults.reduce((sum, r) => sum + r.damageMin, 0);
+  const totalMax = hitResults.reduce((sum, r) => sum + r.damageMax, 0);
+  const defenderHP = hitResults[0]?.defenderHP ?? defenderHpFallback;
+  return {
+    damageMin: totalMin,
+    damageMax: totalMax,
+    percentMin: (totalMin / defenderHP) * 100,
+    percentMax: (totalMax / defenderHP) * 100,
+    defenderHP,
+    remainingHPMin: Math.max(0, defenderHP - totalMax),
+    remainingHPMax: Math.max(0, defenderHP - totalMin),
+    isStatusMove: hitResults.every((r) => r.isStatusMove),
+    isImmune: hitResults.every((r) => r.isImmune),
+    koChance: totalMin >= defenderHP ? 100 : 0,
+  };
+}
+
 function calculateMoveDamageResult(
   move: Move,
   attackerStats: { hp: number; attack: number; defense: number; spAttack: number; spDefense: number; speed: number },
   defenderStats: { hp: number; attack: number; defense: number; spAttack: number; spDefense: number; speed: number },
-): DamageResult {
+): MoveDamageResult {
   const atkOverride = {
     attack: calcStatWithEV(attackerStats.attack, attackerAtkEV, attackerAtkNature),
     spAttack: calcStatWithEV(attackerStats.spAttack, attackerSpAtkEV, attackerSpAtkNature),
@@ -384,25 +411,19 @@ function calculateMoveDamageResult(
   }
 
   if (move.name !== "トリプルアクセル") {
-    return calculateDamage({ ...baseInput, movePower: resolvedPower });
+    const result = calculateDamage({ ...baseInput, movePower: resolvedPower });
+    return {
+      ...result,
+      criticalResult: calculateDamage({ ...baseInput, movePower: resolvedPower, isCritical: true }),
+    };
   }
 
   const hitPowers = [20, 40, 60].slice(0, Math.max(1, Math.min(3, tripleAxelHits)));
   const hitResults = hitPowers.map((power) => calculateDamage({ ...baseInput, movePower: power }));
-  const totalMin = hitResults.reduce((sum, r) => sum + r.damageMin, 0);
-  const totalMax = hitResults.reduce((sum, r) => sum + r.damageMax, 0);
-  const defenderHP = hitResults[0]?.defenderHP ?? defenderHpWithEV;
+  const criticalHitResults = hitPowers.map((power) => calculateDamage({ ...baseInput, movePower: power, isCritical: true }));
   return {
-    damageMin: totalMin,
-    damageMax: totalMax,
-    percentMin: (totalMin / defenderHP) * 100,
-    percentMax: (totalMax / defenderHP) * 100,
-    defenderHP,
-    remainingHPMin: Math.max(0, defenderHP - totalMax),
-    remainingHPMax: Math.max(0, defenderHP - totalMin),
-    isStatusMove: hitResults.every((r) => r.isStatusMove),
-    isImmune: hitResults.every((r) => r.isImmune),
-    koChance: totalMin >= defenderHP ? 100 : 0,
+    ...combineDamageResults(hitResults, defenderHpWithEV),
+    criticalResult: combineDamageResults(criticalHitResults, defenderHpWithEV),
   };
 }
 
@@ -6076,6 +6097,42 @@ function renderDamageSlotName(nameEl: HTMLElement, pokemon: Pokemon | null): voi
   nameEl.innerHTML = `<span class="damage-slot-name-main">${escapeHtml(pokemon.name)}</span><span class="damage-slot-base-stats">${statsText}</span>`;
 }
 
+function formatDamageResultText(result: DamageResult): string {
+  return result.damageMin === result.damageMax
+    ? `${result.damageMin}（${result.percentMin.toFixed(1)}%）`
+    : `${result.damageMin}〜${result.damageMax}（${result.percentMin.toFixed(1)}〜${result.percentMax.toFixed(1)}%）`;
+}
+
+function formatKoBadgeHtml(result: DamageResult): string {
+  const koCount = Math.round(result.koChance / 100 * 16);
+  const koStr =
+    result.koChance === 100 ? "確定" :
+    result.koChance === 0   ? "" :
+    `乱${koCount}/16`;
+  const koBadgeClass = koCount === 16 ? "" : koCount >= 8 ? " damage-ko-badge--orange" : " damage-ko-badge--yellow";
+  return koStr ? `<span class="damage-ko-badge${koBadgeClass}">${koStr}</span>` : "";
+}
+
+function createDamageGauge(result: DamageResult, options: { critical?: boolean; label?: string } = {}): HTMLDivElement {
+  const gaugeWrap = document.createElement("div");
+  gaugeWrap.className = "damage-move-result-row" + (options.critical ? " damage-move-result-row--critical" : "");
+  const remainMinPct = (result.remainingHPMin / result.defenderHP) * 100;
+  const remainMaxPct = (result.remainingHPMax / result.defenderHP) * 100;
+  const colorFor = (pct: number) => (pct > 75 ? "is-red" : pct > 50 ? "is-yellow" : "is-green");
+  const colorMin = colorFor(result.percentMin);
+  const colorMax = colorFor(result.percentMax);
+  const ariaLabel = options.critical ? "急所時の攻撃後の残りHP目安" : "攻撃後の残りHP目安";
+  const label = options.label ?? (options.critical ? "急所" : "通常");
+  gaugeWrap.innerHTML = `
+    <span class="damage-move-result-text"><span class="damage-move-result-label">${label}</span><span class="damage-move-damage-text">${formatDamageResultText(result)}</span>${formatKoBadgeHtml(result)}</span>
+    <div class="damage-move-gauge${options.critical ? " damage-move-gauge--critical" : ""}" role="presentation" aria-label="${ariaLabel}">
+      <div class="damage-move-gauge-fill damage-move-gauge-fill-min ${colorMin}" style="width: ${Math.min(100, remainMaxPct)}%"></div>
+      <div class="damage-move-gauge-fill damage-move-gauge-fill-max ${colorMax}" style="width: ${Math.min(100, remainMinPct)}%"></div>
+    </div>
+  `;
+  return gaugeWrap;
+}
+
 function renderTab1MovesSlots(): void {
   const slotsEl = document.getElementById("damage-moves-slots");
   if (!slotsEl || !attackPokemon) return;
@@ -6111,10 +6168,10 @@ function renderTab1MovesSlots(): void {
         : resolvedPowerForDisplay != null
           ? String(resolvedPowerForDisplay)
           : "—";
-      header.innerHTML = `<span class="damage-move-slot-name">${escapeHtml(move.name)}</span> <span class="damage-move-slot-meta"><img class="type-img" src="img/type/${escapeHtml(move.type)}.png" alt="${escapeHtml(move.type)}" />・${escapeHtml(move.category)}・威力${powerStr}</span>`;
+      header.innerHTML = `<img class="type-img type-img-sv damage-move-slot-type-img" src="${typeSvSrc(move.type)}" alt="${escapeHtml(move.type)}" /><span class="damage-move-slot-name">${escapeHtml(move.name)}</span><span class="damage-move-slot-meta">${escapeHtml(move.category)}</span><span class="damage-move-slot-meta">威力${powerStr}</span>`;
       btn.appendChild(header);
 
-      let damageResult: DamageResult | null = null;
+      let damageResult: MoveDamageResult | null = null;
       if (defendPokemon && defenderStats) {
         damageResult = calculateMoveDamageResult(move, attackerStats, defenderStats);
       }
@@ -6129,34 +6186,11 @@ function renderTab1MovesSlots(): void {
         } else if (damageResult.isImmune) {
           body.innerHTML = '<span class="damage-move-damage-text">効果がない</span>';
         } else {
-          const dmgStr =
-            damageResult.damageMin === damageResult.damageMax
-              ? `${damageResult.damageMin}（${damageResult.percentMin.toFixed(1)}%）`
-              : `${damageResult.damageMin}〜${damageResult.damageMax}（${damageResult.percentMin.toFixed(1)}〜${damageResult.percentMax.toFixed(1)}%）`;
-          const koCount = Math.round(damageResult.koChance / 100 * 16);
-          const koStr =
-            damageResult.koChance === 100 ? "確定" :
-            damageResult.koChance === 0   ? "" :
-            `乱${koCount}/16`;
-          const koBadgeClass = koCount === 16 ? "" : koCount >= 8 ? " damage-ko-badge--orange" : " damage-ko-badge--yellow";
-          const koBadge = koStr ? `<span class="damage-ko-badge${koBadgeClass}">${koStr}</span>` : "";
-          body.innerHTML = `<span class="damage-move-damage-text">${dmgStr}</span>${koBadge}`;
-
-          const gaugeWrap = document.createElement("div");
-          gaugeWrap.className = "damage-move-gauge-wrap";
-          const remainMinPct = (damageResult.remainingHPMin / damageResult.defenderHP) * 100;
-          const remainMaxPct = (damageResult.remainingHPMax / damageResult.defenderHP) * 100;
-          const colorFor = (pct: number) => (pct > 75 ? "is-red" : pct > 50 ? "is-yellow" : "is-green");
-          const colorMin = colorFor(damageResult.percentMin);
-          const colorMax = colorFor(damageResult.percentMax);
-          gaugeWrap.innerHTML = `
-            <div class="damage-move-gauge" role="presentation" aria-label="攻撃後の残りHP目安">
-              <div class="damage-move-gauge-fill damage-move-gauge-fill-min ${colorMin}" style="width: ${Math.min(100, remainMaxPct)}%"></div>
-              <div class="damage-move-gauge-fill damage-move-gauge-fill-max ${colorMax}" style="width: ${Math.min(100, remainMinPct)}%"></div>
-            </div>
-            <span class="damage-move-gauge-label">残りHP目安: ${damageResult.remainingHPMin}〜${damageResult.remainingHPMax} / ${damageResult.defenderHP}</span>
-          `;
-          body.appendChild(gaugeWrap);
+          body.innerHTML = "";
+          body.appendChild(createDamageGauge(damageResult, { label: "通常" }));
+          if (damageResult.criticalResult && !damageResult.criticalResult.isStatusMove && !damageResult.criticalResult.isImmune) {
+            body.appendChild(createDamageGauge(damageResult.criticalResult, { critical: true, label: "急所" }));
+          }
         }
       } else {
         body.innerHTML = '<span class="damage-move-damage-text">防御側を選択するとダメージを表示</span>';
