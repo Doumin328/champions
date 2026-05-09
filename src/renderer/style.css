@@ -4517,3 +4517,718 @@ body {
 .ssd-btn--save:hover {
   background: linear-gradient(180deg, #4a80e4 0%, #3666c0 100%);
 }
+
+/* ========== Right pane esports HUD theme ========== */
+:root {
+  --hud-bg: #090d15;
+  --hud-bg-2: #0f1624;
+  --hud-panel: rgba(16, 24, 38, 0.86);
+  --hud-panel-strong: rgba(22, 33, 52, 0.94);
+  --hud-panel-soft: rgba(255, 255, 255, 0.045);
+  --hud-line: rgba(143, 190, 255, 0.18);
+  --hud-line-strong: rgba(86, 212, 255, 0.62);
+  --hud-accent: #50d8ff;
+  --hud-accent-2: #ffcc3d;
+  --hud-success: #66e39a;
+  --hud-danger: #ff5f6d;
+  --hud-warn: #ffd75d;
+  --hud-critical: #c58cff;
+  --hud-text: #f1f7ff;
+  --hud-muted: rgba(219, 232, 247, 0.66);
+  --hud-faint: rgba(219, 232, 247, 0.42);
+  --hud-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+  --hud-glow-blue: 0 0 0 1px rgba(80, 216, 255, 0.22), 0 0 22px rgba(80, 216, 255, 0.18);
+  --hud-glow-gold: 0 0 0 1px rgba(255, 204, 61, 0.34), 0 0 22px rgba(255, 204, 61, 0.24);
+  --hud-radius: 8px;
+}
+
+.tabs-section {
+  color: var(--hud-text);
+  background:
+    linear-gradient(180deg, rgba(80, 216, 255, 0.08), transparent 9rem),
+    linear-gradient(135deg, var(--hud-bg) 0%, var(--hud-bg-2) 100%);
+  border-left: 1px solid var(--hud-line);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+.tab-buttons {
+  gap: 0.35rem;
+  padding: 0.6rem;
+  background: rgba(4, 8, 15, 0.72);
+  border-bottom: 1px solid var(--hud-line);
+  box-shadow: inset 0 -1px 0 rgba(80, 216, 255, 0.08);
+}
+
+.tab-btn {
+  top: auto;
+  padding: 0.62rem 0.5rem;
+  color: var(--hud-muted);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--hud-radius);
+  box-shadow: none;
+  text-shadow: none;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.tab-btn::after {
+  content: "";
+  position: absolute;
+  left: 0.55rem;
+  right: 0.55rem;
+  bottom: 0.3rem;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tab-btn:hover:not(.is-active),
+.tab-btn:active:not(.is-active) {
+  color: var(--hud-text);
+  background: rgba(80, 216, 255, 0.08);
+  border-bottom-width: 1px;
+  border-color: rgba(80, 216, 255, 0.28);
+  box-shadow: var(--hud-glow-blue);
+  transform: translateY(-1px);
+}
+
+.tab-btn.is-active {
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(80, 216, 255, 0.2), rgba(80, 216, 255, 0.06));
+  border: 1px solid rgba(80, 216, 255, 0.46);
+  border-bottom: 1px solid rgba(80, 216, 255, 0.46);
+  box-shadow: var(--hud-glow-blue), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  text-shadow: 0 0 14px rgba(80, 216, 255, 0.5);
+  transform: none;
+}
+
+.tab-btn.is-active::after {
+  background: var(--hud-accent);
+  box-shadow: 0 0 14px rgba(80, 216, 255, 0.85);
+}
+
+.tab-panels {
+  padding: 0.8rem;
+}
+
+.tab-panel {
+  scrollbar-color: rgba(80, 216, 255, 0.36) rgba(255, 255, 255, 0.04);
+}
+
+.damage-panel,
+.tab-team .team-panel,
+.box-panel {
+  gap: 0.7rem;
+}
+
+.damage-slot-defender,
+.damage-slot-attacker,
+.damage-moves-section,
+.damage-weather-section,
+.tab-team .team-list-section {
+  background:
+    linear-gradient(135deg, rgba(80, 216, 255, 0.075), transparent 34%),
+    var(--hud-panel);
+  border: 1px solid var(--hud-line);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.damage-slot-defender {
+  border-color: rgba(255, 95, 109, 0.24);
+}
+
+.damage-slot-attacker {
+  border-color: rgba(102, 227, 154, 0.24);
+}
+
+.damage-slot-label,
+.damage-moves-label,
+.tab-team .team-list-header,
+.pokemon-modal-title,
+.box-detail-header {
+  color: var(--hud-text);
+  background: linear-gradient(90deg, rgba(80, 216, 255, 0.14), rgba(255, 255, 255, 0.025));
+  border-bottom: 1px solid var(--hud-line);
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
+.damage-slot-label {
+  position: relative;
+}
+
+.damage-slot-label::before,
+.damage-moves-label::before,
+.tab-team .team-list-heading::before,
+.box-title::before {
+  content: "";
+  display: inline-block;
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  background: var(--hud-accent);
+  box-shadow: 0 0 12px rgba(80, 216, 255, 0.8);
+  vertical-align: 0.08em;
+}
+
+.damage-slot-defender .damage-slot-label::before {
+  background: var(--hud-danger);
+  box-shadow: 0 0 12px rgba(255, 95, 109, 0.75);
+}
+
+.damage-slot-attacker .damage-slot-label::before {
+  background: var(--hud-success);
+  box-shadow: 0 0 12px rgba(102, 227, 154, 0.75);
+}
+
+.damage-roster-bar,
+.damage-slot-body,
+.damage-move-slot-body,
+.pokemon-picker-team-wrap,
+.picker-source-sort-row,
+.pokemon-picker-type-wrap,
+.box-detail-section,
+.box-view-section,
+.box-ability-nature-row,
+.box-stats-moves-row {
+  border-color: rgba(143, 190, 255, 0.12);
+}
+
+.damage-roster-bar,
+.damage-move-slot-body {
+  background: rgba(5, 9, 16, 0.34);
+}
+
+.damage-roster-label,
+.damage-moves-note,
+.damage-moves-slots-label,
+.damage-moves-list-label,
+.box-sort-label,
+.box-detail-label,
+.pokemon-picker-type-label,
+.pokemon-picker-team-label,
+.stream-section-title {
+  color: var(--hud-muted);
+}
+
+.damage-roster-slot,
+.pokemon-picker-team-slot,
+.damage-condition-option,
+.damage-move-type-btn,
+.damage-move-category-btn,
+.box-type-btn,
+.picker-source-btn,
+.pokemon-picker-btn,
+.damage-item-display,
+.damage-item-picker-btn,
+.box-item-card,
+.box-nature-cell {
+  color: var(--hud-text);
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(143, 190, 255, 0.16);
+  border-radius: var(--hud-radius);
+}
+
+.damage-roster-slot:hover:not(:disabled),
+.pokemon-picker-team-slot:hover,
+.damage-condition-option:hover,
+.damage-move-type-btn:hover,
+.damage-move-category-btn:hover,
+.box-type-btn:hover,
+.picker-source-btn:hover:not(.is-active),
+.pokemon-picker-btn:hover,
+.damage-item-display:hover,
+.damage-item-picker-btn:hover,
+.box-item-card:hover,
+.box-nature-cell:hover {
+  background: rgba(80, 216, 255, 0.1);
+  border-color: rgba(80, 216, 255, 0.38);
+  box-shadow: var(--hud-glow-blue);
+}
+
+.damage-roster-slot.is-selected,
+.damage-condition-option.is-active,
+.picker-source-btn.is-active,
+.pokemon-picker-team-slot.is-active-slot,
+.box-item-card.is-selected {
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(80, 216, 255, 0.22), rgba(80, 216, 255, 0.08));
+  border-color: var(--hud-line-strong);
+  box-shadow: var(--hud-glow-blue);
+}
+
+.damage-slot-img-wrap,
+.team-slot-img-wrap,
+.tab-team .team-slot-img-wrap,
+.box-detail-pokemon-img,
+.pokemon-picker-btn-img,
+.pokemon-picker-team-slot-img {
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+}
+
+.damage-slot-img {
+  border-radius: var(--hud-radius);
+  background:
+    radial-gradient(circle at 50% 34%, rgba(80, 216, 255, 0.14), transparent 54%),
+    rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(143, 190, 255, 0.12);
+}
+
+.damage-slot-name-main,
+.team-detail-slot-name,
+.tab-team .team-card-name,
+.box-title,
+.box-card-name {
+  color: var(--hud-text);
+}
+
+.damage-slot-base-stats,
+.damage-item-effect,
+.damage-slot-types,
+.team-detail-slot-ability,
+.box-card-nature,
+.box-item-card-effect,
+.box-view-item-effect,
+.box-view-move-meta,
+.pokemon-modal-note,
+.box-empty-msg {
+  color: var(--hud-muted);
+}
+
+.damage-item-display,
+.damage-item-picker,
+.box-item-picker,
+.box-moves-list-wrap {
+  background: rgba(6, 10, 18, 0.62);
+  border-color: rgba(143, 190, 255, 0.15);
+}
+
+.damage-item-picker-search,
+.move-search-input,
+.box-item-search,
+.box-detail-ability-select,
+.box-detail-nature-select,
+.box-sort-select,
+.picker-sort-select,
+.damage-team-select,
+.ability-select,
+.ability-type-trigger,
+.damage-slot-stat-row select,
+.damage-ev-input {
+  color: var(--hud-text);
+  background: rgba(5, 10, 18, 0.86);
+  border: 1px solid rgba(143, 190, 255, 0.22);
+  border-radius: 6px;
+  outline: none;
+}
+
+.damage-team-select option,
+.ability-select option,
+.damage-slot-stat-row select option,
+.box-detail-nature-select option,
+.box-sort-select option,
+.picker-sort-select option {
+  color: #f1f7ff;
+  background: #111827;
+}
+
+.damage-item-picker-search:focus,
+.move-search-input:focus,
+.box-item-search:focus,
+.box-detail-ability-select:focus,
+.box-detail-nature-select:focus,
+.box-sort-select:focus,
+.picker-sort-select:focus,
+.damage-team-select:focus,
+.ability-select:focus,
+.ability-type-trigger:focus,
+.damage-slot-stat-row select:focus,
+.damage-ev-input:focus {
+  border-color: var(--hud-line-strong);
+  box-shadow: var(--hud-glow-blue);
+}
+
+.ability-text {
+  color: var(--hud-text);
+  background: rgba(5, 10, 18, 0.72);
+  border-color: rgba(143, 190, 255, 0.2);
+}
+
+.ability-toggle-btn.is-on {
+  color: #06120d;
+  background: var(--hud-success);
+  border-color: rgba(102, 227, 154, 0.9);
+  box-shadow: 0 0 14px rgba(102, 227, 154, 0.3);
+}
+
+.ability-toggle-btn.is-off {
+  color: var(--hud-faint);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(143, 190, 255, 0.14);
+}
+
+.damage-ev-btn,
+.damage-ev-step-btn,
+.rank-btn,
+.damage-slot-select-btn,
+.damage-swap-btn,
+.tab-team .team-create-btn,
+.tab-team .team-edit-btn,
+.tab-team .team-reset-storage-btn,
+.box-create-btn,
+.box-detail-add-btn,
+.box-detail-item-select-btn,
+.box-detail-item-clear-btn,
+.pokemon-modal-btn,
+.box-nature-btn {
+  border-radius: 6px;
+  border: 1px solid rgba(143, 190, 255, 0.2);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.damage-slot-select-btn,
+.tab-team .team-create-btn,
+.box-create-btn,
+.pokemon-modal-confirm {
+  color: #06120d;
+  background: linear-gradient(180deg, #7af0aa, var(--hud-success));
+  border-color: rgba(102, 227, 154, 0.72);
+}
+
+.damage-slot-select-btn:hover,
+.tab-team .team-create-btn:hover,
+.box-create-btn:hover,
+.pokemon-modal-confirm:hover {
+  background: linear-gradient(180deg, #93ffc0, #6ee6a1);
+  box-shadow: 0 0 18px rgba(102, 227, 154, 0.24);
+}
+
+.damage-swap-btn,
+.tab-team .team-edit-btn,
+.box-detail-add-btn,
+.box-detail-item-select-btn,
+.box-nature-btn {
+  color: var(--hud-text);
+  background: linear-gradient(180deg, rgba(80, 216, 255, 0.18), rgba(80, 216, 255, 0.06));
+}
+
+.damage-swap-btn:hover,
+.tab-team .team-edit-btn:hover,
+.box-detail-add-btn:hover,
+.box-detail-item-select-btn:hover,
+.box-nature-btn:hover {
+  background: rgba(80, 216, 255, 0.18);
+  border-color: rgba(80, 216, 255, 0.42);
+  box-shadow: var(--hud-glow-blue);
+}
+
+.pokemon-modal-cancel,
+.tab-team .team-reset-storage-btn {
+  color: var(--hud-muted);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.pokemon-modal-delete,
+.confirm-delete-btn,
+.box-detail-item-clear-btn,
+.tab-team .team-delete-badge {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 95, 109, 0.92), rgba(178, 45, 62, 0.94));
+  border-color: rgba(255, 130, 140, 0.52);
+}
+
+.damage-status-btn.is-active {
+  background: linear-gradient(180deg, rgba(255, 117, 66, 0.95), rgba(204, 64, 31, 0.95));
+  border-color: rgba(255, 170, 104, 0.8);
+  box-shadow: 0 0 18px rgba(255, 117, 66, 0.34);
+}
+
+.damage-ev-btn-0,
+.damage-ev-btn-252,
+.damage-ev-step-down,
+.damage-ev-step-up {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.damage-ev-btn:hover:not(:disabled),
+.damage-ev-step-btn:hover:not(:disabled),
+.rank-btn:hover:not(:disabled) {
+  background: rgba(80, 216, 255, 0.12);
+  border-color: rgba(80, 216, 255, 0.4);
+}
+
+.damage-stats-real-value,
+.rank-value,
+.box-stat-real,
+.box-card-stat-real,
+.box-view-value {
+  color: var(--hud-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.damage-move-slot,
+.tab-team .team-card,
+.team-detail-slot,
+.box-pokemon-card.team-detail-slot,
+.pokemon-modal-content {
+  background:
+    linear-gradient(135deg, rgba(80, 216, 255, 0.07), transparent 42%),
+    var(--hud-panel);
+  border: 1px solid var(--hud-line);
+  border-radius: var(--hud-radius);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.damage-move-slot:hover,
+.tab-team .team-card:hover,
+.team-detail-slot:hover,
+.box-pokemon-card:hover {
+  background:
+    linear-gradient(135deg, rgba(80, 216, 255, 0.11), transparent 42%),
+    var(--hud-panel-strong);
+  border-color: rgba(80, 216, 255, 0.34);
+  box-shadow: var(--hud-glow-blue);
+}
+
+.damage-move-slot.is-editing,
+.damage-move-btn.is-selected,
+.damage-move-type-btn.is-active,
+.damage-move-category-btn.is-active,
+.box-type-btn.is-active,
+.pokemon-picker-type-buttons .picker-type-btn.is-active,
+.box-nature-cell.is-selected {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 204, 61, 0.24), rgba(255, 204, 61, 0.08));
+  border-color: rgba(255, 204, 61, 0.82);
+  box-shadow: var(--hud-glow-gold);
+}
+
+.damage-move-slot.is-editing .damage-move-slot-btn,
+.damage-move-btn.is-selected {
+  background: linear-gradient(180deg, rgba(255, 204, 61, 0.2), rgba(255, 204, 61, 0.06));
+}
+
+.damage-move-slot-btn,
+.damage-move-btn {
+  background: transparent;
+  color: var(--hud-text);
+}
+
+.damage-move-slot-btn:hover,
+.damage-move-btn:hover {
+  background: rgba(80, 216, 255, 0.08);
+}
+
+.damage-move-slot-header {
+  border-bottom: 1px solid rgba(143, 190, 255, 0.1);
+}
+
+.damage-move-result-row--critical {
+  color: #f3e7ff;
+}
+
+.damage-move-gauge {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+}
+
+.damage-move-gauge-fill-min,
+.damage-move-gauge-fill-max {
+  box-shadow: 0 0 10px currentColor;
+}
+
+.damage-move-gauge-fill-min.is-green,
+.damage-move-gauge-fill-max.is-green {
+  background: linear-gradient(90deg, #53e58e, #14b86f);
+}
+
+.damage-move-gauge-fill-min.is-yellow,
+.damage-move-gauge-fill-max.is-yellow {
+  background: linear-gradient(90deg, #ffe166, #ffb935);
+}
+
+.damage-move-gauge-fill-min.is-red,
+.damage-move-gauge-fill-max.is-red {
+  background: linear-gradient(90deg, #ff8a94, #ff3d58);
+}
+
+.damage-move-gauge--critical .damage-move-gauge-fill-min,
+.damage-move-gauge--critical .damage-move-gauge-fill-max {
+  box-shadow: 0 0 12px rgba(197, 140, 255, 0.6);
+}
+
+.damage-ko-badge {
+  background: var(--hud-danger);
+  box-shadow: 0 0 12px rgba(255, 95, 109, 0.35);
+}
+
+.damage-ko-badge--orange {
+  background: #ff9b45;
+}
+
+.damage-ko-badge--yellow {
+  color: #17140a;
+  background: var(--hud-warn);
+}
+
+.tab-team .team-list {
+  gap: 0.75rem;
+  padding: 0.7rem;
+}
+
+.tab-team .team-card {
+  padding: 0.8rem;
+}
+
+.tab-team .team-card.drag-over,
+.team-detail-slot.drag-over {
+  background: rgba(80, 216, 255, 0.14);
+  border-color: rgba(80, 216, 255, 0.82);
+  box-shadow: var(--hud-glow-blue);
+}
+
+.tab-team .team-card.is-dragging,
+.team-detail-slot.is-dragging {
+  opacity: 0.5;
+  filter: saturate(0.72);
+}
+
+.tab-team .team-slot-img,
+.team-detail-slot-img,
+.box-card-img,
+.box-detail-pokemon-img {
+  border-radius: var(--hud-radius);
+}
+
+.tab-team .team-list-item-icon,
+.team-slot-item-icon,
+.box-card-item-badge {
+  background: rgba(5, 9, 16, 0.82);
+  border: 1px solid rgba(143, 190, 255, 0.25);
+  border-radius: 999px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.38);
+}
+
+.team-detail-slot.is-empty,
+.pokemon-picker-team-slot.pokemon-picker-team-slot--empty {
+  background: rgba(255, 255, 255, 0.025);
+  border-style: dashed;
+  border-color: rgba(143, 190, 255, 0.16);
+}
+
+.team-slot-move,
+.box-view-move {
+  color: var(--hud-text);
+}
+
+.team-detail-ev-table th,
+.box-stat-hd,
+.box-card-stat-hd {
+  color: var(--hud-faint);
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(143, 190, 255, 0.12);
+}
+
+.team-detail-ev-table td,
+.box-card-stat-val,
+.box-stat-base {
+  color: var(--hud-muted);
+}
+
+.team-detail-ev-table th.nat-up,
+.box-stat-label.box-stat-nature-up,
+.box-stat-real.box-stat-nature-up {
+  color: #ff9cab;
+}
+
+.team-detail-ev-table th.nat-down,
+.box-stat-label.box-stat-nature-down,
+.box-stat-real.box-stat-nature-down {
+  color: #82c7ff;
+}
+
+.box-panel {
+  background: transparent;
+}
+
+.box-header,
+.box-type-filter-wrap {
+  padding: 0.55rem 0.65rem;
+  background: rgba(6, 10, 18, 0.5);
+  border: 1px solid rgba(143, 190, 255, 0.12);
+  border-radius: var(--hud-radius);
+}
+
+.box-pokemon-grid {
+  gap: 0.7rem;
+  padding: 0.05rem 0.2rem 0.15rem 0;
+}
+
+.box-pokemon-card.team-detail-slot {
+  min-height: 228px;
+}
+
+.box-card-stat-ev-nz {
+  color: var(--hud-accent);
+  text-shadow: 0 0 8px rgba(80, 216, 255, 0.4);
+}
+
+.pokemon-modal-backdrop {
+  background: rgba(3, 6, 12, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.pokemon-modal-content {
+  background:
+    linear-gradient(135deg, rgba(80, 216, 255, 0.08), transparent 28%),
+    #101827;
+  border-color: rgba(80, 216, 255, 0.24);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.65), 0 0 38px rgba(80, 216, 255, 0.12);
+}
+
+.pokemon-picker-list {
+  background: rgba(5, 9, 16, 0.26);
+}
+
+.pokemon-picker-btn {
+  min-height: 112px;
+}
+
+.pokemon-modal-actions {
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(143, 190, 255, 0.1);
+}
+
+.box-detail-content {
+  background:
+    linear-gradient(135deg, rgba(80, 216, 255, 0.08), transparent 32%),
+    #101827;
+}
+
+.box-detail-header-info {
+  min-width: 0;
+}
+
+.box-view-ev-chip {
+  background: rgba(80, 216, 255, 0.08);
+  border-color: rgba(80, 216, 255, 0.22);
+  color: var(--hud-text);
+}
+
+.box-item-list,
+.damage-item-picker-grid,
+.damage-moves-list-scroll,
+.box-moves-list-scroll,
+.pokemon-picker-list,
+.tab-team .team-list,
+.box-pokemon-grid,
+.team-detail-grid {
+  scrollbar-color: rgba(80, 216, 255, 0.45) rgba(255, 255, 255, 0.04);
+}
