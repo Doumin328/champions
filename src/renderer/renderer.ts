@@ -2474,6 +2474,8 @@ let deleteTargetTeamIndex: number = -1;
 
 /** ドラッグ中のチームインデックス */
 let dragSourceTeamIndex: number = -1;
+let dragSourceTeamSlotIndex: number = -1;
+let suppressTeamDetailSlotClickAfterDrag = false;
 
 /** タブ1: 攻撃側ポケモン */
 let attackPokemon: Pokemon | null = null;
@@ -4625,6 +4627,33 @@ function updateTeamEditButtonLabel(): void {
   if (teamEditBtn) teamEditBtn.textContent = isEditMode ? "完了" : "編集";
 }
 
+function reorderTeamDetailSlots(teamIndex: number, sourceSlotIndex: number, targetSlotIndex: number): void {
+  const team = teams[teamIndex];
+  if (!team) return;
+  if (sourceSlotIndex === targetSlotIndex) return;
+  if (sourceSlotIndex < 0 || sourceSlotIndex >= MAX_TEAM_SIZE) return;
+  if (targetSlotIndex < 0 || targetSlotIndex >= MAX_TEAM_SIZE) return;
+  if (!team[sourceSlotIndex]?.pokemon || !team[targetSlotIndex]?.pokemon) return;
+
+  const slots: Array<TeamMember | null> = Array.from(
+    { length: MAX_TEAM_SIZE },
+    (_, index) => team[index] ?? null,
+  );
+  const [moved] = slots.splice(sourceSlotIndex, 1);
+  slots.splice(targetSlotIndex, 0, moved);
+
+  for (let i = 0; i < MAX_TEAM_SIZE; i++) {
+    const member = slots[i] ?? null;
+    if (member) team[i] = member;
+    else delete team[i];
+  }
+
+  saveTeamToStorage();
+  renderTeamList();
+  renderTeamDetailModal(teamIndex);
+  renderDamageRosterSlots();
+}
+
 function renderTeamDetailModal(teamIndex: number): void {
   const grid = document.getElementById("team-detail-grid");
   const title = document.getElementById("team-detail-title");
@@ -4673,6 +4702,41 @@ function renderTeamDetailModal(teamIndex: number): void {
     const member = team[i];
     const btn = createPokemonDetailCard(member ?? null, moveMap, { asButton: true }) as HTMLButtonElement;
     btn.dataset.slotIndex = String(i);
+    if (member?.pokemon) {
+      btn.draggable = true;
+      btn.addEventListener("dragstart", (e) => {
+        dragSourceTeamSlotIndex = i;
+        btn.classList.add("is-dragging");
+        e.dataTransfer?.setData("text/plain", String(i));
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+      });
+      btn.addEventListener("dragend", () => {
+        dragSourceTeamSlotIndex = -1;
+        btn.classList.remove("is-dragging");
+        document.querySelectorAll(".team-detail-slot").forEach((slot) => slot.classList.remove("drag-over"));
+        suppressTeamDetailSlotClickAfterDrag = true;
+        window.setTimeout(() => {
+          suppressTeamDetailSlotClickAfterDrag = false;
+        }, 100);
+      });
+      btn.addEventListener("dragover", (e) => {
+        if (dragSourceTeamSlotIndex < 0 || dragSourceTeamSlotIndex === i) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        btn.classList.add("drag-over");
+      });
+      btn.addEventListener("dragleave", () => {
+        btn.classList.remove("drag-over");
+      });
+      btn.addEventListener("drop", (e) => {
+        e.preventDefault();
+        btn.classList.remove("drag-over");
+        if (selectedTeamIndex === null) return;
+        const sourceSlotIndex = dragSourceTeamSlotIndex;
+        suppressTeamDetailSlotClickAfterDrag = true;
+        reorderTeamDetailSlots(selectedTeamIndex, sourceSlotIndex, i);
+      });
+    }
     grid.appendChild(btn);
   }
 }
@@ -4692,6 +4756,8 @@ function closeTeamDetailModal(): void {
   selectedTeamIndex = null;
   selectedTeamSlotIndex = null;
   teamDetailPendingSlotIndex = null;
+  dragSourceTeamSlotIndex = -1;
+  suppressTeamDetailSlotClickAfterDrag = false;
 }
 
 function beginTeamDraftAtSlot(teamIndex: number, slotIndex: number, member: TeamMember): void {
@@ -6716,6 +6782,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("team-detail-close")?.addEventListener("click", () => closeTeamDetailModal());
   document.getElementById("team-detail-modal")?.querySelector(".pokemon-modal-backdrop")?.addEventListener("click", () => closeTeamDetailModal());
   document.getElementById("team-detail-grid")?.addEventListener("click", (e) => {
+    if (suppressTeamDetailSlotClickAfterDrag) {
+      suppressTeamDetailSlotClickAfterDrag = false;
+      return;
+    }
     const slot = (e.target as HTMLElement).closest(".team-detail-slot");
     if (!slot || selectedTeamIndex === null) return;
     const slotIndex = parseInt((slot as HTMLElement).dataset.slotIndex ?? "", 10);

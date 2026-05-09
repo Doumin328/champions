@@ -1484,11 +1484,15 @@ body {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.15);
   min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .damage-move-slot.is-editing {
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+  border-color: #fffb12;
+  box-shadow:
+    0 0 0 2px rgba(255, 251, 18, 0.72),
+    0 0 16px rgba(255, 220, 40, 0.38);
+  transform: translateY(-1px);
 }
 
 .damage-move-slot-btn {
@@ -1508,7 +1512,7 @@ body {
 }
 
 .damage-move-slot.is-editing .damage-move-slot-btn {
-  background: rgba(71, 85, 105, 0.55);
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.22), rgba(255, 185, 36, 0.2));
 }
 
 .damage-move-slot-header {
@@ -1657,6 +1661,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .damage-move-type-btn:hover {
@@ -1664,8 +1669,18 @@ body {
 }
 
 .damage-move-type-btn.is-active {
-  background: rgba(71, 99, 130, 0.5);
-  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.32), rgba(255, 185, 36, 0.28));
+  border-color: #fffb12;
+  box-shadow:
+    0 0 0 2px rgba(255, 251, 18, 0.72),
+    0 0 16px rgba(255, 220, 40, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.damage-move-type-btn.is-active img {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)) saturate(1.12);
 }
 
 .damage-moves-list-category-buttons {
@@ -1683,6 +1698,7 @@ body {
   background: rgba(255, 255, 255, 0.1);
   color: #eee;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .damage-move-category-btn:hover {
@@ -1690,18 +1706,24 @@ body {
 }
 
 .damage-move-category-btn.is-active {
-  background: rgba(71, 99, 130, 0.5);
-  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.32), rgba(255, 185, 36, 0.28));
+  border-color: #fffb12;
+  box-shadow:
+    0 0 0 2px rgba(255, 251, 18, 0.72),
+    0 0 16px rgba(255, 220, 40, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
 }
 
 .damage-move-category-btn--physical.is-active {
-  background: rgba(180, 60, 60, 0.5);
-  border-color: rgba(255, 180, 180, 0.5);
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.32), rgba(255, 185, 36, 0.28));
+  border-color: #fffb12;
 }
 
 .damage-move-category-btn--special.is-active {
-  background: rgba(60, 80, 160, 0.5);
-  border-color: rgba(180, 200, 255, 0.5);
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.32), rgba(255, 185, 36, 0.28));
+  border-color: #fffb12;
 }
 
 .damage-moves-list-scroll {
@@ -1728,6 +1750,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .damage-move-btn:hover {
@@ -2052,6 +2075,25 @@ body {
 .team-detail-slot:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.22);
+}
+
+.team-detail-slot[draggable="true"] {
+  cursor: grab;
+}
+
+.team-detail-slot[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.team-detail-slot.is-dragging {
+  opacity: 0.55;
+  transform: scale(0.98);
+}
+
+.team-detail-slot.drag-over {
+  background: rgba(84, 171, 255, 0.14);
+  border-color: rgba(84, 171, 255, 0.72);
+  box-shadow: 0 0 0 2px rgba(84, 171, 255, 0.22);
 }
 
 .team-detail-slot.is-empty {
@@ -2492,6 +2534,7 @@ body {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .pokemon-picker-type-buttons .picker-type-btn:hover {
@@ -2499,9 +2542,17 @@ body {
 }
 
 .pokemon-picker-type-buttons .picker-type-btn.is-active {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.32), rgba(255, 185, 36, 0.28));
   border-color: #fffb12;
+  box-shadow:
+    0 0 0 2px rgba(255, 251, 18, 0.72),
+    0 0 16px rgba(255, 220, 40, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.pokemon-picker-type-buttons .picker-type-btn.is-active img {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)) saturate(1.12);
 }
 
 .pokemon-modal-note-row {
@@ -3058,6 +3109,7 @@ body {
   justify-content: center;
   font-size: 0.72rem;
   color: #eee;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .box-type-btn:hover {
@@ -3065,13 +3117,23 @@ body {
 }
 
 .box-type-btn.is-active {
-  border-color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: #fffb12;
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.32), rgba(255, 185, 36, 0.28));
+  box-shadow:
+    0 0 0 2px rgba(255, 251, 18, 0.72),
+    0 0 16px rgba(255, 220, 40, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
 }
 
 .box-type-btn img {
   height: 26px;
   display: block;
+}
+
+.box-type-btn.is-active img {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)) saturate(1.12);
 }
 
 /* ========== BOX詳細モーダル ========== */
@@ -3621,8 +3683,18 @@ body {
 }
 
 .damage-move-btn.is-selected {
-  background: rgba(100, 180, 255, 0.15);
-  border-left-color: rgba(100, 180, 255, 0.6);
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 251, 18, 0.26), rgba(255, 185, 36, 0.22));
+  border-color: #fffb12;
+  box-shadow:
+    0 0 0 2px rgba(255, 251, 18, 0.55),
+    0 0 14px rgba(255, 220, 40, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.damage-move-btn.is-selected img {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)) saturate(1.12);
 }
 
 /* ========== 配信コントロールパネル ========== */
