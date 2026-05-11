@@ -81,6 +81,7 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
 
 const LEVEL = 50;
 const FREEZE_DRY_MOVE_NAME = "フリーズドライ";
+const SPECIAL_MOVES_TARGET_DEFENSE = new Set(["サイコショック", "サイコブレイク", "しんぴのつるぎ"]);
 
 function getTypeMultiplier(moveType: string, defenderType: string, moveName?: string): number {
   if (moveName === FREEZE_DRY_MOVE_NAME && moveType === "こおり" && defenderType === "みず") {
@@ -209,12 +210,13 @@ export function calculateDamage(input: DamageInput): DamageResult {
   const criticalMult = input.isCritical ? 1.5 : 1;
   const burnMult = input.isBurned && moveCategory === "物理" ? 0.5 : 1;
   const protectMult = input.protectMultiplier ?? 1;
+  const targetsDefense = moveName != null && SPECIAL_MOVES_TARGET_DEFENSE.has(moveName);
   const atkStat =
     moveCategory === "物理"
       ? calcStat(attackerBaseStats.attack, false)
       : calcStat(attackerBaseStats.spAttack, false);
   const defStat =
-    moveCategory === "物理"
+    moveCategory === "物理" || targetsDefense
       ? calcStat(defenderBaseStats.defense, false)
       : calcStat(defenderBaseStats.spDefense, false);
 

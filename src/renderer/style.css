@@ -989,6 +989,38 @@ body {
   color: #fff;
 }
 
+.mimikyu-disguise-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+}
+
+.mimikyu-disguise-toggle-btn {
+  min-width: 48px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mimikyu-disguise-toggle-btn:hover {
+  color: #fff;
+}
+
+.mimikyu-disguise-toggle-btn.is-active {
+  background: #555;
+  color: #fff;
+}
+
 /* ===== タイプ画像 ===== */
 .type-img {
   height: 20px;

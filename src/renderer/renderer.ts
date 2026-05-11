@@ -41,6 +41,7 @@ const WEATHER_BALL_TYPE_BY_WEATHER: Record<string, string> = {
   すなあらし: "いわ",
 };
 const TYPE_OVERRIDE_ABILITIES = new Set(["へんげんじざい", "リベロ"]);
+const SPECIAL_MOVES_TARGET_DEFENSE = new Set(["サイコショック", "サイコブレイク", "しんぴのつるぎ"]);
 
 function getTypeEff(moveType: string, defenderTypes: string[], moveName?: string): number {
   const row = TYPE_CHART[moveType];
@@ -86,6 +87,7 @@ interface DamageResult {
   koChance: number;
   isUnsupportedMove?: boolean;
   unsupportedReason?: string;
+  damageRolls?: number[];
 }
 
 interface MoveDamageResult extends DamageResult {
@@ -172,16 +174,18 @@ function calculateDamage(input: {
 
   // STAB（てきおうりょく で stabMult を上書き）
   const stab = attackerTypes.includes(effectiveMoveType) ? (atkAb?.stabMult ?? 1.5) : 1;
+  const targetsDefense = moveName != null && SPECIAL_MOVES_TARGET_DEFENSE.has(moveName);
+  const defenderStatCategory = targetsDefense ? "物理" : moveCategory;
 
   const atkBase = moveCategory === "物理"
     ? (attackerStatOverride?.attack ?? calcStat(attackerBaseStats.attack, false))
     : (attackerStatOverride?.spAttack ?? calcStat(attackerBaseStats.spAttack, false));
-  const defBase = moveCategory === "物理"
+  const defBase = defenderStatCategory === "物理"
     ? (defenderStatOverride?.defense ?? calcStat(defenderBaseStats.defense, false))
     : (defenderStatOverride?.spDefense ?? calcStat(defenderBaseStats.spDefense, false));
   const isCritical = input.isCritical === true;
   const rawAtkRank = moveCategory === "物理" ? (input.attackerAtkRank ?? 0) : (input.attackerSpAtkRank ?? 0);
-  const rawDefRank = moveCategory === "物理" ? (input.defenderDefRank ?? 0) : (input.defenderSpDefRank ?? 0);
+  const rawDefRank = defenderStatCategory === "物理" ? (input.defenderDefRank ?? 0) : (input.defenderSpDefRank ?? 0);
   const atkRank = isCritical && rawAtkRank < 0 ? 0 : rawAtkRank;
   const defRank = isCritical && rawDefRank > 0 ? 0 : rawDefRank;
 
@@ -189,7 +193,7 @@ function calculateDamage(input: {
   const atkItemMult = (attackerItem === "choice-band" && moveCategory === "物理") ? 1.5
     : (attackerItem === "choice-specs" && moveCategory === "特殊") ? 1.5 : 1;
   // 防御側持ち物：ステータス補正
-  const defItemMult = moveCategory === "物理"
+  const defItemMult = defenderStatCategory === "物理"
     ? (defenderItem === "eviolite" ? 1.5 : 1)
     : (defenderItem === "assault-vest" || defenderItem === "eviolite" ? 1.5 : 1);
 
@@ -197,8 +201,8 @@ function calculateDamage(input: {
   const atkAbStatCondMet = !atkAb?.weatherCondition || effectiveWeather === atkAb.weatherCondition;
   const atkAbMult = (atkAb?.atkStatMult != null && atkAbStatCondMet && (!atkAb.moveCategory || atkAb.moveCategory === moveCategory)) ? atkAb.atkStatMult : 1;
   // 防御側特性：ステータス倍率（ファーコート等）。かたやぶりで無効化
-  const defAbMult = !ignoreDefAb && defAb?.defStatMult != null && (!defAb.moveCategory || defAb.moveCategory === moveCategory) ? defAb.defStatMult : 1;
-  const snowDefenseMult = effectiveWeather === "ゆき" && moveCategory === "物理" && defenderTypes.includes("こおり") ? 1.5 : 1;
+  const defAbMult = !ignoreDefAb && defAb?.defStatMult != null && (!defAb.moveCategory || defAb.moveCategory === defenderStatCategory) ? defAb.defStatMult : 1;
+  const snowDefenseMult = effectiveWeather === "ゆき" && defenderStatCategory === "物理" && defenderTypes.includes("こおり") ? 1.5 : 1;
 
   const atkStat = Math.max(1, Math.floor(Math.floor(atkBase * rankMult(atkRank)) * atkItemMult * atkAbMult));
   const defStat = Math.max(1, Math.floor(Math.floor(defBase * rankMult(defRank)) * defItemMult * defAbMult * snowDefenseMult));
@@ -292,6 +296,7 @@ function calculateDamage(input: {
     defenderHP,
     remainingHPMin: Math.max(0, defenderHP - damageMax), remainingHPMax: Math.max(0, defenderHP - damageMin),
     isStatusMove: false, isImmune: false, koChance,
+    damageRolls: rolls,
   };
 }
 
@@ -339,6 +344,15 @@ function combineDamageResults(hitResults: DamageResult[], defenderHpFallback: nu
   const totalMin = hitResults.reduce((sum, r) => sum + r.damageMin, 0);
   const totalMax = hitResults.reduce((sum, r) => sum + r.damageMax, 0);
   const defenderHP = hitResults[0]?.defenderHP ?? defenderHpFallback;
+  const damageRolls = hitResults.every((r) => r.damageRolls && r.damageRolls.length > 0)
+    ? hitResults.reduce<number[]>(
+        (totals, result) => totals.flatMap((total) => result.damageRolls!.map((damage) => total + damage)),
+        [0],
+      )
+    : undefined;
+  const koChance = damageRolls
+    ? (damageRolls.filter((damage) => damage >= defenderHP).length / damageRolls.length) * 100
+    : totalMin >= defenderHP ? 100 : 0;
   return {
     damageMin: totalMin,
     damageMax: totalMax,
@@ -349,8 +363,40 @@ function combineDamageResults(hitResults: DamageResult[], defenderHpFallback: nu
     remainingHPMax: Math.max(0, defenderHP - totalMin),
     isStatusMove: hitResults.every((r) => r.isStatusMove),
     isImmune: hitResults.every((r) => r.isImmune),
-    koChance: totalMin >= defenderHP ? 100 : 0,
+    koChance,
+    damageRolls,
   };
+}
+
+function addFixedDamageToResult(result: DamageResult, fixedDamage: number): DamageResult {
+  if (fixedDamage <= 0 || result.isStatusMove || result.isImmune || result.isUnsupportedMove) {
+    return result;
+  }
+  const damageMin = result.damageMin + fixedDamage;
+  const damageMax = result.damageMax + fixedDamage;
+  const damageRolls = result.damageRolls?.map((damage) => damage + fixedDamage);
+  const koChance = damageRolls
+    ? (damageRolls.filter((damage) => damage >= result.defenderHP).length / damageRolls.length) * 100
+    : damageMin >= result.defenderHP ? 100 : damageMax < result.defenderHP ? 0 : result.koChance;
+  return {
+    ...result,
+    damageMin,
+    damageMax,
+    percentMin: (damageMin / result.defenderHP) * 100,
+    percentMax: (damageMax / result.defenderHP) * 100,
+    remainingHPMin: Math.max(0, result.defenderHP - damageMax),
+    remainingHPMax: Math.max(0, result.defenderHP - damageMin),
+    koChance,
+    damageRolls,
+  };
+}
+
+function addFixedDamageToMoveResult(result: MoveDamageResult, fixedDamage: number): MoveDamageResult {
+  const next = addFixedDamageToResult(result, fixedDamage) as MoveDamageResult;
+  if (result.criticalResult) {
+    next.criticalResult = addFixedDamageToResult(result.criticalResult, fixedDamage);
+  }
+  return next;
 }
 
 function calculateMoveDamageResult(
@@ -410,21 +456,23 @@ function calculateMoveDamageResult(
     );
   }
 
+  const disguiseDamage = shouldApplyMimikyuDisguiseDamage() ? Math.floor(defenderHpWithEV / 8) : 0;
+
   if (move.name !== "トリプルアクセル") {
     const result = calculateDamage({ ...baseInput, movePower: resolvedPower });
-    return {
+    return addFixedDamageToMoveResult({
       ...result,
       criticalResult: calculateDamage({ ...baseInput, movePower: resolvedPower, isCritical: true }),
-    };
+    }, disguiseDamage);
   }
 
   const hitPowers = [20, 40, 60].slice(0, Math.max(1, Math.min(3, tripleAxelHits)));
   const hitResults = hitPowers.map((power) => calculateDamage({ ...baseInput, movePower: power }));
   const criticalHitResults = hitPowers.map((power) => calculateDamage({ ...baseInput, movePower: power, isCritical: true }));
-  return {
+  return addFixedDamageToMoveResult({
     ...combineDamageResults(hitResults, defenderHpWithEV),
     criticalResult: combineDamageResults(criticalHitResults, defenderHpWithEV),
-  };
+  }, disguiseDamage);
 }
 
 function syncDamageConditionButtons(): void {
@@ -575,9 +623,14 @@ function getFreshPokemon(pokemon: Pokemon): Pokemon {
 
 const AEGISLASH_SHIELD_ID = "0681";
 const AEGISLASH_BLADE_ID = "0681A";
+const MIMIKYU_ID = "0778";
 
 function isAegislashForm(pokemon: Pokemon | null | undefined): boolean {
   return !!pokemon && (pokemon.id === AEGISLASH_SHIELD_ID || pokemon.id === AEGISLASH_BLADE_ID);
+}
+
+function isMimikyu(pokemon: Pokemon | null | undefined): boolean {
+  return pokemon?.id === MIMIKYU_ID;
 }
 
 function getAegislashAlternateForm(pokemon: Pokemon | null | undefined): Pokemon | null {
@@ -2525,6 +2578,7 @@ interface DamagePokemonState {
   spDefNature: number;
   defRank: number;
   spDefRank: number;
+  disguiseBroken: boolean;
 }
 
 function createDefaultDamagePokemonState(): DamagePokemonState {
@@ -2549,6 +2603,7 @@ function createDefaultDamagePokemonState(): DamagePokemonState {
     spDefNature: 1.0,
     defRank: 0,
     spDefRank: 0,
+    disguiseBroken: false,
   };
 }
 
@@ -2797,6 +2852,14 @@ function getDamageSideState(side: DamageSide): DamagePokemonState {
 function setDamageSideState(side: DamageSide, state: DamagePokemonState): void {
   if (side === "attacker") attackerState = state;
   else defenderState = state;
+}
+
+function shouldApplyMimikyuDisguiseDamage(): boolean {
+  return isMimikyu(defenderState.pokemon) && defenderState.disguiseBroken;
+}
+
+function resetMimikyuDisguiseState(state: DamagePokemonState): DamagePokemonState {
+  return { ...state, disguiseBroken: false };
 }
 
 function getEffectiveDamageTypes(side: DamageSide): string[] {
@@ -5324,8 +5387,8 @@ function toggleAegislashForm(slot: "attacker" | "defender"): void {
   const currentPokemon = slot === "attacker" ? attackPokemon : defendPokemon;
   const alternateForm = getAegislashAlternateForm(currentPokemon);
   if (!alternateForm) return;
-  if (slot === "attacker") attackerState = { ...attackerState, pokemon: alternateForm, abilityOverrideType: "" };
-  else defenderState = { ...defenderState, pokemon: alternateForm, abilityOverrideType: "" };
+  if (slot === "attacker") attackerState = resetMimikyuDisguiseState({ ...attackerState, pokemon: alternateForm, abilityOverrideType: "" });
+  else defenderState = resetMimikyuDisguiseState({ ...defenderState, pokemon: alternateForm, abilityOverrideType: "" });
   syncLegacyStateFromDamageStates();
   syncStatsInputsFromState();
   renderTab1DamageDisplay();
@@ -5345,6 +5408,7 @@ function toggleMegaForm(slot: "attacker" | "defender", targetPokemon?: Pokemon):
     ability: nextAbility,
     abilityActive: true,
     abilityOverrideType: "",
+    disguiseBroken: false,
   };
   if (slot === "attacker") attackerState = nextState;
   else defenderState = nextState;
@@ -5352,6 +5416,35 @@ function toggleMegaForm(slot: "attacker" | "defender", targetPokemon?: Pokemon):
   syncLegacyStateFromDamageStates();
   syncStatsInputsFromState();
   renderTab1DamageDisplay();
+}
+
+function appendMimikyuDisguiseButton(slot: "attacker" | "defender", row: HTMLElement, pokemon: Pokemon | null): boolean {
+  if (slot !== "defender" || !isMimikyu(pokemon)) return false;
+  row.hidden = false;
+  const isBroken = defenderState.disguiseBroken;
+  const toggle = document.createElement("div");
+  toggle.className = "mimikyu-disguise-toggle";
+  toggle.setAttribute("role", "group");
+  toggle.setAttribute("aria-label", "ばけのかわ追加ダメージ");
+  toggle.addEventListener("click", () => {
+    defenderState = { ...defenderState, disguiseBroken: !defenderState.disguiseBroken };
+    syncLegacyStateFromDamageStates();
+    renderTab1DamageDisplay();
+  });
+
+  const appendOption = (label: string, brokenValue: boolean): void => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mimikyu-disguise-toggle-btn" + (isBroken === brokenValue ? " is-active" : "");
+    btn.textContent = label;
+    btn.setAttribute("aria-pressed", isBroken === brokenValue ? "true" : "false");
+    toggle.appendChild(btn);
+  };
+
+  appendOption("1/8無", false);
+  appendOption("1/8込", true);
+  row.appendChild(toggle);
+  return true;
 }
 
 function renderTab1FormChangeRow(slot: "attacker" | "defender"): void {
@@ -5383,6 +5476,9 @@ function renderTab1FormChangeRow(slot: "attacker" | "defender"): void {
     });
     if (!isAegislashForm(pokemon)) return;
   }
+  row.innerHTML = "";
+  if (appendMimikyuDisguiseButton(slot, row, pokemon)) return;
+
   if (!pokemon || !isAegislashForm(pokemon)) {
     row.hidden = true;
     row.innerHTML = "";
@@ -5488,6 +5584,8 @@ function swapAttackerDefender(): void {
   closeAbilityTypeDropdowns();
   syncDamageStatesFromLegacyState();
   [attackerState, defenderState] = [defenderState, attackerState];
+  attackerState = resetMimikyuDisguiseState(attackerState);
+  defenderState = resetMimikyuDisguiseState(defenderState);
   damageRostersSwapped = !damageRostersSwapped;
   syncLegacyStateFromDamageStates();
   editingMoveSlotIndex = null;
