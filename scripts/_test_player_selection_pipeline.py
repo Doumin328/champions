@@ -64,30 +64,6 @@ def apply_player_selection_results(
             "score": result.get("score"),
         }
 
-    unordered = [
-        result for result in results
-        if result.get("pokemonName")
-        and not (
-            isinstance(result.get("selectionOrder"), int)
-            and 1 <= int(result["selectionOrder"]) <= 3
-        )
-    ]
-    unordered.sort(key=lambda result: int(result.get("slotIndex", 999)))
-
-    fill_index = 0
-    for display_index in range(3):
-        if next_selection[display_index] is not None or fill_index >= len(unordered):
-            continue
-        result = unordered[fill_index]
-        fill_index += 1
-        next_selection[display_index] = {
-            "slotIndex": result.get("slotIndex"),
-            "selectionOrder": display_index + 1,
-            "pokemonName": result.get("pokemonName"),
-            "itemName": result.get("itemName"),
-            "score": result.get("score"),
-        }
-
     return next_selection
 
 

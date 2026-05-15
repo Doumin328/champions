@@ -77,6 +77,10 @@ type PlayerDebugImagePayload = {
   selectedSlots: Array<{ selectionOrder: number; imageBase64: string; itemImageBase64: string }>;
 };
 
+type PlayerSelectionImageSyncPayload = {
+  slots: Array<{ selectionOrder: number; pokemonId: string | null }>;
+};
+
 function createWindow(): void {
   // キャプチャーボード（getUserMedia）の映像を許可する
   session.defaultSession.setPermissionRequestHandler(
@@ -354,6 +358,35 @@ ipcMain.handle("recognition:save-player-debug-images", async (_event, payload: P
       if (slot.itemImageBase64) {
         fs.writeFileSync(path.join(outputDir, `myPokeSelected_item_${slot.selectionOrder}.png`), Buffer.from(slot.itemImageBase64, "base64"));
       }
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle("recognition:sync-player-selection-images", async (_event, payload: PlayerSelectionImageSyncPayload) => {
+  try {
+    const outputDir = path.resolve(process.cwd(), "outputImg", "sensyutu");
+    const sourceDir = path.resolve(process.cwd(), "img", "pokemon_myPoke");
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    const slotByOrder = new Map<number, string | null>();
+    for (const slot of payload.slots ?? []) {
+      if (typeof slot.selectionOrder !== "number" || slot.selectionOrder < 1 || slot.selectionOrder > 3) continue;
+      slotByOrder.set(slot.selectionOrder, typeof slot.pokemonId === "string" && slot.pokemonId.trim() ? slot.pokemonId.trim() : null);
+    }
+
+    for (let selectionOrder = 1; selectionOrder <= 3; selectionOrder += 1) {
+      const outputPath = path.join(outputDir, `sensyutuPoke${selectionOrder}.png`);
+      const pokemonId = slotByOrder.get(selectionOrder) ?? null;
+      const sourcePath = pokemonId ? path.join(sourceDir, `${pokemonId}.png`) : "";
+      if (!pokemonId || !fs.existsSync(sourcePath)) {
+        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+        continue;
+      }
+      fs.copyFileSync(sourcePath, outputPath);
     }
 
     return { success: true };

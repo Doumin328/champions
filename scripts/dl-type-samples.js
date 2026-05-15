@@ -1,7 +1,7 @@
 /**
  * タイプアイコンのサンプルを3ソースからダウンロードして比較用に保存
  *
- * 保存先: src/img/test/types/
+ * 保存先: img/test/types/
  * 実行: node scripts/dl-type-samples.js
  */
 
@@ -9,7 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 
-const OUT_DIR = path.join(__dirname, "../src/img/test/types");
+const OUT_DIR = path.join(__dirname, "../img/test/types");
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const SWSH_BASE =
@@ -76,7 +76,7 @@ async function main() {
     }
   }
 
-  console.log(`\n保存先: src/img/test/types/`);
+  console.log(`\n保存先: img/test/types/`);
   console.log("ファイル一覧:");
   fs.readdirSync(OUT_DIR).forEach((f) => console.log(`  ${f}`));
 }

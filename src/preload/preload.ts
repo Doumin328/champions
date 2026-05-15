@@ -55,4 +55,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     slots: Array<{ slotIndex: number; imageBase64: string; itemImageBase64: string }>;
     selectedSlots: Array<{ selectionOrder: number; imageBase64: string; itemImageBase64: string }>;
   }) => ipcRenderer.invoke("recognition:save-player-debug-images", payload),
+  syncPlayerSelectionImages: (slots: Array<{ selectionOrder: number; pokemonId: string | null }>) =>
+    ipcRenderer.invoke("recognition:sync-player-selection-images", { slots }),
 });

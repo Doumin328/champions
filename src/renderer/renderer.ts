@@ -166,7 +166,87 @@ let demoPokemon: Pokemon[] = [];
 const STORAGE_KEY_VIDEO = "champions_last_video_device_id";
 const STORAGE_KEY_AUDIO = "champions_last_audio_device_id";
 const STORAGE_KEY_TEAM = "champions_team";
+const STORAGE_KEY_BATTLE_LAYOUT = "champions_battle_layout";
+const STORAGE_KEY_BATTLE_LAYOUT_PRESETS = "champions_battle_layout_presets";
 const MAX_TEAM_SIZE = 6;
+
+const BATTLE_LAYOUT_SOURCE_KEYS = [
+  "game",
+  "playerPokemon1",
+  "playerPokemon2",
+  "playerPokemon3",
+  "playerItemName1",
+  "playerItemName2",
+  "playerItemName3",
+  "playerItemIcon1",
+  "playerItemIcon2",
+  "playerItemIcon3",
+  "opponentPokemon1",
+  "opponentPokemon2",
+  "opponentPokemon3",
+  "opponentPokemon4",
+  "opponentPokemon5",
+  "opponentPokemon6",
+] as const;
+
+type BattleLayoutSourceKey = typeof BATTLE_LAYOUT_SOURCE_KEYS[number];
+
+const BATTLE_LAYOUT_SOURCE_LABELS: Record<BattleLayoutSourceKey, string> = {
+  game: "Game",
+  playerPokemon1: "My Pokemon 1",
+  playerPokemon2: "My Pokemon 2",
+  playerPokemon3: "My Pokemon 3",
+  playerItemName1: "Item Name 1",
+  playerItemName2: "Item Name 2",
+  playerItemName3: "Item Name 3",
+  playerItemIcon1: "Item Icon 1",
+  playerItemIcon2: "Item Icon 2",
+  playerItemIcon3: "Item Icon 3",
+  opponentPokemon1: "Opponent 1",
+  opponentPokemon2: "Opponent 2",
+  opponentPokemon3: "Opponent 3",
+  opponentPokemon4: "Opponent 4",
+  opponentPokemon5: "Opponent 5",
+  opponentPokemon6: "Opponent 6",
+};
+
+const DEFAULT_BATTLE_LAYOUT: BattleLayoutConfig = {
+  version: 2,
+  sources: {
+    game: { x: 0.02, y: 0.035, width: 0.75, height: 0.68 },
+    playerPokemon1: { x: 0.055, y: 0.765, width: 0.12, height: 0.18 },
+    playerPokemon2: { x: 0.315, y: 0.765, width: 0.12, height: 0.18 },
+    playerPokemon3: { x: 0.575, y: 0.765, width: 0.12, height: 0.18 },
+    playerItemName1: { x: 0.18, y: 0.84, width: 0.16, height: 0.055 },
+    playerItemName2: { x: 0.44, y: 0.84, width: 0.16, height: 0.055 },
+    playerItemName3: { x: 0.70, y: 0.84, width: 0.16, height: 0.055 },
+    playerItemIcon1: { x: 0.18, y: 0.765, width: 0.055, height: 0.075 },
+    playerItemIcon2: { x: 0.44, y: 0.765, width: 0.055, height: 0.075 },
+    playerItemIcon3: { x: 0.70, y: 0.765, width: 0.055, height: 0.075 },
+    opponentPokemon1: { x: 0.84, y: 0.08, width: 0.11, height: 0.115 },
+    opponentPokemon2: { x: 0.84, y: 0.215, width: 0.11, height: 0.115 },
+    opponentPokemon3: { x: 0.84, y: 0.35, width: 0.11, height: 0.115 },
+    opponentPokemon4: { x: 0.84, y: 0.485, width: 0.11, height: 0.115 },
+    opponentPokemon5: { x: 0.84, y: 0.62, width: 0.11, height: 0.115 },
+    opponentPokemon6: { x: 0.84, y: 0.755, width: 0.11, height: 0.115 },
+  },
+  lockedSources: createBattleLayoutLockedSources(),
+};
+
+let battleLayoutConfig: BattleLayoutConfig = cloneBattleLayoutConfig(DEFAULT_BATTLE_LAYOUT);
+const expandedBattleLayoutSources = new Set<BattleLayoutSourceKey>();
+let battleLayoutEditing = false;
+type BattleLayoutDragMode = "move" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
+let battleLayoutDragState: {
+  source: BattleLayoutSourceKey;
+  mode: BattleLayoutDragMode;
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startRect: NormalizedRect;
+  wrapWidth: number;
+  wrapHeight: number;
+} | null = null;
 
 /** ダミー画像（SVG data URL） */
 const DUMMY_POKEMON_IMAGE =
@@ -179,7 +259,7 @@ const DUMMY_POKEMON_IMAGE =
       "</svg>"
   );
 
-/** 空きマス用画像（6匹に満たない箇所）。src/img/ball_monster.png を優先し、無ければ ball_monster.svg を使用 */
+/** 空きマス用画像（6匹に満たない箇所）。img/ball_monster.png を優先し、無ければ ball_monster.svg を使用 */
 const BALL_MONSTER_IMAGE = "img/ball_monster.png";
 
 /** demoPokemon から最新データを取得（learnset・abilities が古い場合の対策） */
@@ -237,6 +317,685 @@ function getPokemonImageSrc(pokemon: Pokemon): string {
   return pokemon.id ? `img/pokemon_cs/${pokemon.id}.png` : DUMMY_POKEMON_IMAGE;
 }
 
+function createBattleLayoutLockedSources(): Record<BattleLayoutSourceKey, boolean> {
+  const lockedSources = {} as Record<BattleLayoutSourceKey, boolean>;
+  for (const key of BATTLE_LAYOUT_SOURCE_KEYS) {
+    lockedSources[key] = false;
+  }
+  return lockedSources;
+}
+
+function cloneBattleLayoutConfig(config: BattleLayoutConfig): BattleLayoutConfig {
+  const sources = {} as Record<BattleLayoutSourceKey, NormalizedRect>;
+  const lockedSources = createBattleLayoutLockedSources();
+  for (const key of BATTLE_LAYOUT_SOURCE_KEYS) {
+    sources[key] = { ...config.sources[key] };
+    lockedSources[key] = config.lockedSources?.[key] === true;
+  }
+  return {
+    version: 2,
+    sources,
+    lockedSources,
+  };
+}
+
+function normalizeBroadcastLookupText(value: string | null | undefined): string {
+  return (value ?? "").replace(/\s+/g, "").trim();
+}
+
+function getPlayerSelectionPokemonByName(pokemonName: string | null): Pokemon | null {
+  const normalizedName = normalizeBroadcastLookupText(pokemonName);
+  if (!normalizedName) return null;
+  return demoPokemon.find((pokemon) => normalizeBroadcastLookupText(pokemon.name) === normalizedName) ?? null;
+}
+
+function getPlayerSelectionImageSrc(entry: BroadcastPlayerSelectionEntry | null): string {
+  if (!entry?.selectionOrder || entry.selectionOrder < 1 || entry.selectionOrder > 3) return BALL_MONSTER_IMAGE;
+  return getFixedPlayerSelectionImageSrc(entry.selectionOrder);
+}
+
+function getFixedPlayerSelectionImageSrc(selectionOrder: number): string {
+  return `../../outputImg/sensyutu/sensyutuPoke${selectionOrder}.png?v=${playerSelectionImageVersion}`;
+}
+
+function getPlayerSelectionItemByName(itemName: string | null): (CompetitiveItem & { imageSrc: string }) | null {
+  const normalizedName = normalizeBroadcastLookupText(itemName);
+  if (!normalizedName) return null;
+  const item = maItems.find((candidate) => normalizeBroadcastLookupText(candidate.nameJa) === normalizedName)
+    ?? COMPETITIVE_ITEMS.find((candidate) => normalizeBroadcastLookupText(candidate.nameJa) === normalizedName)
+    ?? maItems.find((candidate) => normalizeBroadcastLookupText(candidate.id) === normalizedName)
+    ?? COMPETITIVE_ITEMS.find((candidate) => normalizeBroadcastLookupText(candidate.id) === normalizedName)
+    ?? null;
+  return item ? { ...item, imageSrc: getHeldItemImageSrc(item) } : null;
+}
+
+function sanitizeBattleLayoutRect(rect: NormalizedRect, source?: BattleLayoutSourceKey): NormalizedRect {
+  const { minWidth, minHeight } = getBattleLayoutMinSize(source);
+  const width = Math.min(1, Math.max(minWidth, Number.isFinite(rect.width) ? rect.width : minWidth));
+  const height = Math.min(1, Math.max(minHeight, Number.isFinite(rect.height) ? rect.height : minHeight));
+  const x = Math.min(1 - width, Math.max(0, Number.isFinite(rect.x) ? rect.x : 0));
+  const y = Math.min(1 - height, Math.max(0, Number.isFinite(rect.y) ? rect.y : 0));
+  return { x, y, width, height };
+}
+
+function getBattleLayoutMinSize(source?: BattleLayoutSourceKey): { minWidth: number; minHeight: number } {
+  const isSmallIcon = source?.startsWith("playerItemIcon") || source?.startsWith("opponentPokemon");
+  return {
+    minWidth: isSmallIcon ? 0.025 : 0.04,
+    minHeight: isSmallIcon ? 0.025 : 0.035,
+  };
+}
+
+function isBattleLayoutConfig(value: unknown): value is BattleLayoutConfig {
+  if (!value || typeof value !== "object") return false;
+  const config = value as Partial<BattleLayoutConfig>;
+  const sources = config.sources as Partial<Record<BattleLayoutSourceKey, NormalizedRect>> | undefined;
+  const lockedSources = config.lockedSources as Partial<Record<BattleLayoutSourceKey, boolean>> | undefined;
+  return config.version === 2
+    && !!sources
+    && BATTLE_LAYOUT_SOURCE_KEYS.every((key) => isValidNormalizedRect(sources[key]))
+    && (!lockedSources || BATTLE_LAYOUT_SOURCE_KEYS.every((key) => typeof lockedSources[key] === "boolean" || lockedSources[key] === undefined));
+}
+
+function loadBattleLayoutFromStorage(): void {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_BATTLE_LAYOUT);
+    if (!raw) {
+      battleLayoutConfig = cloneBattleLayoutConfig(DEFAULT_BATTLE_LAYOUT);
+      return;
+    }
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isBattleLayoutConfig(parsed)) {
+      battleLayoutConfig = cloneBattleLayoutConfig(DEFAULT_BATTLE_LAYOUT);
+      return;
+    }
+    const sources = {} as Record<BattleLayoutSourceKey, NormalizedRect>;
+    const lockedSources = createBattleLayoutLockedSources();
+    for (const key of BATTLE_LAYOUT_SOURCE_KEYS) {
+      sources[key] = sanitizeBattleLayoutRect(parsed.sources[key], key);
+      lockedSources[key] = parsed.lockedSources?.[key] === true;
+    }
+    battleLayoutConfig = { version: 2, sources, lockedSources };
+  } catch {
+    battleLayoutConfig = cloneBattleLayoutConfig(DEFAULT_BATTLE_LAYOUT);
+  }
+}
+
+function saveBattleLayoutToStorage(): void {
+  localStorage.setItem(STORAGE_KEY_BATTLE_LAYOUT, JSON.stringify(battleLayoutConfig));
+}
+
+function loadBattleLayoutPresetsFromStorage(): BattleLayoutPreset[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_BATTLE_LAYOUT_PRESETS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is BattleLayoutPreset =>
+      item !== null &&
+      typeof item === "object" &&
+      typeof (item as BattleLayoutPreset).name === "string" &&
+      isBattleLayoutConfig((item as BattleLayoutPreset).config)
+    );
+  } catch {
+    return [];
+  }
+}
+
+function saveBattleLayoutPresetsToStorage(presets: BattleLayoutPreset[]): void {
+  localStorage.setItem(STORAGE_KEY_BATTLE_LAYOUT_PRESETS, JSON.stringify(presets));
+}
+
+function renderBattleLayoutPresetSelect(): void {
+  if (!battlePresetSelectEl) return;
+  const presets = loadBattleLayoutPresetsFromStorage();
+  while (battlePresetSelectEl.options.length > 1) battlePresetSelectEl.remove(1);
+  for (const preset of presets) {
+    const opt = document.createElement("option");
+    opt.value = preset.name;
+    opt.textContent = preset.name;
+    battlePresetSelectEl.appendChild(opt);
+  }
+  if (battlePresetLoadBtnEl) battlePresetLoadBtnEl.disabled = presets.length === 0;
+  if (battlePresetDeleteBtnEl) battlePresetDeleteBtnEl.disabled = presets.length === 0;
+}
+
+function saveBattleLayoutPreset(): void {
+  const name = battlePresetNameInputEl?.value.trim() ?? "";
+  if (!name) {
+    battlePresetNameInputEl?.classList.add("is-error");
+    battlePresetNameInputEl?.focus();
+    return;
+  }
+  battlePresetNameInputEl?.classList.remove("is-error");
+  const presets = loadBattleLayoutPresetsFromStorage();
+  const idx = presets.findIndex((p) => p.name === name);
+  const entry: BattleLayoutPreset = { name, config: cloneBattleLayoutConfig(battleLayoutConfig) };
+  if (idx >= 0) {
+    presets[idx] = entry;
+  } else {
+    presets.push(entry);
+  }
+  saveBattleLayoutPresetsToStorage(presets);
+  renderBattleLayoutPresetSelect();
+  if (battlePresetSelectEl) battlePresetSelectEl.value = name;
+}
+
+function loadBattleLayoutPreset(): void {
+  const selected = battlePresetSelectEl?.value ?? "";
+  if (!selected) return;
+  const preset = loadBattleLayoutPresetsFromStorage().find((p) => p.name === selected);
+  if (!preset) return;
+  battleLayoutConfig = cloneBattleLayoutConfig(preset.config);
+  applyBattleLayoutConfig();
+  saveBattleLayoutToStorage();
+}
+
+function deleteBattleLayoutPreset(): void {
+  const selected = battlePresetSelectEl?.value ?? "";
+  if (!selected) return;
+  saveBattleLayoutPresetsToStorage(loadBattleLayoutPresetsFromStorage().filter((p) => p.name !== selected));
+  renderBattleLayoutPresetSelect();
+  if (battlePresetSelectEl) battlePresetSelectEl.value = "";
+}
+
+function applyNormalizedRectStyle(target: HTMLElement, rect: NormalizedRect): void {
+  target.style.left = `${rect.x * 100}%`;
+  target.style.top = `${rect.y * 100}%`;
+  target.style.width = `${rect.width * 100}%`;
+  target.style.height = `${rect.height * 100}%`;
+}
+
+function setBattleLayoutGameCssVars(target: HTMLElement, rect: NormalizedRect): void {
+  target.style.setProperty("--battle-game-x", `${rect.x * 100}%`);
+  target.style.setProperty("--battle-game-y", `${rect.y * 100}%`);
+  target.style.setProperty("--battle-game-w", `${rect.width * 100}%`);
+  target.style.setProperty("--battle-game-h", `${rect.height * 100}%`);
+}
+
+function applyBattleLayoutConfig(): void {
+  const layoutEl = document.querySelector(".broadcast-layout") as HTMLElement | null;
+  const targets = [layoutEl, videoWrapEl].filter((target): target is HTMLElement => !!target);
+  for (const target of targets) {
+    setBattleLayoutGameCssVars(target, battleLayoutConfig.sources.game);
+  }
+  document.querySelectorAll<HTMLElement>(".broadcast-layout-source[data-layout-source]").forEach((sourceEl) => {
+    const source = sourceEl.dataset.layoutSource as BattleLayoutSourceKey | undefined;
+    if (!source || source === "game" || !battleLayoutConfig.sources[source]) return;
+    applyNormalizedRectStyle(sourceEl, getBattleLayoutDisplayRect(source, battleLayoutConfig.sources[source]));
+  });
+  if (videoEl) {
+    setBattleLayoutGameCssVars(videoEl, battleLayoutConfig.sources.game);
+  }
+  updateBattleLayoutEditorBoxes();
+  renderBattleLayoutSourceList();
+}
+
+function isPlayerPokemonLayoutSource(source: BattleLayoutSourceKey): boolean {
+  return source.startsWith("playerPokemon");
+}
+
+function getBattleLayoutSourceImage(source: BattleLayoutSourceKey): HTMLImageElement | null {
+  const sourceEl = document.querySelector<HTMLElement>(`.broadcast-layout-source[data-layout-source="${source}"]`);
+  return sourceEl?.querySelector("img") ?? null;
+}
+
+function getBattleLayoutSourceImageAspect(source: BattleLayoutSourceKey): number | null {
+  const img = getBattleLayoutSourceImage(source);
+  if (!img || img.hidden || img.naturalWidth <= 0 || img.naturalHeight <= 0) return null;
+  return img.naturalWidth / img.naturalHeight;
+}
+
+function getBattleLayoutBounds(): DOMRect | null {
+  const layoutRect = document.querySelector<HTMLElement>(".broadcast-layout")?.getBoundingClientRect() ?? null;
+  if (layoutRect && layoutRect.width > 0 && layoutRect.height > 0) return layoutRect;
+  const editLayerRect = document.getElementById("broadcast-layout-edit-layer")?.getBoundingClientRect() ?? null;
+  if (editLayerRect && editLayerRect.width > 0 && editLayerRect.height > 0) return editLayerRect;
+  const wrapRect = videoWrapEl?.getBoundingClientRect() ?? null;
+  return wrapRect && wrapRect.width > 0 && wrapRect.height > 0 ? wrapRect : null;
+}
+
+function getPlayerPokemonNormalizedAspect(source: BattleLayoutSourceKey): number | null {
+  if (!isPlayerPokemonLayoutSource(source)) return null;
+  const layerRect = getBattleLayoutBounds();
+  const imageAspect = getBattleLayoutSourceImageAspect(source);
+  if (!layerRect || layerRect.width <= 0 || layerRect.height <= 0 || !imageAspect) return null;
+  return imageAspect * (layerRect.height / layerRect.width);
+}
+
+function getAspectCorrectedPlayerPokemonRect(source: BattleLayoutSourceKey, rect: NormalizedRect): NormalizedRect {
+  const aspect = getPlayerPokemonNormalizedAspect(source);
+  if (!aspect) return rect;
+
+  const min = getBattleLayoutMinSize(source);
+  const centerX = rect.x + rect.width / 2;
+  const centerY = rect.y + rect.height / 2;
+  const maxWidthByCenter = 2 * Math.min(centerX, 1 - centerX);
+  const maxHeightByCenter = 2 * Math.min(centerY, 1 - centerY);
+  const maxWidth = Math.max(min.minWidth, Math.min(1, maxWidthByCenter, maxHeightByCenter * aspect));
+
+  let width = Math.min(maxWidth, Math.max(min.minWidth, min.minHeight * aspect, rect.width));
+  let height = width / aspect;
+  if (height > maxHeightByCenter) {
+    height = Math.max(min.minHeight, maxHeightByCenter);
+    width = height * aspect;
+  }
+
+  return sanitizeBattleLayoutRect({
+    x: centerX - width / 2,
+    y: centerY - height / 2,
+    width,
+    height,
+  }, source);
+}
+
+function getBattleLayoutDisplayRect(source: BattleLayoutSourceKey, rect: NormalizedRect): NormalizedRect {
+  return isPlayerPokemonLayoutSource(source) ? getAspectCorrectedPlayerPokemonRect(source, rect) : rect;
+}
+
+function getScaledPlayerPokemonRect(
+  source: BattleLayoutSourceKey,
+  startRect: NormalizedRect,
+  mode: BattleLayoutDragMode,
+  aspect: number,
+  dx: number,
+  dy: number,
+): NormalizedRect {
+  if (mode === "move") return sanitizeBattleLayoutRect(startRect, source);
+
+  const min = getBattleLayoutMinSize(source);
+  const anchorX = mode.includes("w") ? startRect.x + startRect.width : startRect.x;
+  const anchorY = mode.includes("n") ? startRect.y + startRect.height : startRect.y;
+  const minWidth = Math.max(min.minWidth, min.minHeight * aspect);
+  const horizontalDelta = (mode.includes("w") ? -dx : dx) / startRect.width;
+  const verticalDelta = (mode.includes("n") ? -dy : dy) / startRect.height;
+  const scaleDelta = Math.abs(horizontalDelta) >= Math.abs(verticalDelta) ? horizontalDelta : verticalDelta;
+
+  const maxWidth = mode.includes("w") ? anchorX : 1 - anchorX;
+  const maxHeight = mode.includes("n") ? anchorY : 1 - anchorY;
+  const maxAspectWidth = Math.max(minWidth, Math.min(maxWidth, maxHeight * aspect));
+  const width = Math.max(minWidth, Math.min(maxAspectWidth, startRect.width * (1 + scaleDelta)));
+  const height = width / aspect;
+
+  const x = mode.includes("w") ? anchorX - width : anchorX;
+  const y = mode.includes("n") ? anchorY - height : anchorY;
+  return sanitizeBattleLayoutRect({ x, y, width, height }, source);
+}
+
+function createBattleLayoutEditorBox(source: BattleLayoutSourceKey): HTMLElement {
+  const box = document.createElement("div");
+  box.className = "broadcast-layout-edit-box";
+  box.dataset.editorSource = source;
+  box.hidden = true;
+
+  const label = document.createElement("span");
+  label.className = "broadcast-layout-edit-label";
+  label.textContent = BATTLE_LAYOUT_SOURCE_LABELS[source];
+
+  box.append(label);
+  return box;
+}
+
+function ensureBattleLayoutEditorBoxes(): void {
+  const layer = document.getElementById("broadcast-layout-edit-layer");
+  if (!layer || layer.childElementCount > 0) return;
+  for (const source of BATTLE_LAYOUT_SOURCE_KEYS) {
+    layer.appendChild(createBattleLayoutEditorBox(source));
+  }
+}
+
+function updateBattleLayoutEditorBoxes(): void {
+  const boxes = document.querySelectorAll<HTMLElement>(".broadcast-layout-edit-box[data-editor-source]");
+  for (const box of Array.from(boxes)) {
+    const source = box.dataset.editorSource as BattleLayoutSourceKey | undefined;
+    if (!source || !battleLayoutConfig.sources[source]) continue;
+    const rect = getBattleLayoutDisplayRect(source, battleLayoutConfig.sources[source]);
+    box.hidden = !battleLayoutEditing;
+    box.classList.toggle("is-locked", isBattleLayoutSourceLocked(source));
+    box.setAttribute("aria-disabled", isBattleLayoutSourceLocked(source) ? "true" : "false");
+    applyNormalizedRectStyle(box, rect);
+  }
+}
+
+function isBattleLayoutSourceLocked(source: BattleLayoutSourceKey): boolean {
+  return battleLayoutConfig.lockedSources?.[source] === true;
+}
+
+function formatBattleLayoutPercent(value: number): string {
+  return `${Math.round(value * 1000) / 10}%`;
+}
+
+function isBattleLayoutSourceVisible(source: BattleLayoutSourceKey): boolean {
+  if (source === "game") return true;
+  const sourceEl = document.querySelector<HTMLElement>(`.broadcast-layout-source[data-layout-source="${source}"]`);
+  return !!sourceEl && !sourceEl.classList.contains("is-empty");
+}
+
+function renderBattleLayoutSourceList(): void {
+  if (!battleLayoutSourceListEl) return;
+  const previousScrollTop = battleLayoutSourceListEl.scrollTop;
+  battleLayoutSourceListEl.innerHTML = "";
+
+  for (const source of BATTLE_LAYOUT_SOURCE_KEYS) {
+    const rect = getBattleLayoutDisplayRect(source, battleLayoutConfig.sources[source]);
+    const locked = isBattleLayoutSourceLocked(source);
+    const visible = isBattleLayoutSourceVisible(source);
+    const expanded = expandedBattleLayoutSources.has(source);
+
+    const row = document.createElement("div");
+    row.className = `battle-source-row${locked ? " is-locked" : ""}${visible ? "" : " is-empty"}${expanded ? " is-expanded" : ""}`;
+    row.dataset.source = source;
+
+    const main = document.createElement("div");
+    main.className = "battle-source-row-main";
+    main.setAttribute("role", "button");
+    main.setAttribute("tabindex", "0");
+    main.setAttribute("aria-expanded", expanded ? "true" : "false");
+
+    const name = document.createElement("span");
+    name.className = "battle-source-row-name";
+    name.textContent = BATTLE_LAYOUT_SOURCE_LABELS[source];
+
+    const status = document.createElement("span");
+    status.className = "battle-source-row-status";
+    status.textContent = visible ? "表示中" : "空";
+
+    const metrics = document.createElement("span");
+    metrics.className = "battle-source-row-metrics";
+    metrics.textContent = `X ${formatBattleLayoutPercent(rect.x)} / Y ${formatBattleLayoutPercent(rect.y)} / W ${formatBattleLayoutPercent(rect.width)} / H ${formatBattleLayoutPercent(rect.height)}`;
+
+    const chevron = document.createElement("span");
+    chevron.className = "battle-source-row-chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    chevron.textContent = expanded ? "▲" : "▼";
+
+    main.append(name, status, metrics, chevron);
+
+    const toggleExpand = (): void => {
+      if (expandedBattleLayoutSources.has(source)) {
+        expandedBattleLayoutSources.delete(source);
+      } else {
+        expandedBattleLayoutSources.add(source);
+      }
+      renderBattleLayoutSourceList();
+    };
+    main.addEventListener("click", toggleExpand);
+    main.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleExpand();
+      }
+    });
+
+    const lockButton = document.createElement("button");
+    lockButton.type = "button";
+    lockButton.className = "battle-source-lock-btn";
+    lockButton.setAttribute("aria-pressed", locked ? "true" : "false");
+    lockButton.setAttribute("aria-label", `${BATTLE_LAYOUT_SOURCE_LABELS[source]} ${locked ? "ロック解除" : "ロック"}`);
+    lockButton.textContent = locked ? "固定中" : "固定";
+    lockButton.addEventListener("click", () => {
+      setBattleLayoutSourceLocked(source, !isBattleLayoutSourceLocked(source));
+    });
+
+    row.append(main, lockButton);
+
+    if (expanded) {
+      const detail = document.createElement("div");
+      detail.className = "battle-source-row-detail";
+
+      const fields: Array<{ key: keyof NormalizedRect; label: string }> = [
+        { key: "x", label: "X" },
+        { key: "y", label: "Y" },
+        { key: "width", label: "W" },
+        { key: "height", label: "H" },
+      ];
+
+      for (const field of fields) {
+        const fieldWrap = document.createElement("label");
+        fieldWrap.className = "battle-source-input-field";
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "battle-source-input-label";
+        labelEl.textContent = field.label;
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.className = "battle-source-input-number";
+        input.step = "0.1";
+        input.min = "0";
+        input.max = "100";
+        input.value = String(Math.round(rect[field.key] * 1000) / 10);
+        input.disabled = locked;
+        input.setAttribute("aria-label", `${BATTLE_LAYOUT_SOURCE_LABELS[source]} ${field.label}`);
+
+        input.addEventListener("input", () => {
+          if (isBattleLayoutSourceLocked(source)) return;
+          const raw = parseFloat(input.value);
+          if (!Number.isFinite(raw)) return;
+          const normalized = raw / 100;
+          const nextRect: NormalizedRect = { ...battleLayoutConfig.sources[source], [field.key]: normalized };
+          updateBattleLayoutSource(source, nextRect, true);
+          const updatedRect = getBattleLayoutDisplayRect(source, battleLayoutConfig.sources[source]);
+          metrics.textContent = `X ${formatBattleLayoutPercent(updatedRect.x)} / Y ${formatBattleLayoutPercent(updatedRect.y)} / W ${formatBattleLayoutPercent(updatedRect.width)} / H ${formatBattleLayoutPercent(updatedRect.height)}`;
+          const syncKeys: Array<keyof NormalizedRect> = ["x", "y", "width", "height"];
+          detail.querySelectorAll<HTMLInputElement>(".battle-source-input-number").forEach((inp, idx) => {
+            if (inp !== input) {
+              inp.value = String(Math.round(updatedRect[syncKeys[idx]] * 1000) / 10);
+            }
+          });
+        });
+
+        fieldWrap.append(labelEl, input);
+        detail.appendChild(fieldWrap);
+      }
+
+      row.appendChild(detail);
+    }
+
+    battleLayoutSourceListEl.appendChild(row);
+  }
+  battleLayoutSourceListEl.scrollTop = previousScrollTop;
+}
+
+function setBattleLayoutSourceLocked(source: BattleLayoutSourceKey, locked: boolean): void {
+  battleLayoutConfig.lockedSources[source] = locked;
+  saveBattleLayoutToStorage();
+  updateBattleLayoutEditorBoxes();
+  renderBattleLayoutSourceList();
+}
+
+function setBattleLayoutEditing(enabled: boolean): void {
+  battleLayoutEditing = enabled;
+  if (videoWrapEl) videoWrapEl.dataset.layoutEditing = enabled ? "true" : "false";
+  if (battleLayoutEditToggleEl) {
+    battleLayoutEditToggleEl.textContent = enabled ? "編集終了" : "レイアウト編集";
+    battleLayoutEditToggleEl.classList.toggle("is-active", enabled);
+  }
+  if (battleLayoutEditControlEl) {
+    battleLayoutEditControlEl.textContent = enabled ? "編集終了" : "レイアウト編集";
+    battleLayoutEditControlEl.classList.toggle("is-active", enabled);
+    battleLayoutEditControlEl.setAttribute("aria-pressed", enabled ? "true" : "false");
+  }
+  if (battleLayoutResetBtnEl) battleLayoutResetBtnEl.hidden = !enabled;
+  updateBattleLayoutEditorBoxes();
+  renderBroadcastOverlayState("setBattleLayoutEditing");
+}
+
+function updateBattleLayoutSource(source: BattleLayoutSourceKey, rect: NormalizedRect, persist = true): void {
+  battleLayoutConfig.sources[source] = getBattleLayoutDisplayRect(source, sanitizeBattleLayoutRect(rect, source));
+  applyBattleLayoutConfig();
+  if (persist) saveBattleLayoutToStorage();
+}
+
+function getBattleLayoutPointerMode(event: PointerEvent, box: HTMLElement): BattleLayoutDragMode {
+  const source = box.dataset.editorSource as BattleLayoutSourceKey | undefined;
+  const rect = box.getBoundingClientRect();
+  const edge = Math.max(4, Math.min(10, rect.width / 2, rect.height / 2));
+  const nearLeft = event.clientX - rect.left <= edge;
+  const nearRight = rect.right - event.clientX <= edge;
+  const nearTop = event.clientY - rect.top <= edge;
+  const nearBottom = rect.bottom - event.clientY <= edge;
+
+  if (nearTop && nearLeft) return "nw";
+  if (nearTop && nearRight) return "ne";
+  if (nearBottom && nearLeft) return "sw";
+  if (nearBottom && nearRight) return "se";
+  if (source && isPlayerPokemonLayoutSource(source)) return "move";
+  if (nearTop) return "n";
+  if (nearRight) return "e";
+  if (nearBottom) return "s";
+  if (nearLeft) return "w";
+  return "move";
+}
+
+function getBattleLayoutCursor(mode: BattleLayoutDragMode): string {
+  return {
+    move: "move",
+    n: "n-resize",
+    ne: "nesw-resize",
+    e: "e-resize",
+    se: "nwse-resize",
+    s: "s-resize",
+    sw: "nesw-resize",
+    w: "w-resize",
+    nw: "nwse-resize",
+  }[mode];
+}
+
+function getResizedBattleLayoutRect(
+  source: BattleLayoutSourceKey,
+  startRect: NormalizedRect,
+  mode: BattleLayoutDragMode,
+  dx: number,
+  dy: number
+): NormalizedRect {
+  if (mode === "move") {
+    return sanitizeBattleLayoutRect({
+      ...startRect,
+      x: startRect.x + dx,
+      y: startRect.y + dy,
+    }, source);
+  }
+
+  const aspect = getPlayerPokemonNormalizedAspect(source);
+  if (aspect) {
+    return getScaledPlayerPokemonRect(source, startRect, mode, aspect, dx, dy);
+  }
+
+  const min = getBattleLayoutMinSize(source);
+  let left = startRect.x;
+  let top = startRect.y;
+  let right = startRect.x + startRect.width;
+  let bottom = startRect.y + startRect.height;
+
+  if (mode.includes("w")) left += dx;
+  if (mode.includes("e")) right += dx;
+  if (mode.includes("n")) top += dy;
+  if (mode.includes("s")) bottom += dy;
+
+  left = Math.max(0, Math.min(left, 1));
+  right = Math.max(0, Math.min(right, 1));
+  top = Math.max(0, Math.min(top, 1));
+  bottom = Math.max(0, Math.min(bottom, 1));
+
+  if (right - left < min.minWidth) {
+    if (mode.includes("w")) left = Math.max(0, right - min.minWidth);
+    else right = Math.min(1, left + min.minWidth);
+  }
+  if (bottom - top < min.minHeight) {
+    if (mode.includes("n")) top = Math.max(0, bottom - min.minHeight);
+    else bottom = Math.min(1, top + min.minHeight);
+  }
+
+  const nextRect = sanitizeBattleLayoutRect({
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  }, source);
+  return nextRect;
+}
+
+function resetBattleLayoutConfig(): void {
+  battleLayoutConfig = cloneBattleLayoutConfig(DEFAULT_BATTLE_LAYOUT);
+  localStorage.removeItem(STORAGE_KEY_BATTLE_LAYOUT);
+  applyBattleLayoutConfig();
+}
+
+function initBattleLayoutEditor(): void {
+  loadBattleLayoutFromStorage();
+  ensureBattleLayoutEditorBoxes();
+  applyBattleLayoutConfig();
+
+  battleLayoutEditToggleEl?.addEventListener("click", () => {
+    setBattleLayoutEditing(!battleLayoutEditing);
+  });
+  battleLayoutEditControlEl?.addEventListener("click", () => {
+    setBattleLayoutEditing(!battleLayoutEditing);
+  });
+  battleLayoutResetBtnEl?.addEventListener("click", resetBattleLayoutConfig);
+
+  document.querySelectorAll<HTMLElement>(".broadcast-layout-edit-box[data-editor-source]").forEach((box) => {
+    box.addEventListener("pointermove", (event) => {
+      if (!battleLayoutEditing || battleLayoutDragState) return;
+      const source = box.dataset.editorSource as BattleLayoutSourceKey | undefined;
+      box.style.cursor = source && isBattleLayoutSourceLocked(source) ? "not-allowed" : getBattleLayoutCursor(getBattleLayoutPointerMode(event, box));
+    });
+    box.addEventListener("pointerleave", () => {
+      if (!battleLayoutDragState) box.style.cursor = "";
+    });
+    box.addEventListener("pointerdown", (event) => {
+      if (!battleLayoutEditing) return;
+      const source = box.dataset.editorSource as BattleLayoutSourceKey | undefined;
+      if (!source) return;
+      if (isBattleLayoutSourceLocked(source)) return;
+      const wrapRect = getBattleLayoutBounds();
+      if (!wrapRect || wrapRect.width <= 0 || wrapRect.height <= 0) return;
+      const mode = getBattleLayoutPointerMode(event, box);
+      const startRect = getBattleLayoutDisplayRect(source, battleLayoutConfig.sources[source]);
+      battleLayoutDragState = {
+        source,
+        mode,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startRect,
+        wrapWidth: wrapRect.width,
+        wrapHeight: wrapRect.height,
+      };
+      box.style.cursor = getBattleLayoutCursor(mode);
+      box.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+  });
+
+  document.addEventListener("pointermove", (event) => {
+    if (!battleLayoutDragState || event.pointerId !== battleLayoutDragState.pointerId) return;
+    const state = battleLayoutDragState;
+    const dx = (event.clientX - state.startClientX) / state.wrapWidth;
+    const dy = (event.clientY - state.startClientY) / state.wrapHeight;
+    const nextRect = getResizedBattleLayoutRect(state.source, state.startRect, state.mode, dx, dy);
+    updateBattleLayoutSource(state.source, nextRect, false);
+  });
+
+  document.addEventListener("pointerup", (event) => {
+    if (!battleLayoutDragState || event.pointerId !== battleLayoutDragState.pointerId) return;
+    battleLayoutDragState = null;
+    document.querySelectorAll<HTMLElement>(".broadcast-layout-edit-box[data-editor-source]").forEach((box) => {
+      box.style.cursor = "";
+    });
+    saveBattleLayoutToStorage();
+  });
+
+  renderBattleLayoutPresetSelect();
+  battlePresetSaveBtnEl?.addEventListener("click", saveBattleLayoutPreset);
+  battlePresetNameInputEl?.addEventListener("input", () => {
+    battlePresetNameInputEl.classList.remove("is-error");
+  });
+  battlePresetLoadBtnEl?.addEventListener("click", loadBattleLayoutPreset);
+  battlePresetDeleteBtnEl?.addEventListener("click", deleteBattleLayoutPreset);
+}
+
 const videoEl = document.getElementById("video") as HTMLVideoElement;
 const deviceSelect = document.getElementById("device-select") as HTMLSelectElement;
 const audioSelect = document.getElementById("audio-select") as HTMLSelectElement;
@@ -258,13 +1017,22 @@ const sceneDetectionTextEl = document.getElementById("scene-detection-text") as 
 const sceneDetectionEnabledEl = document.getElementById("scene-detection-enabled") as HTMLInputElement | null;
 const sceneDebugEnabledEl = document.getElementById("scene-debug-enabled") as HTMLInputElement | null;
 const sceneDetectionDebugEl = document.getElementById("scene-detection-debug") as HTMLElement | null;
-const broadcastTeamNameEl = document.getElementById("broadcast-team-name") as HTMLElement | null;
-const broadcastRosterEl = document.getElementById("broadcast-roster") as HTMLElement | null;
-const broadcastPlayerCardEls = [
-  document.getElementById("broadcast-card-attacker") as HTMLElement | null,
-  document.getElementById("broadcast-card-item") as HTMLElement | null,
-  document.getElementById("broadcast-card-defender") as HTMLElement | null,
-];
+const battleLayoutEditToggleEl = document.getElementById("battle-layout-edit-toggle") as HTMLButtonElement | null;
+const battleLayoutEditControlEl = document.getElementById("battle-layout-edit-control") as HTMLButtonElement | null;
+const battleLayoutResetBtnEl = document.getElementById("battle-layout-reset-btn") as HTMLButtonElement | null;
+const battleLayoutSourceListEl = document.getElementById("battle-layout-source-list") as HTMLElement | null;
+const battlePresetNameInputEl = document.getElementById("battle-preset-name-input") as HTMLInputElement | null;
+const battlePresetSelectEl = document.getElementById("battle-preset-select") as HTMLSelectElement | null;
+const battlePresetSaveBtnEl = document.getElementById("battle-preset-save-btn") as HTMLButtonElement | null;
+const battlePresetLoadBtnEl = document.getElementById("battle-preset-load-btn") as HTMLButtonElement | null;
+const battlePresetDeleteBtnEl = document.getElementById("battle-preset-delete-btn") as HTMLButtonElement | null;
+let broadcastTeamNameEl: HTMLElement | null = null;
+let broadcastRosterEl: HTMLElement | null = null;
+const broadcastPlayerCardEls: Array<HTMLElement | null> = [];
+const broadcastPlayerPokemonEls = [1, 2, 3].map((index) => document.getElementById(`broadcast-player-pokemon-${index}`) as HTMLImageElement | null);
+const broadcastPlayerItemNameEls = [1, 2, 3].map((index) => document.getElementById(`broadcast-player-item-name-${index}`) as HTMLElement | null);
+const broadcastPlayerItemIconEls = [1, 2, 3].map((index) => document.getElementById(`broadcast-player-item-icon-${index}`) as HTMLImageElement | null);
+const broadcastOpponentPokemonEls = [1, 2, 3, 4, 5, 6].map((index) => document.getElementById(`broadcast-opponent-pokemon-${index}`) as HTMLImageElement | null);
 
 type SceneKind = "idle" | "selection" | "battle" | "unknown";
 
@@ -273,6 +1041,17 @@ interface NormalizedRect {
   y: number;
   width: number;
   height: number;
+}
+
+interface BattleLayoutConfig {
+  version: 2;
+  sources: Record<BattleLayoutSourceKey, NormalizedRect>;
+  lockedSources: Record<BattleLayoutSourceKey, boolean>;
+}
+
+interface BattleLayoutPreset {
+  name: string;
+  config: BattleLayoutConfig;
 }
 
 interface BroadcastBattleIndicator {
@@ -326,6 +1105,7 @@ interface BroadcastPlayerDebugSlotImage {
 interface BroadcastPlayerSelectionEntry {
   slotIndex: number;
   selectionOrder: number;
+  pokemonId: string | null;
   pokemonName: string | null;
   itemName: string | null;
   score: number;
@@ -562,6 +1342,7 @@ let playerSelectionTrackingSlots: BroadcastPlayerSelectionTrackerSlot[] = Array.
   lastUpdatedAt: 0,
 }));
 let playerSelectionTrackingNextOrder = 1;
+let playerSelectionImageVersion = Date.now();
 let recognitionBootstrapPromise: Promise<void> | null = null;
 let sceneSampleCache: SceneSampleCache = { frameId: 0, samples: new Map() };
 let activeMainTabId = "tab1";
@@ -581,6 +1362,7 @@ function serializeConfirmedPlayerSelection(): Array<{
   displayIndex: number;
   slotIndex: number | null;
   selectionOrder: number | null;
+  pokemonId: string | null;
   pokemonName: string | null;
   itemName: string | null;
   score: number | null;
@@ -589,6 +1371,7 @@ function serializeConfirmedPlayerSelection(): Array<{
     displayIndex: index + 1,
     slotIndex: entry?.slotIndex ?? null,
     selectionOrder: entry?.selectionOrder ?? null,
+    pokemonId: entry?.pokemonId ?? null,
     pokemonName: entry?.pokemonName ?? null,
     itemName: entry?.itemName ?? null,
     score: entry?.score ?? null,
@@ -1335,6 +2118,72 @@ function renderBroadcastPlayerSelection(): void {
   }
 }
 
+function renderBroadcastPlayerSelectionCards(): void {
+  for (let index = 0; index < broadcastPlayerCardEls.length; index += 1) {
+    const cardEl = broadcastPlayerCardEls[index];
+    if (!cardEl) continue;
+    const entry = confirmedPlayerSelection[index];
+    const item = getPlayerSelectionItemByName(entry?.itemName ?? null);
+    cardEl.classList.toggle("broadcast-info-card--accent", index === 1);
+    cardEl.classList.toggle("is-empty", !entry);
+    cardEl.innerHTML = "";
+
+    const art = document.createElement("img");
+    art.className = "broadcast-info-art";
+    art.src = getPlayerSelectionImageSrc(entry);
+    art.alt = entry?.pokemonName ?? "";
+    art.onerror = () => {
+      art.src = BALL_MONSTER_IMAGE;
+    };
+
+    const body = document.createElement("div");
+    body.className = "broadcast-info-body";
+
+    const label = document.createElement("div");
+    label.className = "broadcast-info-label";
+    label.textContent = entry ? `Select ${entry.selectionOrder}` : `Select ${index + 1}`;
+
+    const title = document.createElement("div");
+    title.className = "broadcast-info-title";
+    title.textContent = entry?.pokemonName ?? "Unknown";
+
+    const subtitle = document.createElement("div");
+    subtitle.className = "broadcast-info-subtitle";
+    if (item) {
+      const itemIcon = document.createElement("img");
+      itemIcon.className = "broadcast-info-item-icon";
+      itemIcon.src = item.imageSrc;
+      itemIcon.alt = item.nameJa;
+      itemIcon.onerror = () => {
+        itemIcon.hidden = true;
+      };
+      subtitle.append(itemIcon);
+    }
+    const itemText = document.createElement("span");
+    itemText.className = "broadcast-info-subtitle-text";
+    itemText.textContent = entry?.itemName ?? "Unknown";
+    subtitle.append(itemText);
+
+    const chip = document.createElement("span");
+    chip.className = "broadcast-info-chip";
+    chip.textContent = entry ? `Slot ${entry.slotIndex + 1}` : "Waiting";
+
+    const chips = document.createElement("div");
+    chips.className = "broadcast-info-chip-row";
+    chips.append(chip);
+
+    const top = document.createElement("div");
+    top.className = "broadcast-info-top";
+    top.append(label, title);
+    const bottom = document.createElement("div");
+    bottom.className = "broadcast-info-bottom";
+    bottom.append(subtitle, chips);
+
+    body.append(top, bottom);
+    cardEl.append(art, body);
+  }
+}
+
 function renderBroadcastRoster(): void {
   if (!broadcastRosterEl) return;
   broadcastRosterEl.innerHTML = "";
@@ -1385,6 +2234,97 @@ function renderBroadcastRoster(): void {
   }
 }
 
+function syncFixedPlayerSelectionImagesFromState(): void {
+  const slots = confirmedPlayerSelection.map((entry, index) => ({
+    selectionOrder: index + 1,
+    pokemonId: entry?.pokemonId ?? null,
+  }));
+  const result = (window as any).electronAPI?.syncPlayerSelectionImages?.(slots);
+  if (result && typeof result.catch === "function") {
+    void result
+      .then(() => {
+        playerSelectionImageVersion = Date.now();
+        renderBroadcastOverlayState("syncFixedPlayerSelectionImagesFromState");
+      })
+      .catch(() => {
+        // External fixed-name image sync should not affect recognition or rendering.
+      });
+    return;
+  }
+  playerSelectionImageVersion = Date.now();
+}
+
+function setBroadcastSourceEmpty(sourceEl: HTMLElement | null, empty: boolean, label: string): void {
+  if (!sourceEl) return;
+  sourceEl.classList.toggle("is-empty", empty);
+  sourceEl.dataset.emptyLabel = label;
+}
+
+function setBroadcastImageSource(img: HTMLImageElement | null, source: string | null, alt: string, emptyLabel: string): void {
+  const sourceEl = img?.closest<HTMLElement>(".broadcast-layout-source") ?? null;
+  const isEmpty = !source;
+  setBroadcastSourceEmpty(sourceEl, isEmpty, emptyLabel);
+  if (!img) return;
+  img.hidden = isEmpty;
+  img.alt = alt;
+  if (!source) {
+    img.removeAttribute("src");
+    return;
+  }
+  img.onload = () => {
+    applyBattleLayoutConfig();
+  };
+  img.onerror = () => {
+    if (img.src.endsWith(BALL_MONSTER_IMAGE)) return;
+    img.src = BALL_MONSTER_IMAGE;
+  };
+  img.src = source;
+}
+
+function renderBroadcastPlayerSources(): void {
+  for (let index = 0; index < 3; index += 1) {
+    const entry = confirmedPlayerSelection[index];
+    const item = getPlayerSelectionItemByName(entry?.itemName ?? null);
+
+    setBroadcastImageSource(
+      broadcastPlayerPokemonEls[index],
+      entry ? getPlayerSelectionImageSrc(entry) : battleLayoutEditing ? getFixedPlayerSelectionImageSrc(index + 1) : null,
+      entry?.pokemonName ?? "",
+      `My Pokemon ${index + 1}`,
+    );
+
+    const itemNameEl = broadcastPlayerItemNameEls[index];
+    if (itemNameEl) {
+      const itemName = entry?.itemName ?? "";
+      itemNameEl.textContent = itemName;
+      setBroadcastSourceEmpty(itemNameEl, !itemName, `Item Name ${index + 1}`);
+    }
+
+    setBroadcastImageSource(
+      broadcastPlayerItemIconEls[index],
+      item?.imageSrc ?? null,
+      item?.nameJa ?? "",
+      `Item Icon ${index + 1}`,
+    );
+  }
+}
+
+function renderBroadcastOpponentSources(): void {
+  const slots = sceneDetectionState.displayScene === "battle" && confirmedOpponentRoster.slots.some((slot) => !!slot)
+    ? confirmedOpponentRoster.slots
+    : broadcastRecognitionStates.map((state) => state.confirmed);
+
+  for (let index = 0; index < 6; index += 1) {
+    const match = slots[index] ?? null;
+    setBroadcastImageSource(
+      broadcastOpponentPokemonEls[index],
+      match?.imageSrc ?? null,
+      match?.pokemonName ?? "",
+      `Opponent ${index + 1}`,
+    );
+  }
+}
+
 function countConfirmedOpponentSlots(): number {
   return confirmedOpponentRoster.slots.filter((slot) => !!slot).length;
 }
@@ -1394,9 +2334,10 @@ function countConfirmedPlayerSelection(): number {
 }
 
 function renderBroadcastOverlayState(context = "renderBroadcastOverlayState"): void {
-  renderBroadcastRoster();
-  renderBroadcastPlayerSelection();
+  renderBroadcastOpponentSources();
+  renderBroadcastPlayerSources();
   renderDamageRosterSlots();
+  renderBattleLayoutSourceList();
   if (isSceneDebugEnabled()) {
     console.debug("[recognition] overlay-render", {
       context,
@@ -1758,9 +2699,11 @@ function applyPlayerSelectionRecognitionResults(
   // 1パス目: selectionOrder が確定している結果を正位置に配置
   for (const result of results) {
     if (!result || !result.selectionOrder || result.selectionOrder < 1 || result.selectionOrder > 3) continue;
+    const pokemon = getPlayerSelectionPokemonByName(result.pokemonName);
     nextSelection[result.selectionOrder - 1] = {
       slotIndex: result.slotIndex,
       selectionOrder: result.selectionOrder,
+      pokemonId: pokemon?.id ?? null,
       pokemonName: result.pokemonName,
       itemName: result.itemName,
       score: result.score,
@@ -1776,6 +2719,7 @@ function applyPlayerSelectionRecognitionResults(
         displayIndex: index + 1,
         slotIndex: entry?.slotIndex ?? null,
         selectionOrder: entry?.selectionOrder ?? null,
+        pokemonId: entry?.pokemonId ?? null,
         pokemonName: entry?.pokemonName ?? null,
         itemName: entry?.itemName ?? null,
         score: entry?.score ?? null,
@@ -1794,6 +2738,7 @@ function applyPlayerSelectionRecognitionResults(
     })));
   }
   confirmedPlayerSelection = nextSelection;
+  syncFixedPlayerSelectionImagesFromState();
   logConfirmedPlayerSelectionState("confirmedPlayerSelection-updated");
   renderBroadcastOverlayState("applyPlayerSelectionRecognitionResults");
 }
@@ -2394,6 +3339,33 @@ function getPokemonById(pokemonId: string | null | undefined): Pokemon | null {
   return demoPokemon.find((p) => p.id === pokemonId) ?? null;
 }
 
+function applyTestPlayerSelectionByIds(pokemonIds: string[]): void {
+  confirmedPlayerSelection = Array.from({ length: 3 }, (_, index) => {
+    const pokemonId = pokemonIds[index] ?? "";
+    if (!pokemonId) return null;
+    const pokemon = getPokemonById(pokemonId);
+    return {
+      slotIndex: index,
+      selectionOrder: index + 1,
+      pokemonId: pokemon?.id ?? pokemonId,
+      pokemonName: pokemon?.name ?? pokemonId,
+      itemName: null,
+      score: 1,
+    };
+  });
+  syncFixedPlayerSelectionImagesFromState();
+  setSceneStatus("battle", "Player selection test");
+  if (videoWrapEl) videoWrapEl.dataset.overlayVisible = "true";
+  renderBroadcastOverlayState("applyTestPlayerSelectionByIds");
+}
+
+function installPlayerSelectionTestHelper(): void {
+  (window as any).championsTestPlayerSelection = (pokemonIds: string[] = ["0132", "0149", "0730"]) => {
+    applyTestPlayerSelectionByIds(pokemonIds);
+    return serializeConfirmedPlayerSelection();
+  };
+}
+
 function getSelectedDamageTeam(): TeamMember[] | null {
   if (teams.length === 0) return null;
   if (selectedDamageTeamIndex < 0 || selectedDamageTeamIndex >= teams.length) selectedDamageTeamIndex = 0;
@@ -2909,7 +3881,7 @@ let tab1MoveSearchText = "";
 // BOXのタイプ一覧（18タイプ）
 const ALL_TYPES = ["ノーマル","かくとう","ひこう","どく","じめん","いわ","むし","ゴースト","はがね","ほのお","みず","くさ","でんき","エスパー","こおり","ドラゴン","あく","フェアリー"];
 
-/** 日本語タイプ名 → SV画像ファイル名（src/img/type/sv/） */
+/** 日本語タイプ名 → SV画像ファイル名（img/type/sv/） */
 const TYPE_SV_IMG: Record<string, string> = {
   "ノーマル": "Normal", "かくとう": "Fighting", "ひこう": "Flying", "どく": "Poison",
   "じめん": "Ground", "いわ": "Rock", "むし": "Bug", "ゴースト": "Ghost",
@@ -6042,9 +7014,13 @@ function initTabs(): void {
 
 document.addEventListener("DOMContentLoaded", () => {
   updateAppScale();
-  window.addEventListener("resize", updateAppScale);
+  window.addEventListener("resize", () => {
+    updateAppScale();
+    updateBattleLayoutEditorBoxes();
+  });
 
   initTabs();
+  initBattleLayoutEditor();
 
   // チーム編成（タブ2）
   const teamCreateBtn = document.getElementById("team-create-btn");
@@ -6417,6 +7393,7 @@ document.addEventListener("DOMContentLoaded", () => {
     )
   ).then((arrays) => {
     demoPokemon = arrays.flat();
+    installPlayerSelectionTestHelper();
     renderDamageRosterSlots();
     if (tab1SelectTarget) {
       renderTab1SelectList();

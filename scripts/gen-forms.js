@@ -5,7 +5,7 @@
  *   1. GitHub API でHOMEスプライトフォルダのファイルリストを取得
  *   2. ID > 1025 のファイルを抽出（姿違い）
  *   3. 各IDについて:
- *      - HOMEスプライトを src/img/pokemon2/{id}.png にダウンロード
+ *      - HOMEスプライトを img/pokemon2/{id}.png にダウンロード
  *      - PokeAPI からタイプ・種族値・日本語名を取得
  *   4. src/renderer/data/pokemon_forms.json に保存
  *
@@ -17,7 +17,7 @@ const path = require("path");
 const https = require("https");
 
 const DATA_DIR = path.join(__dirname, "../src/renderer/data");
-const IMG_DIR = path.join(__dirname, "../src/img/pokemon2");
+const IMG_DIR = path.join(__dirname, "../img/pokemon2");
 const OUT_FILE = path.join(DATA_DIR, "pokemon_forms.json");
 
 const TYPE_EN_TO_JA = {
