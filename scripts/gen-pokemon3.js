@@ -11,7 +11,7 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 
-const IMG_DIR = path.join(__dirname, "../src/img/pokemon3");
+const IMG_DIR = path.join(__dirname, "../img/pokemon3");
 const DATA_DIR = path.join(__dirname, "../src/renderer/data");
 const FORMS_FILE = path.join(DATA_DIR, "pokemon_forms.json");
 

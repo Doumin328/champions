@@ -4,7 +4,7 @@ const dataDir = path.join(__dirname, '../src/renderer/data');
 
 // pokemon_csフォルダのIDセット
 const csIds = new Set(
-  fs.readdirSync(path.join(__dirname, '../src/img/pokemon_cs'))
+  fs.readdirSync(path.join(__dirname, '../img/pokemon_cs'))
     .filter(f => f.endsWith('.png'))
     .map(f => f.slice(0, -4))
 );

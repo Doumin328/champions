@@ -30,6 +30,7 @@
               <button type="button" class="video-scene-mode-btn" data-overlay-mode="force-on">ON</button>
               <button type="button" class="video-scene-mode-btn" data-overlay-mode="force-off">OFF</button>
             </div>
+            <button type="button" class="video-scene-mode-btn" id="battle-layout-edit-control">レイアウト編集</button>
             <label class="video-scene-toggle">
               <input type="checkbox" id="scene-detection-enabled" checked />
               <span>認識</span>
@@ -44,22 +45,30 @@
           <video id="video" autoplay playsinline></video>
           <div class="broadcast-layout" aria-hidden="true">
             <div class="broadcast-layout-backdrop"></div>
+            <div class="broadcast-layout-editor-panel">
+              <button type="button" class="broadcast-layout-editor-btn" id="battle-layout-edit-toggle">レイアウト編集</button>
+              <button type="button" class="broadcast-layout-editor-btn" id="battle-layout-reset-btn" hidden>リセット</button>
+            </div>
             <div class="broadcast-layout-headline">
               <span class="broadcast-layout-kicker">Pokemon Champions</span>
               <strong class="broadcast-layout-title">Battle Layout</strong>
             </div>
-            <aside class="broadcast-side-panel">
-              <div class="broadcast-side-header">
-                <span class="broadcast-side-label">LIVE SLOT VIEW</span>
-                <strong class="broadcast-side-name" id="broadcast-team-name">Opponent Preview</strong>
-              </div>
-              <div class="broadcast-roster" id="broadcast-roster"></div>
-            </aside>
-            <div class="broadcast-bottom-bar">
-              <div class="broadcast-info-card" id="broadcast-card-attacker"></div>
-              <div class="broadcast-info-card" id="broadcast-card-item"></div>
-              <div class="broadcast-info-card" id="broadcast-card-defender"></div>
-            </div>
+            <div class="broadcast-layout-source broadcast-player-pokemon" data-layout-source="playerPokemon1"><img id="broadcast-player-pokemon-1" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-player-pokemon" data-layout-source="playerPokemon2"><img id="broadcast-player-pokemon-2" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-player-pokemon" data-layout-source="playerPokemon3"><img id="broadcast-player-pokemon-3" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-player-item-name" data-layout-source="playerItemName1" id="broadcast-player-item-name-1"></div>
+            <div class="broadcast-layout-source broadcast-player-item-name" data-layout-source="playerItemName2" id="broadcast-player-item-name-2"></div>
+            <div class="broadcast-layout-source broadcast-player-item-name" data-layout-source="playerItemName3" id="broadcast-player-item-name-3"></div>
+            <div class="broadcast-layout-source broadcast-player-item-icon" data-layout-source="playerItemIcon1"><img id="broadcast-player-item-icon-1" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-player-item-icon" data-layout-source="playerItemIcon2"><img id="broadcast-player-item-icon-2" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-player-item-icon" data-layout-source="playerItemIcon3"><img id="broadcast-player-item-icon-3" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-opponent-pokemon" data-layout-source="opponentPokemon1"><img id="broadcast-opponent-pokemon-1" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-opponent-pokemon" data-layout-source="opponentPokemon2"><img id="broadcast-opponent-pokemon-2" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-opponent-pokemon" data-layout-source="opponentPokemon3"><img id="broadcast-opponent-pokemon-3" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-opponent-pokemon" data-layout-source="opponentPokemon4"><img id="broadcast-opponent-pokemon-4" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-opponent-pokemon" data-layout-source="opponentPokemon5"><img id="broadcast-opponent-pokemon-5" alt="" /></div>
+            <div class="broadcast-layout-source broadcast-opponent-pokemon" data-layout-source="opponentPokemon6"><img id="broadcast-opponent-pokemon-6" alt="" /></div>
+            <div class="broadcast-layout-edit-layer" id="broadcast-layout-edit-layer" aria-hidden="true"></div>
           </div>
           <div class="video-scene-status" id="scene-detection-status" aria-live="polite">
             <span class="video-scene-status-badge" id="scene-detection-badge">待機</span>
@@ -75,6 +84,7 @@
             <div class="streaming-tab-buttons" role="tablist">
               <button type="button" class="streaming-tab-btn is-active" data-streaming-tab="stream" role="tab" aria-selected="true">配信</button>
               <button type="button" class="streaming-tab-btn" data-streaming-tab="record" role="tab" aria-selected="false">録画</button>
+              <button type="button" class="streaming-tab-btn" data-streaming-tab="edit" role="tab" aria-selected="false">編集</button>
             </div>
             <button type="button" class="streaming-settings-open-btn" id="stream-settings-open-btn">設定</button>
           </div>
@@ -103,6 +113,44 @@
             <div id="streaming-tab-record" class="streaming-tab-panel" role="tabpanel" hidden>
               <div class="streaming-placeholder">
                 <span class="streaming-placeholder-text">録画機能は準備中です</span>
+              </div>
+            </div>
+
+            <div id="streaming-tab-edit" class="streaming-tab-panel streaming-tab-panel--edit" role="tabpanel" hidden>
+              <div class="battle-edit-layout">
+
+                <!-- 左: プリセットセクション -->
+                <div class="battle-preset-section">
+                  <div class="stream-section-header">
+                    <span class="stream-section-title">プリセット</span>
+                  </div>
+                  <div class="battle-preset-save-row">
+                    <input type="text" id="battle-preset-name-input" class="streaming-input battle-preset-name-input"
+                      placeholder="プリセット名" maxlength="40" aria-label="プリセット名" />
+                    <button type="button" id="battle-preset-save-btn" class="battle-preset-btn battle-preset-btn--save">保存</button>
+                  </div>
+                  <div class="battle-preset-load-row">
+                    <select id="battle-preset-select" class="streaming-select battle-preset-select" aria-label="保存済みプリセット">
+                      <option value="" disabled selected>-- プリセットを選択 --</option>
+                    </select>
+                  </div>
+                  <div class="battle-preset-action-row">
+                    <button type="button" id="battle-preset-load-btn" class="battle-preset-btn battle-preset-btn--load">読込</button>
+                    <button type="button" id="battle-preset-delete-btn" class="battle-preset-btn battle-preset-btn--delete">削除</button>
+                  </div>
+                </div>
+
+                <!-- 縦区切り -->
+                <div class="battle-edit-divider" aria-hidden="true"></div>
+
+                <!-- 右: ソースセクション -->
+                <div class="battle-source-section">
+                  <div class="stream-section-header">
+                    <span class="stream-section-title">ソース</span>
+                  </div>
+                  <div class="battle-source-list" id="battle-layout-source-list"></div>
+                </div>
+
               </div>
             </div>
 
