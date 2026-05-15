@@ -1035,6 +1035,7 @@ const broadcastPlayerItemIconEls = [1, 2, 3].map((index) => document.getElementB
 const broadcastOpponentPokemonEls = [1, 2, 3, 4, 5, 6].map((index) => document.getElementById(`broadcast-opponent-pokemon-${index}`) as HTMLImageElement | null);
 
 type SceneKind = "idle" | "selection" | "battle" | "unknown";
+type SelectionSceneDetectionMode = "none" | "complete-and-arrow" | "complete-only";
 
 interface NormalizedRect {
   x: number;
@@ -1058,6 +1059,7 @@ interface BroadcastBattleIndicator {
   id: string;
   targetState?: Exclude<SceneKind, "unknown">;
   detectFromScene?: Exclude<SceneKind, "unknown">;
+  scanSlotRects?: "player";
   rect: NormalizedRect;
   threshold: number;
   templateImage?: string;
@@ -1156,6 +1158,7 @@ interface SceneDetectionWorkerIndicator {
   id: string;
   targetState: Exclude<SceneKind, "unknown">;
   detectFromScene?: Exclude<SceneKind, "unknown">;
+  scanSlotRects?: "player";
   threshold: number;
   minTemplateScore?: number;
 }
@@ -1180,6 +1183,7 @@ interface SceneDetectionWorkerResult {
 
 const SCENE_DETECTION_INTERVAL_MS = 220;
 const SCENE_STABLE_MATCHES = 3;
+const BATTLE_TO_IDLE_STABLE_MATCHES = 8;
 const BROADCAST_RECOGNITION_INTERVAL_MS = 350;
 const SCENE_DETECTION_INTERVAL_WHILE_DAMAGE_TAB_MS = 550;
 const BROADCAST_RECOGNITION_INTERVAL_WHILE_DAMAGE_TAB_MS = 900;
@@ -1222,6 +1226,7 @@ const DEFAULT_BROADCAST_BATTLE_INDICATORS: BroadcastBattleIndicator[] = [
   {
     id: "selection-arrow",
     targetState: "selection",
+    scanSlotRects: "player",
     rect: { x: 0.0, y: 0.1574074074074074, width: 0.06145833333333334, height: 0.11851851851851852 },
     threshold: 0.9,
     templateImage: "scene/selection_arrow.png",
@@ -1310,6 +1315,7 @@ let sceneDetectionState: SceneDetectionState = {
 let sceneDetectionRunning = false;
 let sceneDetectionTimerHandle: number | null = null;
 let sceneDetectionLastRunAt = 0;
+let latestSelectionSceneDetectionMode: SelectionSceneDetectionMode = "none";
 let broadcastRecognitionCanvas: HTMLCanvasElement | null = null;
 let broadcastRecognitionContext: CanvasRenderingContext2D | null = null;
 let sceneTemplateCanvas: HTMLCanvasElement | null = null;
@@ -1586,11 +1592,14 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
                   : indicator.detectFromScene === "battle"
                     ? "battle"
                     : undefined;
+            const scanSlotRects: "player" | undefined =
+              indicator.scanSlotRects === "player" || indicator.id === "selection-arrow" ? "player" : undefined;
             return {
               ...indicator,
               rect: clampRect(indicator.rect),
               targetState,
               detectFromScene,
+              scanSlotRects,
             };
           });
         if (indicators.length > 0) nextIndicators = indicators;
@@ -1628,6 +1637,7 @@ function createSceneDetectionWorkerIndicators(): SceneDetectionWorkerIndicator[]
     id: indicator.id,
     targetState: indicator.targetState ?? "battle",
     detectFromScene: indicator.detectFromScene,
+    scanSlotRects: indicator.scanSlotRects,
     threshold: indicator.threshold,
     minTemplateScore: indicator.minTemplateScore,
   }));
@@ -1727,23 +1737,25 @@ function collectSceneDetectionSamples(
     const scaleCandidates = scaleOffset > 0 ? [1 - scaleOffset, 1, 1 + scaleOffset] : [1];
     const variants: Uint8ClampedArray[] = [];
 
-    for (const scale of scaleCandidates) {
-      const scaledRect: NormalizedRect = {
-        x: indicator.rect.x + indicator.rect.width * (1 - scale) * 0.5,
-        y: indicator.rect.y + indicator.rect.height * (1 - scale) * 0.5,
-        width: indicator.rect.width * scale,
-        height: indicator.rect.height * scale,
-      };
-      for (const dx of dxCandidates) {
-        for (const dy of dyCandidates) {
-          const candidateRect = clampRect({
-            x: scaledRect.x + indicator.rect.width * dx,
-            y: scaledRect.y + indicator.rect.height * dy,
-            width: scaledRect.width,
-            height: scaledRect.height,
-          });
-          const observed = cropRectFromVideo(candidateRect, template.width, template.height, sceneSampleCache);
-          if (observed) variants.push(observed);
+    for (const baseRect of getIndicatorBaseRects(indicator)) {
+      for (const scale of scaleCandidates) {
+        const scaledRect: NormalizedRect = {
+          x: baseRect.x + baseRect.width * (1 - scale) * 0.5,
+          y: baseRect.y + baseRect.height * (1 - scale) * 0.5,
+          width: baseRect.width * scale,
+          height: baseRect.height * scale,
+        };
+        for (const dx of dxCandidates) {
+          for (const dy of dyCandidates) {
+            const candidateRect = clampRect({
+              x: scaledRect.x + baseRect.width * dx,
+              y: scaledRect.y + baseRect.height * dy,
+              width: scaledRect.width,
+              height: scaledRect.height,
+            });
+            const observed = cropRectFromVideo(candidateRect, template.width, template.height, sceneSampleCache);
+            if (observed) variants.push(observed);
+          }
         }
       }
     }
@@ -1762,10 +1774,30 @@ function buildSceneDetectionDebugLines(
 ): string[] {
   return [
     `current=${currentScene} next=${nextScene}`,
+    ...(nextScene === "selection" ? [`selectionRule=${getSelectionSceneDetectionMode(scores)}`] : []),
     ...scores.map(({ indicatorId, score, threshold, matched, detectFromScene }) =>
       `${matched ? "PASS" : "FAIL"} ${indicatorId}${detectFromScene ? ` [from:${detectFromScene}]` : ""}: ${score.toFixed(4)} / ${threshold.toFixed(2)}`
     ),
   ];
+}
+
+function getSelectionSceneDetectionMode(scores: SceneDetectionWorkerScore[]): SelectionSceneDetectionMode {
+  const completeScore = scores.find(({ indicatorId }) => indicatorId === "selection-complete");
+  if (!completeScore) {
+    return scores.every(({ matched }) => matched) ? "complete-and-arrow" : "none";
+  }
+
+  if (!completeScore.matched) return "none";
+
+  const arrowScores = scores.filter(({ indicatorId }) => indicatorId === "selection-arrow");
+  if (arrowScores.length === 0 || arrowScores.some(({ matched }) => matched)) {
+    return "complete-and-arrow";
+  }
+  return "complete-only";
+}
+
+function detectSelectionSceneFromScores(scores: SceneDetectionWorkerScore[]): SceneKind {
+  return getSelectionSceneDetectionMode(scores) === "none" ? "unknown" : "selection";
 }
 
 function detectSceneFromVideoSync(): SceneKind {
@@ -1788,12 +1820,15 @@ function detectSceneFromVideoSync(): SceneKind {
 
   if (isSceneDebugEnabled() && nextScene === "idle") {
     updateSceneDetectionDebug(buildSceneDetectionDebugLines(nextScene, sceneDetectionState.displayScene, scores));
+  } else if (isSceneDebugEnabled() && nextScene === "selection") {
+    updateSceneDetectionDebug(buildSceneDetectionDebugLines(nextScene, sceneDetectionState.displayScene, scores));
   } else {
     updateSceneDetectionDebug([]);
   }
 
   if (nextScene === "selection") {
-    return scores.every(({ matched }) => matched) ? "selection" : "unknown";
+    latestSelectionSceneDetectionMode = getSelectionSceneDetectionMode(scores);
+    return detectSelectionSceneFromScores(scores);
   }
 
   if (nextScene === "idle") {
@@ -1846,8 +1881,13 @@ async function detectSceneFromVideo(): Promise<SceneKind> {
     const result = await resultPromise;
     if (isSceneDebugEnabled() && nextScene === "idle") {
       updateSceneDetectionDebug(buildSceneDetectionDebugLines(nextScene, sceneDetectionState.displayScene, result.scores));
+    } else if (isSceneDebugEnabled() && nextScene === "selection") {
+      updateSceneDetectionDebug(buildSceneDetectionDebugLines(nextScene, sceneDetectionState.displayScene, result.scores));
     } else {
       updateSceneDetectionDebug([]);
+    }
+    if (nextScene === "selection") {
+      latestSelectionSceneDetectionMode = getSelectionSceneDetectionMode(result.scores);
     }
     return result.rawScene;
   } catch {
@@ -1936,6 +1976,26 @@ function computeTemplateScore(observed: Uint8ClampedArray, template: Uint8Clampe
   return Math.max(0, 1 - totalDiff / (pixelCount * 255));
 }
 
+function getIndicatorBaseRects(indicator: BroadcastBattleIndicator): NormalizedRect[] {
+  if (indicator.scanSlotRects !== "player" || broadcastPlayerSlotRects.length === 0) {
+    return [indicator.rect];
+  }
+
+  const firstSlot = broadcastPlayerSlotRects[0];
+  if (!firstSlot || firstSlot.height <= 0) return [indicator.rect];
+
+  const yOffsetRatio = (indicator.rect.y - firstSlot.y) / firstSlot.height;
+  const heightRatio = indicator.rect.height / firstSlot.height;
+  return broadcastPlayerSlotRects.map((slotRect) =>
+    clampRect({
+      x: indicator.rect.x,
+      y: slotRect.y + slotRect.height * yOffsetRatio,
+      width: indicator.rect.width,
+      height: slotRect.height * heightRatio,
+    })
+  );
+}
+
 function getBestIndicatorScore(indicator: BroadcastBattleIndicator, cache: SceneSampleCache | null = null): number {
   const template = broadcastIndicatorTemplates.get(indicator.id);
   if (!template) return 0;
@@ -1948,24 +2008,26 @@ function getBestIndicatorScore(indicator: BroadcastBattleIndicator, cache: Scene
   const scaleCandidates = scaleOffset > 0 ? [1 - scaleOffset, 1, 1 + scaleOffset] : [1];
   let bestScore = 0;
 
-  for (const scale of scaleCandidates) {
-    const scaledRect: NormalizedRect = {
-      x: indicator.rect.x + indicator.rect.width * (1 - scale) * 0.5,
-      y: indicator.rect.y + indicator.rect.height * (1 - scale) * 0.5,
-      width: indicator.rect.width * scale,
-      height: indicator.rect.height * scale,
-    };
-    for (const dx of dxCandidates) {
-      for (const dy of dyCandidates) {
-        const candidateRect = clampRect({
-          x: scaledRect.x + indicator.rect.width * dx,
-          y: scaledRect.y + indicator.rect.height * dy,
-          width: scaledRect.width,
-          height: scaledRect.height,
-        });
-        const observed = cropRectFromVideo(candidateRect, template.width, template.height, cache);
-        if (!observed) continue;
-        bestScore = Math.max(bestScore, computeTemplateScore(observed, template.data));
+  for (const baseRect of getIndicatorBaseRects(indicator)) {
+    for (const scale of scaleCandidates) {
+      const scaledRect: NormalizedRect = {
+        x: baseRect.x + baseRect.width * (1 - scale) * 0.5,
+        y: baseRect.y + baseRect.height * (1 - scale) * 0.5,
+        width: baseRect.width * scale,
+        height: baseRect.height * scale,
+      };
+      for (const dx of dxCandidates) {
+        for (const dy of dyCandidates) {
+          const candidateRect = clampRect({
+            x: scaledRect.x + baseRect.width * dx,
+            y: scaledRect.y + baseRect.height * dy,
+            width: scaledRect.width,
+            height: scaledRect.height,
+          });
+          const observed = cropRectFromVideo(candidateRect, template.width, template.height, cache);
+          if (!observed) continue;
+          bestScore = Math.max(bestScore, computeTemplateScore(observed, template.data));
+        }
       }
     }
   }
@@ -2003,7 +2065,7 @@ function detectIdleSceneFromScores(
   }
 
   const battleSpecificScores = scores.filter(({ indicator }) => indicator.detectFromScene === "battle");
-  if (battleSpecificScores.some(({ matched }) => matched)) {
+  if (battleSpecificScores.length >= 2 && battleSpecificScores.every(({ matched }) => matched)) {
     return "idle";
   }
 
@@ -2027,7 +2089,10 @@ function updateSceneDetectionDebug(lines: string[]): void {
 }
 
 function getRequiredStableMatches(from: SceneKind, to: SceneKind): number {
-  if (from === "battle" && to === "idle") return 5;
+  if (from === "idle" && to === "selection" && latestSelectionSceneDetectionMode === "complete-only") {
+    return SCENE_STABLE_MATCHES + 2;
+  }
+  if (from === "battle" && to === "idle") return BATTLE_TO_IDLE_STABLE_MATCHES;
   return SCENE_STABLE_MATCHES;
 }
 

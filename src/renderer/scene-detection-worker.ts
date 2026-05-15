@@ -4,6 +4,7 @@ type WorkerIndicator = {
   id: string;
   targetState: Exclude<WorkerSceneKind, "unknown">;
   detectFromScene?: Exclude<WorkerSceneKind, "unknown">;
+  scanSlotRects?: "player";
   threshold: number;
   minTemplateScore?: number;
 };
@@ -39,7 +40,7 @@ type DetectSceneScore = {
   score: number;
   threshold: number;
   matched: boolean;
-  detectFromScene?: Exclude<SceneKind, "unknown">;
+  detectFromScene?: Exclude<WorkerSceneKind, "unknown">;
 };
 
 type DetectSceneResultMessage = {
@@ -72,7 +73,7 @@ function workerDetectIdleSceneFromScores(scores: DetectSceneScore[], currentScen
   }
 
   const battleSpecificScores = scores.filter(({ detectFromScene }) => detectFromScene === "battle");
-  if (battleSpecificScores.some(({ matched }) => matched)) {
+  if (battleSpecificScores.length >= 2 && battleSpecificScores.every(({ matched }) => matched)) {
     return "idle";
   }
 
@@ -82,6 +83,22 @@ function workerDetectIdleSceneFromScores(scores: DetectSceneScore[], currentScen
   }
 
   return "unknown";
+}
+
+function workerDetectSelectionSceneFromScores(scores: DetectSceneScore[]): WorkerSceneKind {
+  const completeScore = scores.find(({ indicatorId }) => indicatorId === "selection-complete");
+  if (!completeScore) {
+    return scores.every(({ matched }) => matched) ? "selection" : "unknown";
+  }
+
+  if (!completeScore.matched) return "unknown";
+
+  const arrowScores = scores.filter(({ indicatorId }) => indicatorId === "selection-arrow");
+  if (arrowScores.length === 0 || arrowScores.some(({ matched }) => matched)) {
+    return "selection";
+  }
+
+  return "selection";
 }
 
 function workerDetectScene(message: DetectSceneMessage): DetectSceneResultMessage {
@@ -123,7 +140,7 @@ function workerDetectScene(message: DetectSceneMessage): DetectSceneResultMessag
 
   let rawScene: WorkerSceneKind = "unknown";
   if (nextScene === "selection") {
-    rawScene = scores.every(({ matched }) => matched) ? "selection" : "unknown";
+    rawScene = workerDetectSelectionSceneFromScores(scores);
   } else if (nextScene === "idle") {
     rawScene = workerDetectIdleSceneFromScores(scores, message.currentScene);
   } else {
