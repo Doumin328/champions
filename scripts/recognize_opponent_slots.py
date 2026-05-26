@@ -140,7 +140,12 @@ for raw_line in sys.stdin:
         if not isinstance(rects, dict) or not isinstance(rects.get("selectionBadgeRect"), dict):
             emit({"type": "player-badge-result", "requestId": request_id, "results": []})
             continue
-        results = detect_player_selection_badges(slots, rects["selectionBadgeRect"])
+        selection_badge_number_rect = rects.get("selectionBadgeNumberRect")
+        results = detect_player_selection_badges(
+            slots,
+            rects["selectionBadgeRect"],
+            selection_badge_number_rect if isinstance(selection_badge_number_rect, dict) else None,
+        )
         emit({"type": "player-badge-result", "requestId": request_id, "results": results})
         continue
 

@@ -10,6 +10,30 @@ const FFMPEG_BIN = ffmpegStatic ?? "ffmpeg";
 const PYTHON_BIN = process.env.PYTHON_BIN ?? "python";
 const RECOGNITION_SCRIPT_PATH = path.resolve(process.cwd(), "scripts", "recognize_opponent_slots.py");
 
+type RendererDebugLogPayload = {
+  label?: string;
+  data?: unknown;
+  table?: unknown;
+};
+
+function writeRecognitionDebugLog(label: string, value: unknown): void {
+  const timestamp = new Date().toISOString();
+  const json = JSON.stringify(value, null, 2);
+  const asciiSafeJson = json.replace(/[^\x00-\x7F]/g, (char) =>
+    `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`
+  );
+  const consoleLine = `[${timestamp}] [${label}] ${asciiSafeJson}\n`;
+  const fileLine = `[${timestamp}] [${label}] ${json}\n`;
+  console.log(consoleLine.trimEnd());
+  try {
+    const outputDir = path.resolve(process.cwd(), "outputImg");
+    fs.mkdirSync(outputDir, { recursive: true });
+    fs.appendFileSync(path.join(outputDir, "player_recognition_debug.log"), fileLine, "utf-8");
+  } catch {
+    // Debug logging should never affect the app.
+  }
+}
+
 type RecognitionWorkerReadyMessage = {
   type: "ready";
   templateCount: number;
@@ -135,6 +159,16 @@ const recognitionPendingRequests = new Map<
   }
 >();
 
+ipcMain.on("debug:renderer-log", (_event, payload: RendererDebugLogPayload) => {
+  const label = typeof payload?.label === "string" && payload.label ? payload.label : "renderer-debug";
+  if (payload?.data !== undefined) {
+    writeRecognitionDebugLog(label, payload.data);
+  }
+  if (payload?.table !== undefined) {
+    writeRecognitionDebugLog(`${label}:table`, payload.table);
+  }
+});
+
 function rejectRecognitionPending(reason: string): void {
   for (const pending of recognitionPendingRequests.values()) {
     pending.resolve({ success: false, error: reason });
@@ -203,6 +237,10 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
         return;
       }
       if (message.type === "error") {
+        writeRecognitionDebugLog("recognition-worker-error-message", {
+          message: message.message,
+          ready: recognitionWorkerReady,
+        });
         if (!recognitionWorkerReady) {
           finalizeReady({ success: false, error: message.message });
         }
@@ -220,6 +258,10 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
     worker.stderr?.on("data", (data: Buffer) => {
       const message = data.toString().trim();
       if (!message) return;
+      writeRecognitionDebugLog("recognition-worker-stderr", {
+        message,
+        ready: recognitionWorkerReady,
+      });
       if (!recognitionWorkerReady && recognitionWorkerReadyPromise) {
         finalizeReady({ success: false, error: message });
       }
@@ -229,6 +271,9 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
     worker.on("error", (error) => {
       recognitionWorker = null;
       recognitionWorkerReady = false;
+      writeRecognitionDebugLog("recognition-worker-process-error", {
+        message: error.message,
+      });
       finalizeReady({ success: false, error: error.message });
       rejectRecognitionPending(error.message);
     });
@@ -238,6 +283,11 @@ function ensureRecognitionWorker(): Promise<{ success: boolean; error?: string; 
       recognitionWorker = null;
       recognitionWorkerReady = false;
       const reason = `Recognition worker exited (${signal ?? code ?? "unknown"})`;
+      writeRecognitionDebugLog("recognition-worker-exit", {
+        code,
+        signal,
+        reason,
+      });
       if (recognitionWorkerReadyPromise) {
         finalizeReady({ success: false, error: reason });
       }
@@ -252,6 +302,11 @@ function sendRecognitionWorkerRequest<TResults>(payload: object): Promise<{ succ
   return new Promise(async (resolve) => {
     const ready = await ensureRecognitionWorker();
     if (!ready.success || !recognitionWorker?.stdin || recognitionWorker.stdin.destroyed) {
+      writeRecognitionDebugLog("recognition-worker-request-unavailable", {
+        error: ready.error ?? "Recognition worker unavailable",
+        hasWorker: !!recognitionWorker,
+        stdinDestroyed: recognitionWorker?.stdin?.destroyed ?? null,
+      });
       resolve({ success: false, error: ready.error ?? "Recognition worker unavailable" });
       return;
     }
@@ -285,8 +340,11 @@ ipcMain.handle("recognition:recognize-player-selection", async (_event, payload:
   slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>;
   rects: {
     selectionBadgeRect: { x: number; y: number; width: number; height: number };
+    selectionBadgeNumberRect?: { x: number; y: number; width: number; height: number };
     pokemonNameRect: { x: number; y: number; width: number; height: number };
     itemNameRect: { x: number; y: number; width: number; height: number };
+    pokemonSpriteRect?: { x: number; y: number; width: number; height: number };
+    visualRecognition?: { enabled?: boolean; modelName?: string };
   };
   trackedSelections?: Array<{ slotIndex: number; selectionOrder: number }>;
 }) => {
@@ -302,6 +360,7 @@ ipcMain.handle("recognition:detect-player-selection-badges", async (_event, payl
   slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>;
   rects: {
     selectionBadgeRect: { x: number; y: number; width: number; height: number };
+    selectionBadgeNumberRect?: { x: number; y: number; width: number; height: number };
   };
 }) => {
   return sendRecognitionWorkerRequest<PlayerSelectionBadgeWorkerResultMessage["results"]>({

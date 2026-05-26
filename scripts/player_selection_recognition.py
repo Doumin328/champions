@@ -22,6 +22,7 @@ DIGIT_PATTERN = re.compile(r"[123]")
 WINDOWS_OCR_TIMEOUT_SECONDS = 20
 
 _badge_templates: dict[int, np.ndarray] | None = None
+_badge_number_templates: dict[tuple[float, float, float, float], dict[int, np.ndarray]] = {}
 
 
 def load_player_pokemon_names() -> list[str]:
@@ -95,8 +96,25 @@ def crop_normalized_rect(image: np.ndarray, rect: dict[str, float]) -> np.ndarra
     return image[y:y + h, x:x + w]
 
 
+def rect_cache_key(rect: dict[str, float]) -> tuple[float, float, float, float]:
+    return (
+        round(float(rect["x"]), 4),
+        round(float(rect["y"]), 4),
+        round(float(rect["width"]), 4),
+        round(float(rect["height"]), 4),
+    )
+
+
 def prepare_badge_match_image(image: np.ndarray) -> np.ndarray:
     resized = cv2.resize(image, (96, 96), interpolation=cv2.INTER_CUBIC)
+    gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (3, 3), 0)
+    _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return thresh
+
+
+def prepare_badge_number_match_image(image: np.ndarray) -> np.ndarray:
+    resized = cv2.resize(image, (64, 64), interpolation=cv2.INTER_CUBIC)
     gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (3, 3), 0)
     _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -117,6 +135,25 @@ def load_badge_templates() -> dict[int, np.ndarray]:
           continue
       templates[digit] = prepare_badge_match_image(image)
     _badge_templates = templates
+    return templates
+
+
+def load_badge_number_templates(number_rect: dict[str, float]) -> dict[int, np.ndarray]:
+    key = rect_cache_key(number_rect)
+    if key in _badge_number_templates:
+        return _badge_number_templates[key]
+
+    templates: dict[int, np.ndarray] = {}
+    for digit in (1, 2, 3):
+        template_path = BADGE_TEMPLATE_DIR / f"{digit}.png"
+        if not template_path.exists():
+            continue
+        image = cv2.imread(str(template_path), cv2.IMREAD_COLOR)
+        if image is None:
+            continue
+        number_crop = crop_normalized_rect(image, number_rect)
+        templates[digit] = prepare_badge_number_match_image(number_crop)
+    _badge_number_templates[key] = templates
     return templates
 
 
@@ -237,22 +274,6 @@ def make_image_id(variant: np.ndarray, kind: str, index: int) -> str:
     return hashlib.sha1(key_seed).hexdigest()
 
 
-def extract_ocr_texts(image: np.ndarray, kind: str) -> list[str]:
-    variants = prepare_ocr_variants(image, kind)
-    batch_inputs: list[tuple[str, np.ndarray]] = []
-    for index, variant in enumerate(variants):
-        key_seed = variant.tobytes()[:128] + bytes(f"{kind}-{index}", "utf-8")
-        image_id = hashlib.sha1(key_seed).hexdigest()
-        batch_inputs.append((image_id, variant))
-    results = run_windows_ocr_batch(batch_inputs)
-    texts: list[str] = []
-    for image_id, _variant in batch_inputs:
-        text = results.get(image_id, "").strip()
-        if text:
-            texts.append(text)
-    return texts
-
-
 def pick_selection_order(texts: list[str]) -> int | None:
     for text in texts:
         normalized = normalize_text(text)
@@ -265,9 +286,35 @@ def pick_selection_order(texts: list[str]) -> int | None:
     return None
 
 
-def detect_selection_order_from_badge_image(image: np.ndarray) -> tuple[int | None, float]:
+def detect_selection_order_from_badge_image(
+    image: np.ndarray,
+    number_rect: dict[str, float] | None = None,
+) -> tuple[int | None, float]:
+    if image is None or image.size == 0:
+        return None, 0.0
+
+    if number_rect is not None:
+        number_templates = load_badge_number_templates(number_rect)
+        if number_templates:
+            number_crop = crop_normalized_rect(image, number_rect)
+            prepared_number = prepare_badge_number_match_image(number_crop)
+            best_digit: int | None = None
+            best_score = -1.0
+            second_score = -1.0
+            for digit, template in number_templates.items():
+                result = cv2.matchTemplate(prepared_number, template, cv2.TM_CCOEFF_NORMED)
+                score = float(result.max()) if result.size > 0 else -1.0
+                if score > best_score:
+                    second_score = best_score
+                    best_digit = digit
+                    best_score = score
+                elif score > second_score:
+                    second_score = score
+            if best_score >= 0.52 and best_score - max(0.0, second_score) >= 0.10:
+                return best_digit, best_score
+
     templates = load_badge_templates()
-    if not templates or image is None or image.size == 0:
+    if not templates:
         return None, 0.0
 
     prepared = prepare_badge_match_image(image)
@@ -284,7 +331,10 @@ def detect_selection_order_from_badge_image(image: np.ndarray) -> tuple[int | No
     return best_digit, best_score
 
 
-def detect_selection_badge_presence(image: np.ndarray) -> tuple[bool, float, dict[str, float | int | None]]:
+def detect_selection_badge_presence(
+    image: np.ndarray,
+    number_rect: dict[str, float] | None = None,
+) -> tuple[bool, float, dict[str, float | int | None]]:
     if image is None or image.size == 0:
         return False, 0.0, {
             "templateOrder": None,
@@ -292,30 +342,41 @@ def detect_selection_badge_presence(image: np.ndarray) -> tuple[bool, float, dic
             "mean": 0.0,
             "std": 0.0,
             "brightRatio": 0.0,
+            "whiteRatio": 0.0,
+            "whiteScore": 0.0,
             "edgeRatio": 0.0,
         }
 
-    selection_order, template_score = detect_selection_order_from_badge_image(image)
+    selection_order, template_score = detect_selection_order_from_badge_image(image, number_rect)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     mean_value = float(np.mean(gray))
     std_value = float(np.std(gray))
     bright_ratio = float(np.count_nonzero(gray > 185) / max(1, gray.size))
+    white_mask = cv2.inRange(
+        image,
+        np.array([230, 230, 230], dtype=np.uint8),
+        np.array([255, 255, 255], dtype=np.uint8),
+    )
+    white_ratio = float(np.count_nonzero(white_mask) / max(1, white_mask.size))
     edges = cv2.Canny(gray, 50, 140)
     edge_ratio = float(np.count_nonzero(edges) / max(1, edges.size))
 
     mean_score = max(0.0, min(1.0, (mean_value - 145.0) / 55.0))
     contrast_score = max(0.0, min(1.0, (std_value - 38.0) / 30.0))
     bright_score = max(0.0, min(1.0, (bright_ratio - 0.18) / 0.28))
+    white_score = max(0.0, min(1.0, (white_ratio - 0.015) / 0.045))
     edge_score = max(0.0, min(1.0, (edge_ratio - 0.08) / 0.10))
     template_presence_score = max(0.0, min(1.0, template_score / 0.45))
     confidence = (
-        mean_score * 0.28
-        + contrast_score * 0.34
-        + bright_score * 0.18
-        + edge_score * 0.08
+        mean_score * 0.24
+        + contrast_score * 0.28
+        + bright_score * 0.14
+        + white_score * 0.16
+        + edge_score * 0.06
         + template_presence_score * 0.12
     )
     confidence = max(confidence, template_presence_score * 0.86)
+    confidence = max(confidence, white_score * 0.62)
 
     return confidence >= 0.48, round(float(confidence), 4), {
         "templateOrder": selection_order,
@@ -323,6 +384,8 @@ def detect_selection_badge_presence(image: np.ndarray) -> tuple[bool, float, dic
         "mean": round(mean_value, 2),
         "std": round(std_value, 2),
         "brightRatio": round(bright_ratio, 4),
+        "whiteRatio": round(white_ratio, 4),
+        "whiteScore": round(white_score, 4),
         "edgeRatio": round(edge_ratio, 4),
     }
 
@@ -330,6 +393,7 @@ def detect_selection_badge_presence(image: np.ndarray) -> tuple[bool, float, dic
 def detect_player_selection_badges(
     slots: list[dict[str, Any]],
     selection_badge_rect: dict[str, float],
+    selection_badge_number_rect: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     import base64 as _base64
 
@@ -357,7 +421,7 @@ def detect_player_selection_badges(
             continue
 
         badge_crop = crop_normalized_rect(image, selection_badge_rect)
-        is_selected, confidence, features = detect_selection_badge_presence(badge_crop)
+        is_selected, confidence, features = detect_selection_badge_presence(badge_crop, selection_badge_number_rect)
         results.append({
             "slotIndex": slot_index,
             "isSelected": is_selected,
@@ -414,26 +478,6 @@ def is_low_confidence_short_candidate(name: str | None, score: float) -> bool:
         return False
     normalized = normalize_text(name)
     return len(normalized) <= 3 and score < 0.86
-
-
-def infer_mega_stone_name(pokemon_name: str | None, texts: list[str]) -> tuple[str | None, float]:
-    if not pokemon_name:
-        return None, 0.0
-    normalized_text = normalize_text(" ".join(texts))
-    if "ナイト" not in normalized_text:
-        return None, 0.0
-
-    normalized_pokemon = normalize_text(pokemon_name)
-    if normalized_pokemon and normalized_pokemon in normalized_text:
-        return f"{pokemon_name}ナイト", 0.98
-
-    if pokemon_name.startswith("メガ") and len(pokemon_name) > len("メガ"):
-        base_name = pokemon_name[len("メガ"):]
-        normalized_base = normalize_text(base_name)
-        if normalized_base and normalized_base in normalized_text:
-            return f"{base_name}ナイト", 0.96
-
-    return f"{pokemon_name}ナイト", 0.88
 
 
 def best_dictionary_match(texts: list[str], dictionary: list[str]) -> tuple[str | None, float]:
@@ -539,19 +583,21 @@ def recognize_player_selection_slots(
         item_crop_texts = collect_texts("item_crop", max_variants=2)
         badge_crop_texts = collect_texts("badge_crop")
 
+        has_tracked_orders = tracked_orders is not None
         tracked_selection_order = tracked_orders.get(slot_index) if tracked_orders else None
         selection_order = tracked_selection_order if tracked_selection_order is not None else None
-        if selection_order is None:
+        if selection_order is None and not has_tracked_orders:
             selection_order = pick_selection_order(full_texts)
         badge_score = 0.72 if selection_order is not None else 0.0
-        if selection_order is None:
-            selection_order, badge_score = detect_selection_order_from_badge_image(sd["badge_crop"])
-        if selection_order is None:
+        if selection_order is None and not has_tracked_orders:
+            selection_order, badge_score = detect_selection_order_from_badge_image(
+                sd["badge_crop"],
+                rects.get("selectionBadgeNumberRect"),
+            )
+        if selection_order is None and not has_tracked_orders:
             selection_order = pick_selection_order(badge_crop_texts)
             badge_score = 0.4 if selection_order is not None else 0.0
-        if tracked_selection_order is None and tracked_orders and selection_order in set(tracked_orders.values()):
-            selection_order = None
-            badge_score = 0.0
+        has_selection_order = selection_order is not None and 1 <= selection_order <= 3
 
         slot_pokemon_name, slot_pokemon_score = best_dictionary_match(full_texts_name, pokemon_names)
         crop_pokemon_name, crop_pokemon_score = best_dictionary_match(name_crop_texts, pokemon_names)
@@ -560,20 +606,14 @@ def recognize_player_selection_slots(
         else:
             pokemon_name, pokemon_score = crop_pokemon_name, crop_pokemon_score
 
-        # Use only the OCR variants that read text reliably. Binary/inverted full-slot variants
-        # often pick up neighboring slot noise and can overpower the actual item crop.
-        item_texts = item_crop_texts + full_texts_name
-        mega_stone_name, mega_stone_score = infer_mega_stone_name(pokemon_name, item_texts)
-        if mega_stone_name:
-            item_name, item_score = mega_stone_name, mega_stone_score
-        else:
-            item_name, item_score = best_dictionary_match(item_texts, item_names)
-            if is_low_confidence_short_candidate(item_name, item_score):
-                item_name, item_score = None, 0.0
+        item_name, item_score = best_dictionary_match(item_crop_texts, item_names)
+        if item_score < 0.34:
+            item_name, item_score = best_dictionary_match(full_texts_name, item_names)
+        if is_low_confidence_short_candidate(item_name, item_score):
+            item_name, item_score = None, 0.0
 
-        has_selection_order = selection_order is not None and 1 <= selection_order <= 3
-        recognized_pokemon_name = pokemon_name if has_selection_order and pokemon_score >= 0.42 else None
-        recognized_item_name = item_name if has_selection_order and item_score >= 0.34 else None
+        recognized_pokemon_name = pokemon_name if pokemon_score >= 0.42 else None
+        recognized_item_name = item_name if item_score >= 0.34 else None
         overall_score = (badge_score + pokemon_score + item_score) / 3 if has_selection_order else 0.0
         results.append({
             "slotIndex": slot_index,
@@ -588,6 +628,14 @@ def recognize_player_selection_slots(
                 "badge": badge_crop_texts,
                 "selectedPokemonName": name_crop_texts if selection_order is not None else [],
                 "selectedItemName": item_crop_texts if selection_order is not None else [],
+            },
+            "debugSlotRecognition": {
+                "ocrPokemonName": pokemon_name,
+                "ocrPokemonScore": round(float(pokemon_score), 4),
+                "slotPokemonName": slot_pokemon_name,
+                "slotPokemonScore": round(float(slot_pokemon_score), 4),
+                "cropPokemonName": crop_pokemon_name,
+                "cropPokemonScore": round(float(crop_pokemon_score), 4),
             },
         })
 

@@ -11,22 +11,27 @@
     { "x": 0.042, "y": 0.146, "width": 0.273, "height": 0.101 },
     { "x": 0.042, "y": 0.264, "width": 0.273, "height": 0.101 },
     { "x": 0.042, "y": 0.382, "width": 0.273, "height": 0.101 },
-    { "x": 0.042, "y": 0.500, "width": 0.273, "height": 0.101 },
-    { "x": 0.042, "y": 0.619, "width": 0.273, "height": 0.101 },
-    { "x": 0.042, "y": 0.737, "width": 0.273, "height": 0.101 }
+    { "x": 0.042, "y": 0.498, "width": 0.273, "height": 0.101 },
+    { "x": 0.042, "y": 0.614, "width": 0.273, "height": 0.101 },
+    { "x": 0.042, "y": 0.730, "width": 0.273, "height": 0.101 }
   ],
   "playerSelectionBadgeRect": { "x": 0.0, "y": 0.10, "width": 0.17, "height": 0.74 },
   "playerPokemonNameRect": { "x": 0.10, "y": 0.00, "width": 0.65, "height": 0.40 },
   "playerItemNameRect": { "x": 0.10, "y": 0.50, "width": 0.57, "height": 0.40 },
+  "playerPokemonSpriteRect": { "x": 0.72, "y": 0.00, "width": 0.28, "height": 1.00 },
+  "playerPokemonVisualRecognition": {
+    "enabled": false,
+    "modelName": "facebook/dinov3-vits16-pretrain-lvd1689m"
+  },
   "spriteSubrect": { "x": 0.03, "y": 0.08, "width": 0.54, "height": 1.00 },
   "battleIndicators": [
     {
       "id": "selection-complete",
       "targetState": "selection",
       "rect": { "x": 0.15625, "y": 0.8407407407407408, "width": 0.13020833333333334, "height": 0.05925925925925926 },
-      "threshold": 0.93,
+      "threshold": 0.95,
       "templateImage": "scene/selection_complete_text.png",
-      "minTemplateScore": 0.93,
+      "minTemplateScore": 0.95,
       "templateSearchOffsetX": 0.02,
       "templateSearchOffsetY": 0.02,
       "templateSearchScale": 0.02
@@ -59,9 +64,9 @@
       "targetState": "idle",
       "detectFromScene": "battle",
       "rect": { "x": 0.4005208333333333, "y": 0.5722222222222222, "width": 0.20104166666666667, "height": 0.062037037037037036 },
-      "threshold": 0.89,
+      "threshold": 0.94,
       "templateImage": "scene/matching_waiting_text.png",
-      "minTemplateScore": 0.89,
+      "minTemplateScore": 0.94,
       "templateSearchOffsetX": 0.025,
       "templateSearchOffsetY": 0.025,
       "templateSearchScale": 0.03
@@ -71,34 +76,34 @@
       "targetState": "idle",
       "detectFromScene": "battle",
       "rect": { "x": 0.3770833333333333, "y": 0.3814814814814815, "width": 0.2453125, "height": 0.25925925925925924 },
-      "threshold": 0.87,
+      "threshold": 0.94,
       "templateImage": "scene/matching_waiting_dialog.png",
-      "minTemplateScore": 0.87,
+      "minTemplateScore": 0.94,
       "templateSearchOffsetX": 0.03,
       "templateSearchOffsetY": 0.03,
       "templateSearchScale": 0.04
     },
     {
-      "id": "continue-battle-button",
+      "id": "continue-battle-text",
       "targetState": "idle",
-      "rect": { "x": 0.6567708333333333, "y": 0.8712962962962963, "width": 0.2791666666666667, "height": 0.10555555555555556 },
-      "threshold": 0.88,
-      "templateImage": "scene/continue_battle_button.png",
-      "minTemplateScore": 0.88,
-      "templateSearchOffsetX": 0.03,
-      "templateSearchOffsetY": 0.03,
-      "templateSearchScale": 0.03
+      "rect": { "x": 0.715, "y": 0.890, "width": 0.145, "height": 0.060 },
+      "threshold": 0.90,
+      "templateImage": "scene/continue_battle_text.png",
+      "minTemplateScore": 0.90,
+      "templateSearchOffsetX": 0.01,
+      "templateSearchOffsetY": 0.01,
+      "templateSearchScale": 0.01
     },
     {
-      "id": "team-edit-button",
+      "id": "team-edit-text",
       "targetState": "idle",
-      "rect": { "x": 0.36770833333333336, "y": 0.8712962962962963, "width": 0.2791666666666667, "height": 0.10555555555555556 },
-      "threshold": 0.88,
-      "templateImage": "scene/team_edit_button.png",
-      "minTemplateScore": 0.88,
-      "templateSearchOffsetX": 0.03,
-      "templateSearchOffsetY": 0.03,
-      "templateSearchScale": 0.03
+      "rect": { "x": 0.416, "y": 0.892, "width": 0.166, "height": 0.060 },
+      "threshold": 0.90,
+      "templateImage": "scene/team_edit_text.png",
+      "minTemplateScore": 0.90,
+      "templateSearchOffsetX": 0.01,
+      "templateSearchOffsetY": 0.01,
+      "templateSearchScale": 0.01
     }
   ]
 }

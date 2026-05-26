@@ -3,6 +3,8 @@ import { contextBridge, ipcRenderer } from "electron";
 // レンダラーから安全に使う API をここで公開する
 contextBridge.exposeInMainWorld("electronAPI", {
   getAppVersion: () => "0.1.0",
+  debugRendererLog: (payload: { label?: string; data?: unknown; table?: unknown }) =>
+    ipcRenderer.send("debug:renderer-log", payload),
 
   // ===== 配信 API =====
   startStream: (config: {
@@ -38,8 +40,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>,
     rects: {
       selectionBadgeRect: { x: number; y: number; width: number; height: number };
+      selectionBadgeNumberRect?: { x: number; y: number; width: number; height: number };
       pokemonNameRect: { x: number; y: number; width: number; height: number };
       itemNameRect: { x: number; y: number; width: number; height: number };
+      pokemonSpriteRect?: { x: number; y: number; width: number; height: number };
+      visualRecognition?: { enabled?: boolean; modelName?: string };
     },
     trackedSelections?: Array<{ slotIndex: number; selectionOrder: number }>
   ) => ipcRenderer.invoke("recognition:recognize-player-selection", { slots, rects, trackedSelections }),
@@ -47,6 +52,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }>,
     rects: {
       selectionBadgeRect: { x: number; y: number; width: number; height: number };
+      selectionBadgeNumberRect?: { x: number; y: number; width: number; height: number };
     }
   ) => ipcRenderer.invoke("recognition:detect-player-selection-badges", { slots, rects }),
   saveOpponentSlotImages: (slots: Array<{ slotIndex: number; imageBase64: string }>) =>

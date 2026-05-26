@@ -9,8 +9,8 @@ import numpy as np
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 RECOGNIZE_DIR = ROOT_DIR / "recognize"
-POKEMON_CS_DIR = ROOT_DIR / "src" / "img" / "pokemon_cs"
-POKEMON_BROADCAST_TEMPLATES_DIR = ROOT_DIR / "src" / "img" / "pokemon_broadcast_templates"
+POKEMON_CS_DIR = ROOT_DIR / "img" / "pokemon_cs"
+POKEMON_BROADCAST_TEMPLATES_DIR = ROOT_DIR / "img" / "pokemon_broadcast_templates"
 POKEMON_DATA_DIR = ROOT_DIR / "src" / "renderer" / "data"
 
 TEMPLATE_SIZE = 112
@@ -400,24 +400,15 @@ def recognize_processed_slot(
     broadcast_templates = [template for template in templates if template.get("templateSource") == "broadcast"]
     pokemon_cs_templates = [template for template in templates if template.get("templateSource") == "pokemon_cs"]
 
+    all_candidates: list[dict[str, Any]] = []
     if recognize_templates:
-        candidates = score_against_templates(observed_raw, recognize_templates, score_bonus_sources={"recognize"})
-    elif broadcast_templates:
-        candidates = score_against_templates(observed_masked, broadcast_templates, score_bonus_sources={"broadcast"})
-    else:
-        candidates = score_against_templates(observed_masked, pokemon_cs_templates)
+        all_candidates.extend(score_against_templates(observed_raw, recognize_templates, score_bonus_sources={"recognize"}))
+    if broadcast_templates:
+        all_candidates.extend(score_against_templates(observed_masked, broadcast_templates, score_bonus_sources={"broadcast"}))
+    if pokemon_cs_templates:
+        all_candidates.extend(score_against_templates(observed_masked, pokemon_cs_templates))
 
-    return candidates[:max_candidates]
-
-
-def recognize_slot_image(
-    image: np.ndarray,
-    templates: list[dict[str, Any]],
-    max_candidates: int = MAX_TOP_CANDIDATES,
-) -> list[dict[str, Any]]:
-    observed_masked = preprocess_observed_array(image)
-    observed_raw = preprocess_raw_array(image)
-    return recognize_processed_slot(observed_masked, observed_raw, templates, max_candidates=max_candidates)
+    return aggregate_candidates_by_pokemon(all_candidates)[:max_candidates]
 
 
 def debug_slot_image(
