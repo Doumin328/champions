@@ -61,14 +61,21 @@ def load_pokemon_mappings() -> tuple[dict[str, str], dict[str, str]]:
     return id_to_name, name_to_id
 
 
+def should_apply_sprite_subrect(slot_rect: dict[str, float]) -> bool:
+    return slot_rect.get("width", 0) > 0.12 or slot_rect.get("height", 0) > 0.13
+
+
 def crop_slot(image, slot_rect: dict[str, float], sprite_subrect: dict[str, float]):
     height, width = image.shape[:2]
-    sprite_rect = {
-        "x": slot_rect["x"] + slot_rect["width"] * sprite_subrect["x"],
-        "y": slot_rect["y"] + slot_rect["height"] * sprite_subrect["y"],
-        "width": slot_rect["width"] * sprite_subrect["width"],
-        "height": slot_rect["height"] * sprite_subrect["height"],
-    }
+    if should_apply_sprite_subrect(slot_rect):
+        sprite_rect = {
+            "x": slot_rect["x"] + slot_rect["width"] * sprite_subrect["x"],
+            "y": slot_rect["y"] + slot_rect["height"] * sprite_subrect["y"],
+            "width": slot_rect["width"] * sprite_subrect["width"],
+            "height": slot_rect["height"] * sprite_subrect["height"],
+        }
+    else:
+        sprite_rect = slot_rect
     sx = int(sprite_rect["x"] * width)
     sy = int(sprite_rect["y"] * height)
     sw = max(1, int(sprite_rect["width"] * width))

@@ -1035,7 +1035,7 @@ const broadcastPlayerItemIconEls = [1, 2, 3].map((index) => document.getElementB
 const broadcastOpponentPokemonEls = [1, 2, 3, 4, 5, 6].map((index) => document.getElementById(`broadcast-opponent-pokemon-${index}`) as HTMLImageElement | null);
 
 type SceneKind = "idle" | "selection" | "battle" | "unknown";
-type SelectionSceneDetectionMode = "none" | "complete-and-arrow" | "complete-only";
+type SelectionSceneDetectionMode = "none" | "complete-and-arrow" | "complete-only" | "arrow-only";
 
 interface NormalizedRect {
   x: number;
@@ -1073,8 +1073,14 @@ interface BroadcastRecognitionConfig {
   opponentSlotRects: NormalizedRect[];
   playerSlotRects?: NormalizedRect[];
   playerSelectionBadgeRect?: NormalizedRect;
+  playerSelectionBadgeNumberRect?: NormalizedRect;
   playerPokemonNameRect?: NormalizedRect;
   playerItemNameRect?: NormalizedRect;
+  playerPokemonSpriteRect?: NormalizedRect;
+  playerPokemonVisualRecognition?: {
+    enabled?: boolean;
+    modelName?: string;
+  };
   spriteSubrect: NormalizedRect;
   battleIndicators?: BroadcastBattleIndicator[];
 }
@@ -1111,6 +1117,50 @@ interface BroadcastPlayerSelectionEntry {
   pokemonName: string | null;
   itemName: string | null;
   score: number;
+}
+
+interface BroadcastPlayerPartySlotEntry {
+  slotIndex: number;
+  pokemonId: string | null;
+  pokemonName: string | null;
+  itemName: string | null;
+  score: number;
+}
+
+interface BroadcastPlayerSelectionRecognitionResult {
+  slotIndex: number;
+  selectionOrder: number | null;
+  pokemonName: string | null;
+  itemName: string | null;
+  score: number;
+  debugOcrTexts?: {
+    slot: string[];
+    pokemonName: string[];
+    itemName: string[];
+    badge: string[];
+    selectedPokemonName: string[];
+    selectedItemName: string[];
+  };
+  debugSlotRecognition?: {
+    ocrPokemonName: string | null;
+    ocrPokemonScore: number;
+    slotPokemonName: string | null;
+    slotPokemonScore: number;
+    cropPokemonName: string | null;
+    cropPokemonScore: number;
+  };
+  debugVisualMatch?: {
+    pokemonId: string | null;
+    pokemonName: string | null;
+    score: number;
+    error?: string;
+    topCandidates?: Array<{
+      pokemonId: string;
+      pokemonName: string;
+      score: number;
+      referencePath?: string;
+    }>;
+  } | null;
 }
 
 interface BroadcastPlayerSelectionTrackerSlot {
@@ -1181,12 +1231,34 @@ interface SceneDetectionWorkerResult {
   scores: SceneDetectionWorkerScore[];
 }
 
-const SCENE_DETECTION_INTERVAL_MS = 220;
+interface SceneDetectionEvidenceIndicator {
+  indicatorId: string;
+  templateImage: string;
+  score: number;
+  threshold: number;
+  matched: boolean;
+  detectFromScene?: Exclude<SceneKind, "unknown">;
+}
+
+interface SceneDetectionEvidence {
+  currentScene: SceneKind;
+  candidateScene: SceneKind;
+  rawScene: SceneKind;
+  indicators: SceneDetectionEvidenceIndicator[];
+}
+
+interface SceneDetectionResult {
+  rawScene: SceneKind;
+  evidence: SceneDetectionEvidence | null;
+}
+
+const SCENE_DETECTION_INTERVAL_MS = 200;
 const SCENE_STABLE_MATCHES = 3;
-const BATTLE_TO_IDLE_STABLE_MATCHES = 8;
+const BATTLE_TO_IDLE_STABLE_MATCHES = 2;
 const BROADCAST_RECOGNITION_INTERVAL_MS = 350;
 const SCENE_DETECTION_INTERVAL_WHILE_DAMAGE_TAB_MS = 550;
 const BROADCAST_RECOGNITION_INTERVAL_WHILE_DAMAGE_TAB_MS = 900;
+const BROADCAST_WORKER_RETRY_INTERVAL_MS = 2000;
 const BROADCAST_RECOGNITION_STABLE_FRAMES = 2;
 const PLAYER_SELECTION_TRACK_STABLE_FRAMES = 2;
 const PLAYER_SELECTION_TRACK_MIN_CONFIDENCE = 0.48;
@@ -1208,8 +1280,14 @@ const DEFAULT_BROADCAST_PLAYER_SLOT_RECTS: NormalizedRect[] = [
   { x: 0.042, y: 0.737, width: 0.273, height: 0.101 },
 ];
 const DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_RECT: NormalizedRect = { x: 0.0, y: 0.10, width: 0.17, height: 0.74 };
+const DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_NUMBER_RECT: NormalizedRect = { x: 0.03, y: 0.16, width: 0.45, height: 0.72 };
 const DEFAULT_BROADCAST_PLAYER_POKEMON_NAME_RECT: NormalizedRect = { x: 0.18, y: 0.06, width: 0.60, height: 0.28 };
 const DEFAULT_BROADCAST_PLAYER_ITEM_NAME_RECT: NormalizedRect = { x: 0.18, y: 0.39, width: 0.52, height: 0.28 };
+const DEFAULT_BROADCAST_PLAYER_POKEMON_SPRITE_RECT: NormalizedRect = { x: 0.72, y: 0.0, width: 0.28, height: 1.0 };
+const DEFAULT_BROADCAST_PLAYER_POKEMON_VISUAL_RECOGNITION = {
+  enabled: false,
+  modelName: "facebook/dinov3-vits16-pretrain-lvd1689m",
+};
 const DEFAULT_BROADCAST_SPRITE_SUBRECT: NormalizedRect = { x: 0.03, y: 0.08, width: 0.54, height: 1.0 };
 const DEFAULT_BROADCAST_BATTLE_INDICATORS: BroadcastBattleIndicator[] = [
   {
@@ -1297,8 +1375,11 @@ const DEFAULT_BROADCAST_BATTLE_INDICATORS: BroadcastBattleIndicator[] = [
 let broadcastOpponentSlotRects: NormalizedRect[] = [...DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS];
 let broadcastPlayerSlotRects: NormalizedRect[] = [...DEFAULT_BROADCAST_PLAYER_SLOT_RECTS];
 let broadcastPlayerSelectionBadgeRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_RECT };
+let broadcastPlayerSelectionBadgeNumberRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_NUMBER_RECT };
 let broadcastPlayerPokemonNameRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_NAME_RECT };
 let broadcastPlayerItemNameRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_ITEM_NAME_RECT };
+let broadcastPlayerPokemonSpriteRect: NormalizedRect = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_SPRITE_RECT };
+let broadcastPlayerPokemonVisualRecognition = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_VISUAL_RECOGNITION };
 let broadcastSpriteSubrect: NormalizedRect = { ...DEFAULT_BROADCAST_SPRITE_SUBRECT };
 let broadcastBattleIndicators: BroadcastBattleIndicator[] = DEFAULT_BROADCAST_BATTLE_INDICATORS.map((indicator) => ({
   ...indicator,
@@ -1312,6 +1393,11 @@ let sceneDetectionState: SceneDetectionState = {
   pendingScene: "unknown",
   consecutiveMatches: 0,
 };
+
+//選出画面を1枚の画像にして切り出すための変数
+let broadcastFrameCanvas: HTMLCanvasElement | null = null;
+let broadcastFrameContext: CanvasRenderingContext2D | null = null;
+
 let sceneDetectionRunning = false;
 let sceneDetectionTimerHandle: number | null = null;
 let sceneDetectionLastRunAt = 0;
@@ -1323,6 +1409,8 @@ let sceneTemplateContext: CanvasRenderingContext2D | null = null;
 let broadcastRecognitionReady = false;
 let broadcastRecognitionInFlight = false;
 let broadcastRecognitionLastRunAt = 0;
+let broadcastRecognitionLastStartAttemptAt = 0;
+let broadcastRecognitionStartPromise: Promise<boolean> | null = null;
 let broadcastRecognitionStates: BroadcastRecognitionSlotState[] = Array.from({ length: 6 }, () => ({
   confirmed: null,
   pending: null,
@@ -1340,6 +1428,10 @@ let playerSelectionSnapshotCaptured = false;
 let playerSelectionSnapshotRecognized = false;
 let playerSelectionSnapshotSlots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
 let playerSelectionSnapshotDebugSlots: BroadcastPlayerDebugSlotImage[] = [];
+let opponentRecognitionDebugLogged = false;
+let playerPartyRecognitionDebugLogged = false;
+let playerPartySnapshotRecognized = false;
+let confirmedPlayerPartySlots: Array<BroadcastPlayerPartySlotEntry | null> = Array.from({ length: 6 }, () => null);
 let confirmedPlayerSelection: Array<BroadcastPlayerSelectionEntry | null> = Array.from({ length: 3 }, () => null);
 let playerSelectionTrackingSlots: BroadcastPlayerSelectionTrackerSlot[] = Array.from({ length: 6 }, () => ({
   selectionOrder: null,
@@ -1348,6 +1440,8 @@ let playerSelectionTrackingSlots: BroadcastPlayerSelectionTrackerSlot[] = Array.
   lastUpdatedAt: 0,
 }));
 let playerSelectionTrackingNextOrder = 1;
+let lastPlayerSelectionTrackingLogSignature = "";
+let lastPlayerSelectionBadgeRawLogSignature = "";
 let playerSelectionImageVersion = Date.now();
 let recognitionBootstrapPromise: Promise<void> | null = null;
 let sceneSampleCache: SceneSampleCache = { frameId: 0, samples: new Map() };
@@ -1392,6 +1486,8 @@ function resetPlayerSelectionTracking(): void {
     lastUpdatedAt: 0,
   }));
   playerSelectionTrackingNextOrder = 1;
+  lastPlayerSelectionTrackingLogSignature = "";
+  lastPlayerSelectionBadgeRawLogSignature = "";
 }
 
 function getTrackedPlayerSelectionSlots(): Array<{ slotIndex: number; selectionOrder: number }> {
@@ -1404,9 +1500,45 @@ function getTrackedPlayerSelectionSlots(): Array<{ slotIndex: number; selectionO
     .sort((a, b) => a.selectionOrder - b.selectionOrder);
 }
 
+function emitPlayerSelectionTrackingLog(): void {
+  const table = [1, 2, 3].map((selectionOrder) => {
+    const sourceSlotIndex = playerSelectionTrackingSlots.findIndex((slot) => slot.selectionOrder === selectionOrder);
+    const state = sourceSlotIndex >= 0 ? playerSelectionTrackingSlots[sourceSlotIndex] : null;
+    return {
+      selectionOrder,
+      sourceSlot: sourceSlotIndex >= 0 ? sourceSlotIndex + 1 : "",
+      confidence: state ? state.confidence : "",
+    };
+  });
+  const signature = table.map((row) => `${row.selectionOrder}:${row.sourceSlot}:${row.confidence}`).join("|");
+  if (signature === lastPlayerSelectionTrackingLogSignature) return;
+  lastPlayerSelectionTrackingLogSignature = signature;
+  emitRendererDebugLog("broadcast-player-selection-tracking", undefined, table);
+}
+
+function emitPlayerSelectionBadgeRawLog(results: PlayerSelectionBadgeDetection[]): void {
+  const table = results
+    .map((result) => ({
+      slot: result.slotIndex + 1,
+      isSelected: result.isSelected,
+      selectionOrder: result.selectionOrder ?? "",
+      selectionOrderScore: result.selectionOrderScore,
+      confidence: result.confidence,
+    }))
+    .sort((a, b) => a.slot - b.slot);
+  const signature = table
+    .map((row) => `${row.slot}:${row.isSelected}:${row.selectionOrder}:${row.selectionOrderScore}:${row.confidence}`)
+    .join("|");
+  if (signature === lastPlayerSelectionBadgeRawLogSignature) return;
+  lastPlayerSelectionBadgeRawLogSignature = signature;
+  emitRendererDebugLog("broadcast-player-selection-badge-raw", undefined, table);
+}
+
 function applyPlayerSelectionBadgeDetections(results: PlayerSelectionBadgeDetection[]): boolean {
   let newlyConfirmed = false;
   const now = Date.now();
+
+  emitPlayerSelectionBadgeRawLog(results);
 
   for (const result of results) {
     if (!result || result.slotIndex < 0 || result.slotIndex >= playerSelectionTrackingSlots.length) continue;
@@ -1427,31 +1559,45 @@ function applyPlayerSelectionBadgeDetections(results: PlayerSelectionBadgeDetect
     state.lastUpdatedAt = now;
   }
 
-  const candidates = results
-    .filter((result) => {
-      const state = playerSelectionTrackingSlots[result.slotIndex];
-      return !!state
-        && state.selectionOrder === null
-        && state.consecutiveSelectedFrames >= PLAYER_SELECTION_TRACK_STABLE_FRAMES
-        && result.isSelected
-        && result.confidence >= PLAYER_SELECTION_TRACK_MIN_CONFIDENCE;
-    })
-    .sort((a, b) => {
-      const orderDiff = (a.selectionOrder ?? 99) - (b.selectionOrder ?? 99);
-      if (orderDiff !== 0) return orderDiff;
-      return a.slotIndex - b.slotIndex;
-    });
+  const bestByOrder = new Map<number, PlayerSelectionBadgeDetection>();
+  for (const result of results) {
+    if (!result || result.slotIndex < 0 || result.slotIndex >= playerSelectionTrackingSlots.length) continue;
+    const selectionOrder = result.selectionOrder;
+    if (!result.isSelected || result.confidence < PLAYER_SELECTION_TRACK_MIN_CONFIDENCE) continue;
+    if (selectionOrder === null || selectionOrder < 1 || selectionOrder > 3) continue;
 
-  for (const result of candidates) {
-    if (playerSelectionTrackingNextOrder > 3) break;
+    const current = bestByOrder.get(selectionOrder);
+    if (
+      !current
+      || result.selectionOrderScore > current.selectionOrderScore
+      || (
+        result.selectionOrderScore === current.selectionOrderScore
+        && result.confidence > current.confidence
+      )
+    ) {
+      bestByOrder.set(selectionOrder, result);
+    }
+  }
+
+  for (const [selectionOrder, result] of bestByOrder) {
+    for (const state of playerSelectionTrackingSlots) {
+      if (state.selectionOrder === selectionOrder) state.selectionOrder = null;
+    }
+
     const state = playerSelectionTrackingSlots[result.slotIndex];
-    if (!state || state.selectionOrder !== null) continue;
-    state.selectionOrder = playerSelectionTrackingNextOrder;
+    if (!state) continue;
+    if (state.selectionOrder !== selectionOrder) newlyConfirmed = true;
+    state.selectionOrder = selectionOrder;
     state.confidence = result.confidence;
     state.lastUpdatedAt = now;
-    playerSelectionTrackingNextOrder += 1;
-    newlyConfirmed = true;
   }
+
+  const trackedOrders = new Set(
+    playerSelectionTrackingSlots
+      .map((slot) => slot.selectionOrder)
+      .filter((selectionOrder): selectionOrder is number => selectionOrder !== null)
+  );
+  playerSelectionTrackingNextOrder = Math.min(4, Math.max(1, ...Array.from(trackedOrders, (order) => order + 1)));
 
   if (isSceneDebugEnabled()) {
     console.debug("[broadcast-player-selection-tracking]", {
@@ -1465,6 +1611,7 @@ function applyPlayerSelectionBadgeDetections(results: PlayerSelectionBadgeDetect
     });
   }
 
+  emitPlayerSelectionTrackingLog();
   return newlyConfirmed;
 }
 
@@ -1542,8 +1689,11 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
   let nextSlotRects = [...DEFAULT_BROADCAST_OPPONENT_SLOT_RECTS];
   let nextPlayerSlotRects = [...DEFAULT_BROADCAST_PLAYER_SLOT_RECTS];
   let nextPlayerSelectionBadgeRect = { ...DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_RECT };
+  let nextPlayerSelectionBadgeNumberRect = { ...DEFAULT_BROADCAST_PLAYER_SELECTION_BADGE_NUMBER_RECT };
   let nextPlayerPokemonNameRect = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_NAME_RECT };
   let nextPlayerItemNameRect = { ...DEFAULT_BROADCAST_PLAYER_ITEM_NAME_RECT };
+  let nextPlayerPokemonSpriteRect = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_SPRITE_RECT };
+  let nextPlayerPokemonVisualRecognition = { ...DEFAULT_BROADCAST_PLAYER_POKEMON_VISUAL_RECOGNITION };
   let nextSpriteSubrect = { ...DEFAULT_BROADCAST_SPRITE_SUBRECT };
   let nextIndicators = DEFAULT_BROADCAST_BATTLE_INDICATORS.map((indicator) => ({
     ...indicator,
@@ -1565,11 +1715,25 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
       if (isValidNormalizedRect(data.playerSelectionBadgeRect)) {
         nextPlayerSelectionBadgeRect = clampRect(data.playerSelectionBadgeRect);
       }
+      if (isValidNormalizedRect(data.playerSelectionBadgeNumberRect)) {
+        nextPlayerSelectionBadgeNumberRect = clampRect(data.playerSelectionBadgeNumberRect);
+      }
       if (isValidNormalizedRect(data.playerPokemonNameRect)) {
         nextPlayerPokemonNameRect = clampRect(data.playerPokemonNameRect);
       }
       if (isValidNormalizedRect(data.playerItemNameRect)) {
         nextPlayerItemNameRect = clampRect(data.playerItemNameRect);
+      }
+      if (isValidNormalizedRect(data.playerPokemonSpriteRect)) {
+        nextPlayerPokemonSpriteRect = clampRect(data.playerPokemonSpriteRect);
+      }
+      if (data.playerPokemonVisualRecognition && typeof data.playerPokemonVisualRecognition === "object") {
+        nextPlayerPokemonVisualRecognition = {
+          enabled: !!data.playerPokemonVisualRecognition.enabled,
+          modelName: typeof data.playerPokemonVisualRecognition.modelName === "string" && data.playerPokemonVisualRecognition.modelName.trim()
+            ? data.playerPokemonVisualRecognition.modelName.trim()
+            : DEFAULT_BROADCAST_PLAYER_POKEMON_VISUAL_RECOGNITION.modelName,
+        };
       }
       if (isValidNormalizedRect(data.spriteSubrect)) {
         nextSpriteSubrect = clampRect(data.spriteSubrect);
@@ -1612,8 +1776,11 @@ async function loadBroadcastRecognitionConfig(): Promise<void> {
   broadcastOpponentSlotRects = nextSlotRects;
   broadcastPlayerSlotRects = nextPlayerSlotRects;
   broadcastPlayerSelectionBadgeRect = nextPlayerSelectionBadgeRect;
+  broadcastPlayerSelectionBadgeNumberRect = nextPlayerSelectionBadgeNumberRect;
   broadcastPlayerPokemonNameRect = nextPlayerPokemonNameRect;
   broadcastPlayerItemNameRect = nextPlayerItemNameRect;
+  broadcastPlayerPokemonSpriteRect = nextPlayerPokemonSpriteRect;
+  broadcastPlayerPokemonVisualRecognition = nextPlayerPokemonVisualRecognition;
   broadcastSpriteSubrect = nextSpriteSubrect;
   broadcastBattleIndicators = nextIndicators;
   broadcastIndicatorsByScene = new Map<Exclude<SceneKind, "unknown">, BroadcastBattleIndicator[]>([
@@ -1781,30 +1948,58 @@ function buildSceneDetectionDebugLines(
   ];
 }
 
+function buildSceneDetectionEvidence(
+  currentScene: SceneKind,
+  candidateScene: SceneKind,
+  rawScene: SceneKind,
+  indicators: BroadcastBattleIndicator[],
+  scores: SceneDetectionWorkerScore[]
+): SceneDetectionEvidence {
+  const indicatorById = new Map(indicators.map((indicator) => [indicator.id, indicator]));
+  return {
+    currentScene,
+    candidateScene,
+    rawScene,
+    indicators: scores.map((score) => {
+      const indicator = indicatorById.get(score.indicatorId);
+      return {
+        indicatorId: score.indicatorId,
+        templateImage: indicator?.templateImage ?? "",
+        score: score.score,
+        threshold: score.threshold,
+        matched: score.matched,
+        detectFromScene: score.detectFromScene,
+      };
+    }),
+  };
+}
+
 function getSelectionSceneDetectionMode(scores: SceneDetectionWorkerScore[]): SelectionSceneDetectionMode {
   const completeScore = scores.find(({ indicatorId }) => indicatorId === "selection-complete");
+  const arrowScores = scores.filter(({ indicatorId }) => indicatorId === "selection-arrow");
+  const hasArrowMatch = arrowScores.some(({ matched }) => matched);
   if (!completeScore) {
     return scores.every(({ matched }) => matched) ? "complete-and-arrow" : "none";
   }
 
-  if (!completeScore.matched) return "none";
+  if (!completeScore.matched) return hasArrowMatch ? "arrow-only" : "none";
 
-  const arrowScores = scores.filter(({ indicatorId }) => indicatorId === "selection-arrow");
-  if (arrowScores.length === 0 || arrowScores.some(({ matched }) => matched)) {
+  if (hasArrowMatch) {
     return "complete-and-arrow";
   }
   return "complete-only";
 }
 
+//「選出完了」と選択の矢印の両方を認識した場合のみ、選出画面として認識する
 function detectSelectionSceneFromScores(scores: SceneDetectionWorkerScore[]): SceneKind {
-  return getSelectionSceneDetectionMode(scores) === "none" ? "unknown" : "selection";
+  return getSelectionSceneDetectionMode(scores) === "complete-and-arrow" ? "selection" : "unknown";
 }
 
-function detectSceneFromVideoSync(): SceneKind {
+function detectSceneFromVideoSync(): SceneDetectionResult {
   const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
   if (candidateIndicators.length === 0) {
     updateSceneDetectionDebug([]);
-    return "unknown";
+    return { rawScene: "unknown", evidence: null };
   }
 
   sceneSampleCache = {
@@ -1828,11 +2023,15 @@ function detectSceneFromVideoSync(): SceneKind {
 
   if (nextScene === "selection") {
     latestSelectionSceneDetectionMode = getSelectionSceneDetectionMode(scores);
-    return detectSelectionSceneFromScores(scores);
+    const rawScene = detectSelectionSceneFromScores(scores);
+    return {
+      rawScene,
+      evidence: buildSceneDetectionEvidence(sceneDetectionState.displayScene, nextScene, rawScene, candidateIndicators, scores),
+    };
   }
 
   if (nextScene === "idle") {
-    return detectIdleSceneFromScores(
+    const rawScene = detectIdleSceneFromScores(
       scores.map((score) => ({
         indicator: candidateIndicators.find((indicator) => indicator.id === score.indicatorId)!,
         score: score.score,
@@ -1841,17 +2040,25 @@ function detectSceneFromVideoSync(): SceneKind {
       })),
       sceneDetectionState.displayScene
     );
+    return {
+      rawScene,
+      evidence: buildSceneDetectionEvidence(sceneDetectionState.displayScene, nextScene, rawScene, candidateIndicators, scores),
+    };
   }
 
   const matchedScore = scores.find(({ matched }) => matched);
-  return matchedScore ? (nextScene ?? "battle") : "unknown";
+  const rawScene = matchedScore ? (nextScene ?? "battle") : "unknown";
+  return {
+    rawScene,
+    evidence: buildSceneDetectionEvidence(sceneDetectionState.displayScene, nextScene, rawScene, candidateIndicators, scores),
+  };
 }
 
-async function detectSceneFromVideo(): Promise<SceneKind> {
+async function detectSceneFromVideo(): Promise<SceneDetectionResult> {
   const candidateIndicators = getIndicatorsForSceneDetection(sceneDetectionState.displayScene);
   if (candidateIndicators.length === 0) {
     updateSceneDetectionDebug([]);
-    return "unknown";
+    return { rawScene: "unknown", evidence: null };
   }
 
   try {
@@ -1889,7 +2096,10 @@ async function detectSceneFromVideo(): Promise<SceneKind> {
     if (nextScene === "selection") {
       latestSelectionSceneDetectionMode = getSelectionSceneDetectionMode(result.scores);
     }
-    return result.rawScene;
+    return {
+      rawScene: result.rawScene,
+      evidence: buildSceneDetectionEvidence(sceneDetectionState.displayScene, nextScene, result.rawScene, candidateIndicators, result.scores),
+    };
   } catch {
     return detectSceneFromVideoSync();
   } finally {
@@ -2121,6 +2331,10 @@ function resetRecognitionStates(reason = "unspecified", options: { preserveOppon
   playerSelectionSnapshotRecognized = false;
   playerSelectionSnapshotSlots = [];
   playerSelectionSnapshotDebugSlots = [];
+  opponentRecognitionDebugLogged = false;
+  playerPartyRecognitionDebugLogged = false;
+  playerPartySnapshotRecognized = false;
+  confirmedPlayerPartySlots = Array.from({ length: 6 }, () => null);
   confirmedPlayerSelection = Array.from({ length: 3 }, () => null);
   resetPlayerSelectionTracking();
   if (isSceneDebugEnabled()) {
@@ -2472,7 +2686,7 @@ function isAllowedSceneTransition(from: SceneKind, to: SceneKind): boolean {
   return to === "idle";
 }
 
-function advanceSceneDetectionState(rawScene: SceneKind): void {
+function advanceSceneDetectionState(rawScene: SceneKind, evidence: SceneDetectionEvidence | null = null): void {
   const previousDisplayScene = sceneDetectionState.displayScene;
   sceneDetectionState.rawScene = rawScene;
   if (rawScene === "unknown") {
@@ -2503,10 +2717,18 @@ function advanceSceneDetectionState(rawScene: SceneKind): void {
     sceneDetectionState.consecutiveMatches = 1;
   }
 
-  if (sceneDetectionState.consecutiveMatches >= getRequiredStableMatches(previousDisplayScene, rawScene)) {
+  const requiredStableMatches = getRequiredStableMatches(previousDisplayScene, rawScene);
+  if (sceneDetectionState.consecutiveMatches >= requiredStableMatches) {
     sceneDetectionState.displayScene = rawScene;
     sceneDetectionState.pendingScene = rawScene;
     sceneDetectionState.consecutiveMatches = 0;
+    emitRendererDebugLog("broadcast-scene-transition", {
+      previousScene: previousDisplayScene,
+      nextScene: rawScene,
+      candidateScene: evidence?.candidateScene ?? rawScene,
+      requiredStableMatches,
+      recognitionImages: evidence?.indicators ?? [],
+    });
     logConfirmedPlayerSelectionState("scene-transition-committed", {
       previousScene: previousDisplayScene,
       nextScene: rawScene,
@@ -2544,27 +2766,47 @@ function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
   });
 }
 
-async function cropBroadcastSlotImage(slotRect: NormalizedRect): Promise<string | null> {
-  const ctx = ensureBroadcastRecognitionCanvas();
-  if (!ctx || !broadcastRecognitionCanvas || !videoEl) return null;
+function captureBroadcastFrame(): HTMLCanvasElement | null {
+  if (!videoEl) return null;
   const videoWidth = videoEl.videoWidth;
   const videoHeight = videoEl.videoHeight;
   if (videoWidth <= 0 || videoHeight <= 0) return null;
 
+  if (!broadcastFrameCanvas) {
+    broadcastFrameCanvas = document.createElement("canvas");
+  }
+  if (broadcastFrameCanvas.width !== videoWidth) broadcastFrameCanvas.width = videoWidth;
+  if (broadcastFrameCanvas.height !== videoHeight) broadcastFrameCanvas.height = videoHeight;
+
+  broadcastFrameContext = broadcastFrameCanvas.getContext("2d", { willReadFrequently: true });
+  if (!broadcastFrameContext) return null;
+  broadcastFrameContext.clearRect(0, 0, videoWidth, videoHeight);
+  broadcastFrameContext.drawImage(videoEl, 0, 0, videoWidth, videoHeight);
+  return broadcastFrameCanvas;
+}
+
+async function cropBroadcastSlotImage(slotRect: NormalizedRect, sourceCanvas?: HTMLCanvasElement | null): Promise<string | null> {
+  const ctx = ensureBroadcastRecognitionCanvas();
+  const source = sourceCanvas ?? videoEl;
+  if (!ctx || !broadcastRecognitionCanvas || !source) return null;
+  const sourceWidth = sourceCanvas ? sourceCanvas.width : videoEl?.videoWidth ?? 0;
+  const sourceHeight = sourceCanvas ? sourceCanvas.height : videoEl?.videoHeight ?? 0;
+  if (sourceWidth <= 0 || sourceHeight <= 0) return null;
+
   const clamped = clampRect(slotRect);
-  const rawSx = Math.floor(clamped.x * videoWidth);
-  const rawSy = Math.floor(clamped.y * videoHeight);
-  const rawSw = Math.max(1, Math.floor(clamped.width * videoWidth));
-  const rawSh = Math.max(1, Math.floor(clamped.height * videoHeight));
-  const sx = Math.min(Math.max(0, rawSx), Math.max(0, videoWidth - 1));
-  const sy = Math.min(Math.max(0, rawSy), Math.max(0, videoHeight - 1));
-  const sw = Math.max(1, Math.min(rawSw, videoWidth - sx));
-  const sh = Math.max(1, Math.min(rawSh, videoHeight - sy));
+  const rawSx = Math.floor(clamped.x * sourceWidth);
+  const rawSy = Math.floor(clamped.y * sourceHeight);
+  const rawSw = Math.max(1, Math.floor(clamped.width * sourceWidth));
+  const rawSh = Math.max(1, Math.floor(clamped.height * sourceHeight));
+  const sx = Math.min(Math.max(0, rawSx), Math.max(0, sourceWidth - 1));
+  const sy = Math.min(Math.max(0, rawSy), Math.max(0, sourceHeight - 1));
+  const sw = Math.max(1, Math.min(rawSw, sourceWidth - sx));
+  const sh = Math.max(1, Math.min(rawSh, sourceHeight - sy));
 
   if (broadcastRecognitionCanvas.width !== sw) broadcastRecognitionCanvas.width = sw;
   if (broadcastRecognitionCanvas.height !== sh) broadcastRecognitionCanvas.height = sh;
   ctx.clearRect(0, 0, sw, sh);
-  ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, sw, sh);
+  ctx.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
   const blob = await canvasToPngBlob(broadcastRecognitionCanvas);
   if (!blob) return null;
   try {
@@ -2574,21 +2816,21 @@ async function cropBroadcastSlotImage(slotRect: NormalizedRect): Promise<string 
   }
 }
 
-async function collectCurrentBroadcastSlots(): Promise<Array<{ slotIndex: number; imageBase64: string; timestamp: number }>> {
+async function collectCurrentBroadcastSlots(sourceCanvas?: HTMLCanvasElement | null): Promise<Array<{ slotIndex: number; imageBase64: string; timestamp: number }>> {
   const capturedAt = Date.now();
   const slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
   for (const [index, rect] of broadcastOpponentSlotRects.entries()) {
-    const imageBase64 = await cropBroadcastSlotImage(rect);
+    const imageBase64 = await cropBroadcastSlotImage(rect, sourceCanvas);
     if (imageBase64) slots.push({ slotIndex: index, imageBase64, timestamp: capturedAt });
   }
   return slots;
 }
 
-async function collectCurrentPlayerSlots(): Promise<Array<{ slotIndex: number; imageBase64: string; timestamp: number }>> {
+async function collectCurrentPlayerSlots(sourceCanvas?: HTMLCanvasElement | null): Promise<Array<{ slotIndex: number; imageBase64: string; timestamp: number }>> {
   const capturedAt = Date.now();
   const slots: Array<{ slotIndex: number; imageBase64: string; timestamp: number }> = [];
   for (const [index, rect] of broadcastPlayerSlotRects.entries()) {
-    const imageBase64 = await cropBroadcastSlotImage(rect);
+    const imageBase64 = await cropBroadcastSlotImage(rect, sourceCanvas);
     if (imageBase64) slots.push({ slotIndex: index, imageBase64, timestamp: capturedAt });
   }
   return slots;
@@ -2603,12 +2845,12 @@ function getNestedBroadcastRect(parentRect: NormalizedRect, childRect: Normalize
   });
 }
 
-async function collectCurrentPlayerDebugSlots(): Promise<BroadcastPlayerDebugSlotImage[]> {
+async function collectCurrentPlayerDebugSlots(sourceCanvas?: HTMLCanvasElement | null): Promise<BroadcastPlayerDebugSlotImage[]> {
   const capturedAt = Date.now();
   const slots: BroadcastPlayerDebugSlotImage[] = [];
   for (const [index, rect] of broadcastPlayerSlotRects.entries()) {
-    const imageBase64 = await cropBroadcastSlotImage(rect);
-    const itemImageBase64 = await cropBroadcastSlotImage(getNestedBroadcastRect(rect, broadcastPlayerItemNameRect));
+    const imageBase64 = await cropBroadcastSlotImage(rect, sourceCanvas);
+    const itemImageBase64 = await cropBroadcastSlotImage(getNestedBroadcastRect(rect, broadcastPlayerItemNameRect), sourceCanvas);
     if (imageBase64) {
       slots.push({ slotIndex: index, imageBase64, itemImageBase64: itemImageBase64 ?? "", timestamp: capturedAt });
     }
@@ -2727,10 +2969,113 @@ function hasOpponentRecognitionMatch(
   return results.some((result) => !!result.pokemonId && !!result.pokemonName);
 }
 
-function hasPlayerSelectionRecognitionMatch(
-  results: Array<{ selectionOrder: number | null; pokemonName: string | null; itemName: string | null }>
-): boolean {
-  return results.some((result) => !!result.selectionOrder && result.selectionOrder >= 1 && result.selectionOrder <= 3);
+function updateConfirmedPlayerPartySlots(results: BroadcastPlayerSelectionRecognitionResult[]): boolean {
+  let changed = false;
+
+  for (const result of results) {
+    if (!result || result.slotIndex < 0 || result.slotIndex >= confirmedPlayerPartySlots.length) continue;
+    const existing = confirmedPlayerPartySlots[result.slotIndex];
+    const pokemonName = existing?.pokemonName ?? result.pokemonName ?? null;
+    const itemName = existing?.itemName ?? result.itemName ?? null;
+    if (!pokemonName && !itemName) continue;
+
+    const pokemon = getPlayerSelectionPokemonByName(pokemonName);
+    const next: BroadcastPlayerPartySlotEntry = {
+      slotIndex: result.slotIndex,
+      pokemonId: pokemon?.id ?? existing?.pokemonId ?? null,
+      pokemonName,
+      itemName,
+      score: result.score,
+    };
+
+    if (
+      !existing
+      || existing.pokemonId !== next.pokemonId
+      || existing.pokemonName !== next.pokemonName
+      || existing.itemName !== next.itemName
+    ) {
+      confirmedPlayerPartySlots[result.slotIndex] = next;
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+function applyPlayerPartyRecognitionResults(results: BroadcastPlayerSelectionRecognitionResult[]): boolean {
+  const partyUpdated = updateConfirmedPlayerPartySlots(results);
+
+  if (!playerPartyRecognitionDebugLogged) {
+    const partyDebugData = {
+      context: "applyPlayerPartyRecognitionResults",
+      scene: sceneDetectionState.displayScene,
+      rawResults: results,
+    };
+    const partyDebugTable = results.map((result) => {
+      const visualTop = result.debugVisualMatch?.topCandidates?.[0] ?? null;
+      const visualSecond = result.debugVisualMatch?.topCandidates?.[1] ?? null;
+      const matchedPokemon = getPlayerSelectionPokemonByName(result.pokemonName);
+      const ocrPokemon = getPlayerSelectionPokemonByName(result.debugSlotRecognition?.ocrPokemonName ?? null);
+      return {
+        slot: result.slotIndex + 1,
+        selectedOrder: result.selectionOrder ?? "",
+        matchedPokemonId: matchedPokemon?.id ?? "",
+        matchedPokemon: result.pokemonName ?? "",
+        ocrPokemonId: ocrPokemon?.id ?? "",
+        ocrPokemon: result.debugSlotRecognition?.ocrPokemonName ?? "",
+        ocrScore: result.debugSlotRecognition?.ocrPokemonScore ?? "",
+        visualPokemonId: result.debugVisualMatch?.pokemonId ?? visualTop?.pokemonId ?? "",
+        visualPokemon: result.debugVisualMatch?.pokemonName ?? visualTop?.pokemonName ?? "",
+        visualScore: result.debugVisualMatch?.score || visualTop?.score || "",
+        visualSecond: visualSecond ? `${visualSecond.pokemonName} (${visualSecond.score})` : "",
+        visualError: result.debugVisualMatch?.error ?? "",
+        nameCropText: result.debugOcrTexts?.pokemonName.join(" / ") ?? "",
+        itemCropText: result.debugOcrTexts?.itemName.join(" / ") ?? "",
+      };
+    });
+    emitRendererDebugLog("broadcast-player-party-recognition", partyDebugData, partyDebugTable);
+    playerPartyRecognitionDebugLogged = true;
+  }
+
+  if (partyUpdated || results.some((result) => !!result.pokemonName || !!result.itemName)) {
+    playerPartySnapshotRecognized = true;
+  }
+  return partyUpdated;
+}
+
+function applyTrackedPlayerSelectionResults(
+  trackedSelections: Array<{ slotIndex: number; selectionOrder: number }>
+): void {
+  const nextSelection: Array<BroadcastPlayerSelectionEntry | null> = Array.from({ length: 3 }, () => null);
+
+  for (const tracked of trackedSelections) {
+    if (!tracked || tracked.selectionOrder < 1 || tracked.selectionOrder > 3) continue;
+    if (tracked.slotIndex < 0 || tracked.slotIndex >= confirmedPlayerPartySlots.length) continue;
+    const partySlot = confirmedPlayerPartySlots[tracked.slotIndex] ?? null;
+    const pokemon = partySlot?.pokemonId ? null : getPlayerSelectionPokemonByName(partySlot?.pokemonName ?? null);
+    nextSelection[tracked.selectionOrder - 1] = {
+      slotIndex: tracked.slotIndex,
+      selectionOrder: tracked.selectionOrder,
+      pokemonId: partySlot?.pokemonId ?? pokemon?.id ?? null,
+      pokemonName: partySlot?.pokemonName ?? null,
+      itemName: partySlot?.itemName ?? null,
+      score: partySlot?.score ?? 0,
+    };
+  }
+
+  const selectedDebugTable = nextSelection.map((entry, index) => ({
+    selection: index + 1,
+    sourceSlot: entry ? entry.slotIndex + 1 : "",
+    pokemonId: entry?.pokemonId ?? "",
+    pokemonName: entry?.pokemonName ?? "",
+    itemName: entry?.itemName ?? "",
+    score: entry?.score ?? "",
+  }));
+  emitRendererDebugLog("broadcast-player-selected-recognition", undefined, selectedDebugTable);
+  confirmedPlayerSelection = nextSelection;
+  syncFixedPlayerSelectionImagesFromState();
+  logConfirmedPlayerSelectionState("confirmedPlayerSelection-updated");
+  renderBroadcastOverlayState("applyTrackedPlayerSelectionResults");
 }
 
 function hasPendingBroadcastRecognition(): boolean {
@@ -2742,78 +3087,47 @@ function shouldRunBroadcastRecognitionForScene(): boolean {
   return sceneDetectionState.displayScene === "selection" || hasPendingBroadcastRecognition();
 }
 
-function applyPlayerSelectionRecognitionResults(
-  results: Array<{
-    slotIndex: number;
-    selectionOrder: number | null;
-    pokemonName: string | null;
-    itemName: string | null;
-    score: number;
-    debugOcrTexts?: {
-      slot: string[];
-      pokemonName: string[];
-      itemName: string[];
-      badge: string[];
-      selectedPokemonName: string[];
-      selectedItemName: string[];
-    };
-  }>
-): void {
-  const nextSelection: Array<BroadcastPlayerSelectionEntry | null> = Array.from({ length: 3 }, () => null);
-
-  // 1パス目: selectionOrder が確定している結果を正位置に配置
-  for (const result of results) {
-    if (!result || !result.selectionOrder || result.selectionOrder < 1 || result.selectionOrder > 3) continue;
-    const pokemon = getPlayerSelectionPokemonByName(result.pokemonName);
-    nextSelection[result.selectionOrder - 1] = {
-      slotIndex: result.slotIndex,
-      selectionOrder: result.selectionOrder,
-      pokemonId: pokemon?.id ?? null,
-      pokemonName: result.pokemonName,
-      itemName: result.itemName,
-      score: result.score,
-    };
+function emitRendererDebugLog(label: string, data?: unknown, table?: unknown): void {
+  try {
+    (window as any).electronAPI?.debugRendererLog?.({ label, data, table });
+  } catch {
+    // Debug forwarding should never affect recognition.
   }
-
-  if (isSceneDebugEnabled()) {
-    console.debug("[broadcast-player-selection]", {
-      context: "applyPlayerSelectionRecognitionResults",
-      scene: sceneDetectionState.displayScene,
-      rawResults: results,
-      nextSelection: nextSelection.map((entry, index) => ({
-        displayIndex: index + 1,
-        slotIndex: entry?.slotIndex ?? null,
-        selectionOrder: entry?.selectionOrder ?? null,
-        pokemonId: entry?.pokemonId ?? null,
-        pokemonName: entry?.pokemonName ?? null,
-        itemName: entry?.itemName ?? null,
-        score: entry?.score ?? null,
-      })),
-    });
-    console.table(results.map((result) => ({
-      slot: result.slotIndex + 1,
-      selectedOrder: result.selectionOrder ?? "",
-      matchedPokemon: result.pokemonName ?? "",
-      matchedItem: result.itemName ?? "",
-      ocrSlot: result.debugOcrTexts?.slot.join(" / ") ?? "",
-      ocrPokemon: result.debugOcrTexts?.pokemonName.join(" / ") ?? "",
-      ocrItem: result.debugOcrTexts?.itemName.join(" / ") ?? "",
-      ocrSelectedPokemon: result.debugOcrTexts?.selectedPokemonName.join(" / ") ?? "",
-      ocrSelectedItem: result.debugOcrTexts?.selectedItemName.join(" / ") ?? "",
-    })));
-  }
-  confirmedPlayerSelection = nextSelection;
-  syncFixedPlayerSelectionImagesFromState();
-  logConfirmedPlayerSelectionState("confirmedPlayerSelection-updated");
-  renderBroadcastOverlayState("applyPlayerSelectionRecognitionResults");
 }
 
 async function startBroadcastRecognitionWorker(): Promise<void> {
   try {
     const result = await (window as any).electronAPI?.startRecognitionWorker?.();
     broadcastRecognitionReady = !!result?.success;
+    if (!broadcastRecognitionReady) {
+      emitRendererDebugLog("broadcast-recognition-worker-start-failed", {
+        error: result?.error ?? "Recognition worker did not report ready",
+        result,
+      });
+    }
   } catch {
     broadcastRecognitionReady = false;
+    emitRendererDebugLog("broadcast-recognition-worker-start-failed", {
+      error: "Failed to invoke recognition worker start",
+    });
+  }
+}
+
+async function ensureBroadcastRecognitionWorkerReady(now = performance.now()): Promise<boolean> {
+  if (broadcastRecognitionReady) return true;
+  if (broadcastRecognitionStartPromise) return broadcastRecognitionStartPromise;
+  if (now - broadcastRecognitionLastStartAttemptAt < BROADCAST_WORKER_RETRY_INTERVAL_MS) return false;
+
+  broadcastRecognitionLastStartAttemptAt = now;
+  broadcastRecognitionStartPromise = (async () => {
+    await startBroadcastRecognitionWorker();
+    return broadcastRecognitionReady;
+  })();
+
+  try {
+    return await broadcastRecognitionStartPromise;
+  } finally {
+    broadcastRecognitionStartPromise = null;
   }
 }
 
@@ -2824,6 +3138,7 @@ async function stopBroadcastRecognitionWorker(): Promise<void> {
     // Ignore stop failures.
   }
   broadcastRecognitionReady = false;
+  broadcastRecognitionStartPromise = null;
 }
 
 async function updateBroadcastRecognition(): Promise<void> {
@@ -2839,9 +3154,16 @@ async function updateBroadcastRecognition(): Promise<void> {
   const captureStartedAt = isSceneDebugEnabled() ? performance.now() : 0;
 
   const canCaptureSelectionSnapshot = sceneDetectionState.displayScene === "selection";
+  
+  //選出画面での構築認識→画像切り出し
+  const selectionFrame = canCaptureSelectionSnapshot
+    && (!selectionSnapshotCaptured || !playerSelectionSnapshotCaptured)
+    ? captureBroadcastFrame()
+    : null;
 
-  if (canCaptureSelectionSnapshot && !selectionSnapshotCaptured) {
-    const slots = await collectCurrentBroadcastSlots();
+  //相手構築6匹の認識→切り出し
+  if (canCaptureSelectionSnapshot && selectionFrame && !selectionSnapshotCaptured) {
+    const slots = await collectCurrentBroadcastSlots(selectionFrame);
     if (slots.length > 0) {
       selectionSnapshotSlots = slots.map((slot) => ({ ...slot }));
       if (isSceneDebugEnabled()) {
@@ -2850,12 +3172,13 @@ async function updateBroadcastRecognition(): Promise<void> {
       selectionSnapshotCaptured = true;
     }
   }
-  if (canCaptureSelectionSnapshot && !playerSelectionSnapshotRecognized) {
-    const playerSlots = await collectCurrentPlayerSlots();
+  //自分構築6匹の認識→切り出し
+  if (canCaptureSelectionSnapshot && selectionFrame && !playerSelectionSnapshotCaptured) {
+    const playerSlots = await collectCurrentPlayerSlots(selectionFrame);
     if (playerSlots.length > 0) {
       playerSelectionSnapshotSlots = playerSlots.map((slot) => ({ ...slot }));
       if (isSceneDebugEnabled()) {
-        const playerDebugSlots = await collectCurrentPlayerDebugSlots();
+        const playerDebugSlots = await collectCurrentPlayerDebugSlots(selectionFrame);
         playerSelectionSnapshotDebugSlots = playerDebugSlots.map((slot) => ({ ...slot }));
         await savePlayerDebugImages(playerDebugSlots);
       } else {
@@ -2869,18 +3192,55 @@ async function updateBroadcastRecognition(): Promise<void> {
     console.debug("[recognition] snapshot-capture-ms", (performance.now() - captureStartedAt).toFixed(1));
   }
 
-  if (!broadcastRecognitionReady || broadcastRecognitionInFlight) return;
+  if (broadcastRecognitionInFlight) return;
+  const workerReady = await ensureBroadcastRecognitionWorkerReady(now);
+  if (!workerReady) {
+    return;
+  }
 
   broadcastRecognitionInFlight = true;
   try {
     const recognitionStartedAt = isSceneDebugEnabled() ? performance.now() : 0;
     if (!selectionSnapshotRecognized && selectionSnapshotSlots.length > 0) {
       const response = await (window as any).electronAPI?.recognizeOpponentSlots?.(selectionSnapshotSlots);
-      if (response?.success && Array.isArray(response.results)) {
+      if (!response?.success || !Array.isArray(response.results)) {
+        broadcastRecognitionReady = false;
+      } else {
         const hasMatch = hasOpponentRecognitionMatch(response.results);
+        if (hasMatch && !opponentRecognitionDebugLogged) {
+          emitRendererDebugLog(
+            "broadcast-opponent-party-recognition",
+            {
+              scene: sceneDetectionState.displayScene,
+              source: "selection-snapshot",
+              hasMatch,
+              captured: selectionSnapshotCaptured,
+              recognized: selectionSnapshotRecognized,
+              resultCount: response.results.length,
+            },
+            response.results.map((result: {
+              slotIndex: number;
+              pokemonId: string | null;
+              pokemonName: string | null;
+              score: number;
+              topCandidates?: Array<{ pokemonId: string | null; pokemonName: string | null; score: number }>;
+            }) => ({
+              slot: result.slotIndex + 1,
+              pokemonId: result.pokemonId ?? "",
+              pokemonName: result.pokemonName ?? "",
+              score: result.score,
+              top1: result.topCandidates?.[0]?.pokemonName ?? "",
+              top1Score: result.topCandidates?.[0]?.score ?? "",
+              top2: result.topCandidates?.[1]?.pokemonName ?? "",
+              top2Score: result.topCandidates?.[1]?.score ?? "",
+            }))
+          );
+          opponentRecognitionDebugLogged = true;
+        }
         if (isSceneDebugEnabled()) {
           console.debug("[recognition] opponent-result", {
             scene: sceneDetectionState.displayScene,
+            source: "selection-snapshot",
             hasMatch,
             captured: selectionSnapshotCaptured,
             recognized: selectionSnapshotRecognized,
@@ -2899,8 +3259,9 @@ async function updateBroadcastRecognition(): Promise<void> {
     if (!playerSelectionSnapshotRecognized && playerSelectionSnapshotSlots.length > 0) {
       let trackingChanged = false;
       if (canCaptureSelectionSnapshot) {
+        const livePlayerSlots = await collectCurrentPlayerSlots();
         const badgeResponse = await (window as any).electronAPI?.detectPlayerSelectionBadges?.(
-          playerSelectionSnapshotSlots,
+          livePlayerSlots,
           {
             selectionBadgeRect: broadcastPlayerSelectionBadgeRect,
           }
@@ -2911,56 +3272,60 @@ async function updateBroadcastRecognition(): Promise<void> {
       }
 
       const trackedSelections = getTrackedPlayerSelectionSlots();
-      const shouldRecognizePlayerSelection = trackingChanged
-        || trackedSelections.length >= 3
-        || playerSelectionSnapshotCaptured;
+      const shouldRecognizePlayerParty = playerSelectionSnapshotCaptured && !playerPartySnapshotRecognized;
 
-      if (shouldRecognizePlayerSelection) {
+      if (shouldRecognizePlayerParty) {
         const playerResponse = await (window as any).electronAPI?.recognizePlayerSelection?.(
           playerSelectionSnapshotSlots,
           {
             selectionBadgeRect: broadcastPlayerSelectionBadgeRect,
             pokemonNameRect: broadcastPlayerPokemonNameRect,
             itemNameRect: broadcastPlayerItemNameRect,
+            pokemonSpriteRect: broadcastPlayerPokemonSpriteRect,
+            visualRecognition: broadcastPlayerPokemonVisualRecognition,
           },
-          trackedSelections
+          []
         );
         if (!playerResponse?.success || !Array.isArray(playerResponse.results)) {
           return;
         }
 
-        const hasMatch = hasPlayerSelectionRecognitionMatch(playerResponse.results);
+        const partyUpdated = applyPlayerPartyRecognitionResults(playerResponse.results);
         if (isSceneDebugEnabled()) {
-          console.debug("[recognition] player-selection-result", {
+          console.debug("[recognition] player-party-result", {
             scene: sceneDetectionState.displayScene,
-            hasMatch,
+            partyUpdated,
             trackedSelections,
             captured: playerSelectionSnapshotCaptured,
-            recognized: playerSelectionSnapshotRecognized,
+            recognized: playerPartySnapshotRecognized,
             resultCount: playerResponse.results.length,
           });
         }
-        if (hasMatch || trackedSelections.length > 0) {
-          if (isSceneDebugEnabled()) {
-            await savePlayerDebugImages(playerSelectionSnapshotDebugSlots, playerResponse.results);
-          }
-          applyPlayerSelectionRecognitionResults(playerResponse.results);
-          playerSelectionSnapshotRecognized = trackedSelections.length >= 3
-            || playerResponse.results.filter((result: { selectionOrder: number | null }) =>
-              !!result.selectionOrder && result.selectionOrder >= 1 && result.selectionOrder <= 3
-            ).length >= 3;
-        } else if (canCaptureSelectionSnapshot) {
+        if (canCaptureSelectionSnapshot && !playerPartySnapshotRecognized) {
           playerSelectionSnapshotCaptured = false;
           playerSelectionSnapshotSlots = [];
           playerSelectionSnapshotDebugSlots = [];
         }
       }
+
+      if (playerPartySnapshotRecognized && trackedSelections.length > 0 && (trackingChanged || trackedSelections.length >= 3)) {
+        if (isSceneDebugEnabled()) {
+          await savePlayerDebugImages(playerSelectionSnapshotDebugSlots, trackedSelections);
+        }
+        applyTrackedPlayerSelectionResults(trackedSelections);
+        playerSelectionSnapshotRecognized = trackedSelections.length >= 3;
+      }
     }
     if (isSceneDebugEnabled()) {
       console.debug("[recognition] worker-roundtrip-ms", (performance.now() - recognitionStartedAt).toFixed(1));
     }
-  } catch {
-    // Ignore recognition failures. Scene detection can continue independently.
+  } catch (error) {
+    emitRendererDebugLog("broadcast-recognition-error", {
+      scene: sceneDetectionState.displayScene,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    // Scene detection can continue independently.
   } finally {
     broadcastRecognitionInFlight = false;
   }
@@ -3045,9 +3410,9 @@ async function runSceneRecognitionLoop(): Promise<void> {
   const startedAt = performance.now();
   sceneDetectionLastRunAt = startedAt;
 
-  const rawScene = await detectSceneFromVideo();
+  const sceneDetectionResult = await detectSceneFromVideo();
   const previousDisplayScene = sceneDetectionState.displayScene;
-  advanceSceneDetectionState(rawScene);
+  advanceSceneDetectionState(sceneDetectionResult.rawScene, sceneDetectionResult.evidence);
   if (sceneDetectionState.displayScene === "battle" && previousDisplayScene !== "battle") {
     renderBroadcastOverlayState("scene-transition-to-battle");
   }

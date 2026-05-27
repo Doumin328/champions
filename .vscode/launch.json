@@ -11,6 +11,12 @@
       },
       "args": ["."],
       "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1"
+      },
+      "console": "internalConsole",
+      "outputCapture": "std",
       "preLaunchTask": "npm: build"
     },
     {
@@ -22,7 +28,13 @@
         "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
       },
       "args": ["."],
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1"
+      },
+      "console": "internalConsole",
+      "outputCapture": "std"
     }
   ]
 }
