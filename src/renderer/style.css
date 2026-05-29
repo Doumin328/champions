@@ -834,6 +834,21 @@ body {
   gap: 0;
 }
 
+.damage-duel-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.damage-duel-row .damage-slot-defender,
+.damage-duel-row .damage-slot-attacker {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 34.5rem;
+  margin-bottom: 0;
+}
+
 /* ②+① で縦の 40% */
 .damage-slot-defender,
 .damage-slot-attacker {
@@ -849,6 +864,11 @@ body {
 }
 
 .damage-slot-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  box-sizing: border-box;
+  height: 2.5rem;
   margin: 0;
   padding: 0.4rem 0.75rem;
   font-size: 0.85rem;
@@ -856,6 +876,20 @@ body {
   color: rgba(255, 255, 255, 0.9);
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.damage-slot-heading-text {
+  margin-right: auto;
+  white-space: nowrap;
+}
+
+.damage-slot-label .damage-roster-label {
+  flex: 0 0 auto;
+}
+
+.damage-slot-label .damage-team-select {
+  flex: 0 1 8rem;
+  max-width: 8rem;
 }
 
 .damage-roster-bar {
@@ -878,6 +912,12 @@ body {
 
 .damage-roster-bar--team:not(.is-team-source) {
   grid-template-columns: auto minmax(0, 1fr);
+}
+
+.damage-duel-row .damage-roster-bar,
+.damage-duel-row .damage-roster-bar--team,
+.damage-duel-row .damage-roster-bar.is-team-source {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .damage-roster-label {
@@ -951,6 +991,19 @@ body {
   opacity: 0.5;
 }
 
+.damage-duel-row .damage-roster-slot {
+  aspect-ratio: 1 / 1;
+  height: auto;
+  padding: 0.1rem;
+}
+
+.damage-duel-row .damage-roster-slot-img {
+  width: 100%;
+  height: 100%;
+  max-width: 2.15rem;
+  max-height: 2.15rem;
+}
+
 .damage-slot-body {
   flex: 1;
   display: flex;
@@ -976,6 +1029,77 @@ body {
   height: 96px;
   object-fit: contain;
   border-radius: 8px;
+}
+
+.damage-duel-row .damage-slot-body {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-areas:
+    "image info"
+    "mega mega"
+    "stats stats"
+    "status status"
+    "picker picker";
+  align-items: start;
+  column-gap: 0.55rem;
+  row-gap: 0.7rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.damage-duel-row .damage-slot-defender .damage-slot-body {
+  grid-template-areas:
+    "image info"
+    "mega mega"
+    "stats stats"
+    "picker picker";
+  grid-template-rows: 72px 1.7rem auto minmax(0, 1fr);
+}
+
+.damage-duel-row .damage-slot-attacker .damage-slot-body {
+  grid-template-areas:
+    "image info"
+    "mega mega"
+    "status status"
+    "stats stats"
+    "picker picker";
+  grid-template-rows: 72px 1.7rem 4.25rem auto minmax(0, 1fr);
+}
+
+.damage-duel-row .damage-slot-img {
+  width: 72px;
+  height: 72px;
+}
+
+.damage-duel-row .damage-slot-img-wrap {
+  grid-area: image;
+  width: 72px;
+}
+
+.damage-duel-row .damage-slot-info {
+  display: contents;
+}
+
+.damage-duel-row .damage-pokemon-summary {
+  grid-area: info;
+  min-height: 72px;
+}
+
+.damage-duel-row .damage-slot-stats,
+.damage-duel-row .damage-attacker-status-row,
+.damage-duel-row .damage-item-picker {
+  grid-column: 1 / -1;
+}
+
+.damage-duel-row .damage-slot-stats {
+  grid-area: stats;
+}
+
+.damage-duel-row .damage-attacker-status-row {
+  grid-area: status;
+}
+
+.damage-duel-row .damage-item-picker {
+  grid-area: picker;
 }
 
 .damage-slot-info {
@@ -1009,11 +1133,77 @@ body {
 }
 
 .damage-slot-types {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.75);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.18rem;
+  min-width: 0;
 }
 
 /* ===== アイテム表示・ピッカー (タブ①) ===== */
+.damage-pokemon-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.damage-pokemon-summary-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.damage-pokemon-summary-row--meta {
+  align-items: center;
+}
+
+.damage-pokemon-summary-row--ability {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.damage-pokemon-summary-row--ability .damage-slot-ability-row {
+  margin: 0;
+  min-width: 0;
+}
+
+.damage-pokemon-summary .damage-slot-name {
+  min-width: 0;
+}
+
+.damage-pokemon-summary .damage-slot-base-stats {
+  font-size: 0.56rem;
+  line-height: 1.1;
+  letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.damage-pokemon-summary .damage-slot-types .type-img-sv {
+  height: 22px;
+}
+
+.damage-pokemon-summary .damage-item-display {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  max-width: none;
+  justify-content: center;
+  padding: 0.18rem;
+}
+
+.damage-pokemon-summary .damage-item-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.damage-pokemon-summary .damage-item-text {
+  display: none;
+}
+
 .damage-slot-top-row {
   display: flex;
   align-items: flex-start;
@@ -1159,6 +1349,55 @@ body {
   margin-left: auto;
 }
 
+.damage-duel-row .damage-slot-img-wrap .damage-form-change-row {
+  width: 72px;
+  min-height: 1.45rem;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-left: 0;
+}
+
+.damage-duel-row .damage-form-change-row {
+  grid-area: mega;
+  width: 100%;
+  height: 1.7rem;
+  min-height: 1.7rem;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  margin-left: 0;
+}
+
+.damage-duel-row .damage-form-change-row[hidden] {
+  display: flex !important;
+  visibility: hidden;
+}
+
+.damage-duel-row .damage-form-change-row .form-change-btn {
+  flex: 0 0 94px;
+  box-sizing: border-box;
+  height: 1.7rem;
+  min-height: 1.7rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.64rem;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.damage-duel-row .damage-form-change-row .mimikyu-disguise-toggle {
+  flex: 0 0 94px;
+  height: 1.7rem;
+}
+
+.damage-duel-row .damage-form-change-row .mimikyu-disguise-toggle-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.2rem 0.1rem;
+  font-size: 0.58rem;
+}
+
 .form-change-btn {
   padding: 4px 12px;
   border-radius: 4px;
@@ -1267,6 +1506,12 @@ body {
   position: relative;
 }
 
+.damage-duel-row .damage-swap-row {
+  flex: 0 0 3.2rem;
+  align-items: center;
+  margin: 0;
+}
+
 .damage-swap-btn {
   padding: 0.25rem 1rem;
   font-size: 0.78rem;
@@ -1280,6 +1525,14 @@ body {
   letter-spacing: 0.05em;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   transition: transform 0.08s, border-bottom-width 0.08s;
+}
+
+.damage-duel-row .damage-swap-btn {
+  width: 2.45rem;
+  height: 2.45rem;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .damage-swap-btn:hover {
@@ -1579,12 +1832,258 @@ body {
   opacity: 0.5;
 }
 
+.damage-nature-select[hidden] {
+  display: none !important;
+}
+
+.damage-duel-row .damage-slot-stats {
+  gap: 0.42rem;
+  margin-top: 0;
+}
+
+.damage-duel-row .damage-slot-stat-row {
+  box-sizing: border-box;
+  padding: 0.35rem 0.45rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(143, 190, 255, 0.11);
+  border-radius: 6px;
+}
+
+.damage-duel-row .damage-slot-stat-row:not(:has(.rank-label)) {
+  height: 4.25rem;
+  min-height: 4.25rem;
+  display: grid;
+  grid-template-columns: 2.25rem 2.65rem minmax(0, 1fr);
+  grid-template-areas: "label real ev";
+  align-items: center;
+  column-gap: 0.35rem;
+}
+
+.damage-duel-row .damage-slot-stat-row:has(.rank-label) {
+  height: 6.35rem;
+  min-height: 6.35rem;
+  display: grid;
+  grid-template-columns: 2.25rem 2.65rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label real ev nature"
+    ". . rank rank";
+  align-items: center;
+  gap: 0.28rem 0.35rem;
+}
+
+.damage-duel-row .damage-slot-stat-row .stat-label {
+  grid-area: label;
+  min-width: 0;
+  color: var(--hud-muted);
+  font-size: 0.74rem;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-stats-real-value {
+  grid-area: real;
+  min-width: 0;
+  text-align: right;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-ev-input-group {
+  grid-area: ev;
+  flex-wrap: nowrap;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-ev-input-group::before {
+  content: "EV";
+  flex: 0 0 auto;
+  margin-right: 0.05rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--hud-faint);
+}
+
+.damage-duel-row .damage-slot-stat-row select {
+  grid-area: nature;
+  min-width: 2.55rem;
+  padding: 0.16rem 0.25rem;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-nature-toggle {
+  grid-area: nature;
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-label {
+  grid-area: rank;
+  justify-self: start;
+  margin-left: 0;
+  padding-right: 4.65rem;
+  font-size: 0.68rem;
+  color: var(--hud-faint);
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-btn-down {
+  grid-area: rank;
+  justify-self: end;
+  transform: translateX(-3.05rem);
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-value {
+  grid-area: rank;
+  justify-self: end;
+  transform: translateX(-1.55rem);
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-btn-up {
+  grid-area: rank;
+  justify-self: end;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-ev-btn,
+.damage-duel-row .damage-slot-stat-row .damage-ev-step-btn,
+.damage-duel-row .damage-slot-stat-row .rank-btn {
+  min-width: 1.65rem;
+  height: 1.65rem;
+  padding: 0 0.28rem;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-ev-input {
+  width: 2.65rem;
+  height: 1.65rem;
+  padding: 0.05rem 0.2rem;
+}
+
+.damage-duel-row .damage-slot-stat-row:not(:has(.rank-label)) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label real ."
+    "ev ev ev";
+  row-gap: 0.3rem;
+}
+
+.damage-duel-row .damage-slot-stat-row:has(.rank-label) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label real nature"
+    "ev ev ev"
+    "ranklabel rank rank";
+  gap: 0.28rem 0.35rem;
+}
+
+.damage-duel-row .damage-slot-stat-row .stat-label {
+  min-width: 2rem;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-stats-real-value {
+  min-width: 0;
+  text-align: left;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-ev-input-group {
+  justify-self: start;
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-label {
+  grid-area: ranklabel;
+  justify-self: start;
+  align-self: center;
+  padding-right: 0;
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-btn-down {
+  grid-area: rank;
+  justify-self: start;
+  transform: none;
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-value {
+  grid-area: rank;
+  justify-self: start;
+  align-self: center;
+  margin-left: 2.1rem;
+  transform: none;
+}
+
+.damage-duel-row .damage-slot-stat-row .rank-btn-up {
+  grid-area: rank;
+  justify-self: start;
+  margin-left: 4.2rem;
+}
+
+.damage-duel-row .damage-slot-stat-row select {
+  justify-self: end;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-nature-toggle {
+  justify-self: end;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-ev-btn,
+.damage-duel-row .damage-slot-stat-row .damage-ev-step-btn,
+.damage-duel-row .damage-slot-stat-row .rank-btn,
+.damage-duel-row .damage-slot-stat-row .damage-nature-btn {
+  min-width: 1.55rem;
+}
+
+.damage-duel-row .damage-slot-stat-row .damage-ev-input {
+  width: 2.35rem;
+}
+
+.damage-nature-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16rem;
+  padding: 0.12rem;
+  border-radius: 7px;
+  background: rgba(2, 8, 18, 0.6);
+  border: 1px solid rgba(143, 190, 255, 0.16);
+}
+
+.damage-nature-btn {
+  min-width: 2rem;
+  height: 1.55rem;
+  padding: 0 0.28rem;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.damage-nature-btn:hover:not(:disabled) {
+  color: var(--hud-text);
+  background: rgba(80, 216, 255, 0.1);
+}
+
+.damage-nature-btn.is-active {
+  color: #06120d;
+  background: var(--hud-success);
+  border-color: rgba(102, 227, 154, 0.75);
+}
+
+.damage-nature-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 /* やけどトグルボタン */
 .damage-attacker-status-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.4rem;
+}
+
+.damage-duel-row .damage-slot-attacker .damage-attacker-status-row {
+  box-sizing: border-box;
+  height: 4.25rem;
+  min-height: 4.25rem;
+  margin-top: 0;
+  padding: 0.35rem 0.45rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(143, 190, 255, 0.11);
+  border-radius: 6px;
 }
 
 .damage-status-btn {

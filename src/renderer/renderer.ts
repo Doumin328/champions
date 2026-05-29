@@ -6419,6 +6419,9 @@ function appendMimikyuDisguiseButton(slot: "attacker" | "defender", row: HTMLEle
 function renderTab1FormChangeRow(slot: "attacker" | "defender"): void {
   const row = document.getElementById(`damage-${slot}-form-change-row`);
   if (!row) return;
+  row.onclick = (event) => {
+    event.stopPropagation();
+  };
 
   const pokemon = slot === "attacker" ? attackPokemon : defendPokemon;
   const megaToggleTarget = getMegaToggleTarget(pokemon);
@@ -6435,7 +6438,7 @@ function renderTab1FormChangeRow(slot: "attacker" | "defender"): void {
         ? "form-change-btn form-change-btn-mega-revert"
         : "form-change-btn form-change-btn-mega";
       btn.textContent = isMegaPokemonId(pokemon.id)
-        ? "メガシンカ解除"
+        ? "メガ解除"
         : `メガシンカ${getMegaFormSuffixLabel(target.id)}`;
       btn.setAttribute("aria-pressed", isMegaPokemonId(pokemon.id) ? "true" : "false");
       btn.addEventListener("click", () => {
@@ -6602,7 +6605,7 @@ function renderTab1DamageDisplay(): void {
       defenderImg.alt = defendPokemon.name;
       defenderImg.onerror = () => { defenderImg.src = BALL_MONSTER_IMAGE; };
       if (defenderName) renderDamageSlotName(defenderName, defendPokemon);
-      if (defenderTypes) defenderTypes.innerHTML = typeBadgesHtml(getEffectiveDamageTypes("defender"));
+      if (defenderTypes) defenderTypes.innerHTML = typeBadgesSvHtml(getEffectiveDamageTypes("defender"));
       const defDisplayBtn = document.getElementById("damage-defender-item-display") as HTMLButtonElement | null;
       if (defDisplayBtn) {
         const isMega = isMegaPokemonId(defendPokemon.id);
@@ -6617,6 +6620,8 @@ function renderTab1DamageDisplay(): void {
       defenderImg.src = BALL_MONSTER_IMAGE;
       defenderImg.alt = "";
       if (defenderName) defenderName.textContent = "";
+      const defenderBaseStats = document.getElementById("damage-defender-base-stats");
+      if (defenderBaseStats) defenderBaseStats.textContent = "";
       if (defenderTypes) defenderTypes.innerHTML = "";
       closeTab1ItemPicker("defender");
     }
@@ -6629,7 +6634,7 @@ function renderTab1DamageDisplay(): void {
       attackerImg.alt = attackPokemon.name;
       attackerImg.onerror = () => { attackerImg.src = BALL_MONSTER_IMAGE; };
       if (attackerName) renderDamageSlotName(attackerName, attackPokemon);
-      if (attackerTypes) attackerTypes.innerHTML = typeBadgesHtml(getEffectiveDamageTypes("attacker"));
+      if (attackerTypes) attackerTypes.innerHTML = typeBadgesSvHtml(getEffectiveDamageTypes("attacker"));
       const atkDisplayBtn = document.getElementById("damage-attacker-item-display") as HTMLButtonElement | null;
       if (atkDisplayBtn) {
         const isMega = isMegaPokemonId(attackPokemon.id);
@@ -6644,6 +6649,8 @@ function renderTab1DamageDisplay(): void {
       attackerImg.src = BALL_MONSTER_IMAGE;
       attackerImg.alt = "";
       if (attackerName) attackerName.textContent = "";
+      const attackerBaseStats = document.getElementById("damage-attacker-base-stats");
+      if (attackerBaseStats) attackerBaseStats.textContent = "";
       if (attackerTypes) attackerTypes.innerHTML = "";
       closeTab1ItemPicker("attacker");
     }
@@ -6662,6 +6669,7 @@ function renderTab1DamageDisplay(): void {
       (el as HTMLInputElement).disabled = !attackPokemon;
     });
   }
+  syncDamageNatureToggleButtons();
 
   updateStatsRealValues();
   updateRankDisplays();
@@ -6744,7 +6752,22 @@ function syncStatsInputsFromState(): void {
   if (atkNat) atkNat.value = String(attackerAtkNature);
   if (spatkEv) spatkEv.value = String(attackerSpAtkEV);
   if (spatkNat) spatkNat.value = String(attackerSpAtkNature);
+  syncDamageNatureToggleButtons();
   updateStatsRealValues();
+}
+
+function syncDamageNatureToggleButtons(): void {
+  document.querySelectorAll<HTMLElement>(".damage-nature-toggle").forEach((wrap) => {
+    const selectId = wrap.dataset.natureSelect;
+    const select = selectId ? document.getElementById(selectId) as HTMLSelectElement | null : null;
+    const selectedValue = select?.value ?? "1.0";
+    wrap.querySelectorAll<HTMLButtonElement>(".damage-nature-btn").forEach((btn) => {
+      const active = btn.dataset.natureValue === selectedValue;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+      btn.disabled = !!select?.disabled;
+    });
+  });
 }
 
 function updateStatsRealValues(): void {
@@ -7149,13 +7172,16 @@ function getBaseStats(pokemon: Pokemon): {
 }
 
 function renderDamageSlotName(nameEl: HTMLElement, pokemon: Pokemon | null): void {
+  const statsEl = document.getElementById(nameEl.id.replace("-name", "-base-stats"));
   if (!pokemon) {
     nameEl.textContent = "";
+    if (statsEl) statsEl.textContent = "";
     return;
   }
   const stats = getBaseStats(pokemon);
   const statsText = [stats.hp, stats.attack, stats.defense, stats.spAttack, stats.spDefense, stats.speed].join(" - ");
-  nameEl.innerHTML = `<span class="damage-slot-name-main">${escapeHtml(pokemon.name)}</span><span class="damage-slot-base-stats">${statsText}</span>`;
+  nameEl.innerHTML = `<span class="damage-slot-name-main">${escapeHtml(pokemon.name)}</span>`;
+  if (statsEl) statsEl.textContent = statsText;
 }
 
 function formatDamageResultText(result: DamageResult): string {
@@ -7571,6 +7597,18 @@ document.addEventListener("DOMContentLoaded", () => {
   damagePanel?.addEventListener("click", (e) => {
     const target = (e.target as HTMLElement).closest("button");
     if (!target) return;
+    if (target.classList.contains("damage-nature-btn")) {
+      const wrap = target.closest<HTMLElement>(".damage-nature-toggle");
+      const selectId = wrap?.dataset.natureSelect;
+      const select = selectId ? document.getElementById(selectId) as HTMLSelectElement | null : null;
+      const nextValue = target.dataset.natureValue;
+      if (!select || !nextValue) return;
+      e.preventDefault();
+      select.value = nextValue;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      syncDamageNatureToggleButtons();
+      return;
+    }
     const inputId = target.dataset.evInput;
     if (inputId) {
       const input = document.getElementById(inputId) as HTMLInputElement | null;

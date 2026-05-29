@@ -32,7 +32,7 @@
             </div>
             <button type="button" class="video-scene-mode-btn" id="battle-layout-edit-control">レイアウト編集</button>
             <label class="video-scene-toggle">
-              <input type="checkbox" id="scene-detection-enabled" checked />
+              <input type="checkbox" id="scene-detection-enabled" />
               <span>認識</span>
             </label>
             <label class="video-scene-toggle">
@@ -72,7 +72,7 @@
           </div>
           <div class="video-scene-status" id="scene-detection-status" aria-live="polite">
             <span class="video-scene-status-badge" id="scene-detection-badge">待機</span>
-            <span class="video-scene-status-text" id="scene-detection-text">映像認識を初期化中</span>
+            <span class="video-scene-status-text" id="scene-detection-text">映像認識を停止中</span>
           </div>
           <div class="video-scene-debug" id="scene-detection-debug" hidden></div>
         </div>
@@ -168,42 +168,48 @@
         <div class="tab-panels">
           <div id="tab1" class="tab-panel tab-damage is-active" role="tabpanel">
             <div class="damage-panel">
-              <!-- ② 防御側 -->
-              <section class="damage-slot damage-slot-defender" aria-labelledby="damage-defender-label">
-                <h2 id="damage-defender-label" class="damage-slot-label">防御側</h2>
-                <div class="damage-roster-bar" aria-label="Opponent roster">
-                  <span class="damage-roster-label" id="damage-defender-roster-label">Opponent</span>
-                  <select id="damage-defender-team-select" class="damage-team-select" aria-label="My Team" hidden></select>
-                  <div class="damage-roster-slots" id="damage-defender-roster"></div>
-                </div>
+              <div class="damage-duel-row">
+                <!-- ② 防御側 -->
+                <section class="damage-slot damage-slot-defender" aria-labelledby="damage-defender-label">
+                  <div class="damage-slot-label">
+                    <span id="damage-defender-label" class="damage-slot-heading-text">防御側</span>
+                    <span class="damage-roster-label" id="damage-defender-roster-label">Opponent</span>
+                    <select id="damage-defender-team-select" class="damage-team-select" aria-label="My Team" hidden></select>
+                  </div>
+                  <div class="damage-roster-bar" aria-label="Opponent roster">
+                    <div class="damage-roster-slots" id="damage-defender-roster"></div>
+                  </div>
                 <div class="damage-slot-body">
                   <div class="damage-slot-img-wrap">
                     <img id="damage-defender-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
                   </div>
                   <div class="damage-slot-info" id="damage-defender-info">
-                    <div class="damage-slot-top-row">
-                      <div class="damage-slot-name-types">
+                    <div class="damage-pokemon-summary">
+                      <div class="damage-pokemon-summary-row">
                         <span class="damage-slot-name" id="damage-defender-name"></span>
                         <span class="damage-slot-types" id="damage-defender-types"></span>
                       </div>
-                      <button type="button" class="damage-item-display" id="damage-defender-item-display">
-                        <img class="damage-item-icon" id="damage-defender-item-icon" alt="" hidden />
-                        <div class="damage-item-text">
-                          <span class="damage-item-name" id="damage-defender-item-name">持ち物なし</span>
-                          <span class="damage-item-effect" id="damage-defender-item-effect"></span>
-                        </div>
-                      </button>
-                    </div>
-                    <div class="damage-ability-formchange-row">
-                      <div class="damage-slot-ability-row" id="damage-defender-ability-row" hidden>
-                        <span class="ability-label">特性</span>
-                        <select id="damage-defender-ability-select" class="ability-select"></select>
-                        <span id="damage-defender-ability-text" class="ability-text" hidden></span>
-                        <div id="damage-defender-ability-type-dropdown" class="ability-type-dropdown" hidden></div>
-                        <button type="button" class="ability-toggle-btn is-on" id="damage-defender-ability-toggle" hidden>ON</button>
+                      <div class="damage-pokemon-summary-row damage-pokemon-summary-row--meta">
+                        <span class="damage-slot-base-stats" id="damage-defender-base-stats"></span>
+                        <button type="button" class="damage-item-display" id="damage-defender-item-display">
+                          <img class="damage-item-icon" id="damage-defender-item-icon" alt="" hidden />
+                          <div class="damage-item-text">
+                            <span class="damage-item-name" id="damage-defender-item-name">持ち物なし</span>
+                            <span class="damage-item-effect" id="damage-defender-item-effect"></span>
+                          </div>
+                        </button>
                       </div>
-                      <div class="damage-form-change-row" id="damage-defender-form-change-row" hidden></div>
+                      <div class="damage-pokemon-summary-row damage-pokemon-summary-row--ability">
+                        <div class="damage-slot-ability-row" id="damage-defender-ability-row" hidden>
+                          <span class="ability-label">特性</span>
+                          <select id="damage-defender-ability-select" class="ability-select"></select>
+                          <span id="damage-defender-ability-text" class="ability-text" hidden></span>
+                          <div id="damage-defender-ability-type-dropdown" class="ability-type-dropdown" hidden></div>
+                          <button type="button" class="ability-toggle-btn is-on" id="damage-defender-ability-toggle" hidden>ON</button>
+                        </div>
+                      </div>
                     </div>
+                    <div class="damage-form-change-row" id="damage-defender-form-change-row" hidden></div>
                     <div class="damage-slot-stats" id="damage-slot-stats-defender">
                       <div class="damage-slot-stat-row">
                         <span class="stat-label">HP</span>
@@ -226,11 +232,16 @@
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-def-ev" aria-label="増やす">＋</button>
                           <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-def-ev">32</button>
                         </div>
-                        <select id="stats-def-nature">
+                        <select id="stats-def-nature" class="damage-nature-select" hidden>
                           <option value="0.9">↓</option>
                           <option value="1.0" selected>普</option>
                           <option value="1.1">↑</option>
                         </select>
+                        <div class="damage-nature-toggle" data-nature-select="stats-def-nature" role="group" aria-label="防御の性格補正">
+                          <button type="button" class="damage-nature-btn" data-nature-value="0.9">0.9</button>
+                          <button type="button" class="damage-nature-btn is-active" data-nature-value="1.0">1.0</button>
+                          <button type="button" class="damage-nature-btn" data-nature-value="1.1">1.1</button>
+                        </div>
                         <span class="rank-label">ランク</span>
                         <button type="button" class="rank-btn rank-btn-down" id="def-rank-down" aria-label="防御ランクを下げる">−</button>
                         <span class="rank-value" id="def-rank-value">0</span>
@@ -246,11 +257,16 @@
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-spdef-ev" aria-label="増やす">＋</button>
                           <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spdef-ev">32</button>
                         </div>
-                        <select id="stats-spdef-nature">
+                        <select id="stats-spdef-nature" class="damage-nature-select" hidden>
                           <option value="0.9">↓</option>
                           <option value="1.0" selected>普</option>
                           <option value="1.1">↑</option>
                         </select>
+                        <div class="damage-nature-toggle" data-nature-select="stats-spdef-nature" role="group" aria-label="特防の性格補正">
+                          <button type="button" class="damage-nature-btn" data-nature-value="0.9">0.9</button>
+                          <button type="button" class="damage-nature-btn is-active" data-nature-value="1.0">1.0</button>
+                          <button type="button" class="damage-nature-btn" data-nature-value="1.1">1.1</button>
+                        </div>
                         <span class="rank-label">ランク</span>
                         <button type="button" class="rank-btn rank-btn-down" id="spdef-rank-down" aria-label="特防ランクを下げる">−</button>
                         <span class="rank-value" id="spdef-rank-value">0</span>
@@ -263,46 +279,55 @@
                     </div>
                   </div>
                 </div>
-              </section>
-              <!-- 入れ替えボタン -->
-              <div class="damage-swap-row">
-                <button type="button" class="damage-swap-btn" id="damage-swap-btn" aria-label="攻撃側と防御側を入れ替え">⇅ 入れ替え</button>
-              </div>
-              <!-- ① 攻撃側 -->
-              <section class="damage-slot damage-slot-attacker" aria-labelledby="damage-attacker-label">
-                <h2 id="damage-attacker-label" class="damage-slot-label">攻撃側</h2>
-                <div class="damage-roster-bar damage-roster-bar--team" aria-label="My team roster">
-                  <label class="damage-roster-label" id="damage-attacker-roster-label" for="damage-attacker-team-select">My Team</label>
-                  <select id="damage-attacker-team-select" class="damage-team-select" aria-label="My Team"></select>
-                  <div class="damage-roster-slots" id="damage-attacker-roster"></div>
+                </section>
+                <!-- 入れ替えボタン -->
+                <div class="damage-swap-row">
+                <button type="button" class="damage-swap-btn" id="damage-swap-btn" aria-label="攻撃側と防御側を入れ替え">⇔</button>
                 </div>
+                <!-- ① 攻撃側 -->
+                <section class="damage-slot damage-slot-attacker" aria-labelledby="damage-attacker-label">
+                  <div class="damage-slot-label">
+                    <span id="damage-attacker-label" class="damage-slot-heading-text">攻撃側</span>
+                    <label class="damage-roster-label" id="damage-attacker-roster-label" for="damage-attacker-team-select">My Team</label>
+                    <select id="damage-attacker-team-select" class="damage-team-select" aria-label="My Team"></select>
+                  </div>
+                  <div class="damage-roster-bar damage-roster-bar--team" aria-label="My team roster">
+                    <div class="damage-roster-slots" id="damage-attacker-roster"></div>
+                  </div>
                 <div class="damage-slot-body">
                   <div class="damage-slot-img-wrap">
                     <img id="damage-attacker-img" class="damage-slot-img" src="img/ball_monster.png" alt="" />
                   </div>
                   <div class="damage-slot-info" id="damage-attacker-info">
-                    <div class="damage-slot-top-row">
-                      <div class="damage-slot-name-types">
+                    <div class="damage-pokemon-summary">
+                      <div class="damage-pokemon-summary-row">
                         <span class="damage-slot-name" id="damage-attacker-name"></span>
                         <span class="damage-slot-types" id="damage-attacker-types"></span>
                       </div>
-                      <button type="button" class="damage-item-display" id="damage-attacker-item-display">
-                        <img class="damage-item-icon" id="damage-attacker-item-icon" alt="" hidden />
-                        <div class="damage-item-text">
-                          <span class="damage-item-name" id="damage-attacker-item-name">持ち物なし</span>
-                          <span class="damage-item-effect" id="damage-attacker-item-effect"></span>
-                        </div>
-                      </button>
-                    </div>
-                    <div class="damage-ability-formchange-row">
-                      <div class="damage-slot-ability-row" id="damage-attacker-ability-row" hidden>
-                        <span class="ability-label">特性</span>
-                        <select id="damage-attacker-ability-select" class="ability-select"></select>
-                        <span id="damage-attacker-ability-text" class="ability-text" hidden></span>
-                        <div id="damage-attacker-ability-type-dropdown" class="ability-type-dropdown" hidden></div>
-                        <button type="button" class="ability-toggle-btn is-on" id="damage-attacker-ability-toggle" hidden>ON</button>
+                      <div class="damage-pokemon-summary-row damage-pokemon-summary-row--meta">
+                        <span class="damage-slot-base-stats" id="damage-attacker-base-stats"></span>
+                        <button type="button" class="damage-item-display" id="damage-attacker-item-display">
+                          <img class="damage-item-icon" id="damage-attacker-item-icon" alt="" hidden />
+                          <div class="damage-item-text">
+                            <span class="damage-item-name" id="damage-attacker-item-name">持ち物なし</span>
+                            <span class="damage-item-effect" id="damage-attacker-item-effect"></span>
+                          </div>
+                        </button>
                       </div>
-                      <div class="damage-form-change-row" id="damage-attacker-form-change-row" hidden></div>
+                      <div class="damage-pokemon-summary-row damage-pokemon-summary-row--ability">
+                        <div class="damage-slot-ability-row" id="damage-attacker-ability-row" hidden>
+                          <span class="ability-label">特性</span>
+                          <select id="damage-attacker-ability-select" class="ability-select"></select>
+                          <span id="damage-attacker-ability-text" class="ability-text" hidden></span>
+                          <div id="damage-attacker-ability-type-dropdown" class="ability-type-dropdown" hidden></div>
+                          <button type="button" class="ability-toggle-btn is-on" id="damage-attacker-ability-toggle" hidden>ON</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="damage-form-change-row" id="damage-attacker-form-change-row" hidden></div>
+                    <div class="damage-attacker-status-row">
+                      <button type="button" id="damage-burn-toggle" class="damage-status-btn">やけど</button>
+                      <button type="button" id="damage-type-boost-toggle" class="damage-status-btn">タイプ強化</button>
                     </div>
                     <div class="damage-slot-stats" id="damage-slot-stats-attacker">
                       <div class="damage-slot-stat-row">
@@ -315,11 +340,16 @@
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-atk-ev" aria-label="増やす">＋</button>
                           <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-atk-ev">32</button>
                         </div>
-                        <select id="stats-atk-nature">
+                        <select id="stats-atk-nature" class="damage-nature-select" hidden>
                           <option value="0.9">↓</option>
                           <option value="1.0" selected>普</option>
                           <option value="1.1">↑</option>
                         </select>
+                        <div class="damage-nature-toggle" data-nature-select="stats-atk-nature" role="group" aria-label="攻撃の性格補正">
+                          <button type="button" class="damage-nature-btn" data-nature-value="0.9">0.9</button>
+                          <button type="button" class="damage-nature-btn is-active" data-nature-value="1.0">1.0</button>
+                          <button type="button" class="damage-nature-btn" data-nature-value="1.1">1.1</button>
+                        </div>
                         <span class="rank-label">ランク</span>
                         <button type="button" class="rank-btn rank-btn-down" id="atk-rank-down" aria-label="攻撃ランクを下げる">−</button>
                         <span class="rank-value" id="atk-rank-value">0</span>
@@ -335,20 +365,21 @@
                           <button type="button" class="damage-ev-step-btn damage-ev-step-up" data-ev-input="stats-spatk-ev" aria-label="増やす">＋</button>
                           <button type="button" class="damage-ev-btn damage-ev-btn-252" data-ev-input="stats-spatk-ev">32</button>
                         </div>
-                        <select id="stats-spatk-nature">
+                        <select id="stats-spatk-nature" class="damage-nature-select" hidden>
                           <option value="0.9">↓</option>
                           <option value="1.0" selected>普</option>
                           <option value="1.1">↑</option>
                         </select>
+                        <div class="damage-nature-toggle" data-nature-select="stats-spatk-nature" role="group" aria-label="特攻の性格補正">
+                          <button type="button" class="damage-nature-btn" data-nature-value="0.9">0.9</button>
+                          <button type="button" class="damage-nature-btn is-active" data-nature-value="1.0">1.0</button>
+                          <button type="button" class="damage-nature-btn" data-nature-value="1.1">1.1</button>
+                        </div>
                         <span class="rank-label">ランク</span>
                         <button type="button" class="rank-btn rank-btn-down" id="spatk-rank-down" aria-label="特攻ランクを下げる">−</button>
                         <span class="rank-value" id="spatk-rank-value">0</span>
                         <button type="button" class="rank-btn rank-btn-up" id="spatk-rank-up" aria-label="特攻ランクを上げる">＋</button>
                       </div>
-                    </div>
-                    <div class="damage-attacker-status-row">
-                      <button type="button" id="damage-burn-toggle" class="damage-status-btn">やけど</button>
-                      <button type="button" id="damage-type-boost-toggle" class="damage-status-btn">タイプ強化</button>
                     </div>
                     <div class="damage-item-picker" id="damage-attacker-item-picker" hidden>
                       <input type="text" class="damage-item-picker-search" id="tab1-attacker-item-search" placeholder="アイテム名で検索…" />
@@ -356,7 +387,8 @@
                     </div>
                   </div>
                 </div>
-              </section>
+                </section>
+              </div>
               <!-- 天候・フィールド -->
               <section id="damage-weather-section" class="damage-weather-section">
                 <div class="damage-condition-group">
